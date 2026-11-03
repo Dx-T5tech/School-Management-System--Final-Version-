@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The room status legend uses a fieldset with a native legend and list.",
+    "The status live region announces detected changes rather than every poll.",
+    "Room-change announcements include changed details when present."
+  ]
+}

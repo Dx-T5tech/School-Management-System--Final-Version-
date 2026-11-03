@@ -1437,21 +1437,65 @@ h1 {
     min-width: 760px;
 }
 
+.room-monitor-floor-map {
+    padding: 12px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: var(--soft);
+}
+
+.room-monitor-map-note {
+    margin: 0 0 10px;
+    color: var(--muted);
+    font-size: 11px;
+}
+
 .room-monitor-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-auto-rows: minmax(112px, auto);
     gap: 10px;
     margin: 0;
     padding: 0;
     list-style: none;
 }
 
+.room-monitor-hallway {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    display: grid;
+    min-height: 84px;
+    place-items: center;
+    border-block: 1px dashed var(--line);
+    color: var(--muted);
+    background: var(--surface);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+}
+
 .room-monitor-card {
+    grid-column: span 2;
+    grid-row: var(--room-row);
+    grid-column: var(--room-column) / span var(--room-column-span);
     min-width: 0;
+    min-height: 112px;
     padding: 14px;
     border: 1px solid var(--line);
-    border-radius: 12px;
+    border-top: 3px solid var(--good);
+    border-radius: 8px;
     background: var(--surface);
+}
+
+.room-monitor-card--occupied {
+    border-top-color: var(--crit);
+}
+
+.room-monitor-card--maintenance,
+.room-monitor-card--inactive {
+    border-top-color: var(--muted);
+    background: var(--soft);
 }
 
 .room-monitor-card h3 {
@@ -1467,6 +1511,9 @@ h1 {
 }
 
 .room-monitor-card .room-monitor-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     color: var(--good);
     font-size: 10px;
     font-weight: 700;
@@ -1478,9 +1525,77 @@ h1 {
     color: var(--crit);
 }
 
-.room-monitor-card--facility .room-monitor-status,
+.room-monitor-card--maintenance .room-monitor-status,
 .room-monitor-card--inactive .room-monitor-status {
-    color: var(--warn);
+    color: var(--muted);
+}
+
+.room-monitor-status-dot {
+    width: 7px;
+    height: 7px;
+    flex: 0 0 7px;
+    border-radius: 50%;
+    background: currentColor;
+}
+
+.room-monitor-timing {
+    font-weight: 700;
+}
+
+.room-monitor-details:empty {
+    display: none;
+}
+
+.room-monitor-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.room-monitor-legend {
+    min-width: 0;
+    margin: 14px 0 0;
+    padding: 0;
+    border: 0;
+}
+
+.room-monitor-legend legend {
+    float: left;
+    margin-right: 10px;
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.room-monitor-legend ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    color: var(--muted);
+    font-size: 11px;
+    list-style: none;
+}
+
+.room-monitor-legend-item::before {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    margin-right: 6px;
+    border-radius: 50%;
+    background: var(--good);
+    content: "";
+}
+
+.room-monitor-legend-item--occupied::before {
+    background: var(--crit);
+}
+
+.room-monitor-legend-item--maintenance::before {
+    background: var(--muted);
 }
 
 .schedule-updated {
@@ -1488,6 +1603,40 @@ h1 {
     color: var(--ink-soft);
     font-size: 11px;
     text-align: right;
+}
+
+@media (max-width: 900px) {
+    .room-monitor-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .room-monitor-card {
+        grid-row: auto;
+        grid-column: span 1;
+    }
+
+    .room-monitor-hallway {
+        grid-row: auto;
+    }
+}
+
+@media (max-width: 560px) {
+    .room-monitor-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .room-monitor-card {
+        padding: 11px;
+    }
+
+    .room-monitor-footer {
+        align-items: flex-start;
+        flex-direction: column;
+    }
+
+    .room-monitor-footer .schedule-updated {
+        text-align: left;
+    }
 }
 
 .conflict-policy {

@@ -10,6 +10,130 @@
     const statusSummary = document.querySelector("[data-status-summary]");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+    const roomMonitoring = document.querySelector("[data-room-monitor]");
+    if (roomMonitoring instanceof HTMLElement) {
+        const refreshUrl = new URL(roomMonitoring.dataset.roomRefreshUrl, window.location.href);
+        const liveStatus = roomMonitoring.querySelector("[data-room-live-status]");
+        const updatedTime = roomMonitoring.querySelector("[data-room-updated]");
+        const occupiedCount = roomMonitoring.querySelector("[data-room-occupied-count]");
+        const availableCount = roomMonitoring.querySelector("[data-room-available-count]");
+        let roomRefreshInProgress = false;
+        const previousRoomStates = new Map();
+        roomMonitoring.querySelectorAll("[data-room-card]").forEach((card) => {
+            previousRoomStates.set(card.dataset.roomId, {
+                status: card.querySelector("[data-room-status]")?.textContent?.trim() ?? "",
+                timing: card.querySelector("[data-room-timing]")?.textContent?.trim() ?? "",
+                details: card.querySelector("[data-room-details]")?.textContent?.trim() ?? "",
+            });
+        });
+
+        const refreshRoomStatuses = async () => {
+            if (roomRefreshInProgress || document.hidden) {
+                return;
+            }
+
+            roomRefreshInProgress = true;
+            try {
+                const response = await fetch(refreshUrl, {
+                    cache: "no-store",
+                    credentials: "same-origin",
+                    headers: { Accept: "application/json" },
+                });
+                if (!response.ok) {
+                    throw new Error(`Room status refresh failed with HTTP ${response.status}.`);
+                }
+
+                const data = await response.json();
+                if (!data || typeof data.roomStates !== "object" || !data.roomStates) {
+                    throw new Error("Room status refresh returned an invalid response.");
+                }
+
+                const statusClasses = ["available", "occupied", "maintenance", "inactive"];
+                const changedRooms = [];
+                roomMonitoring.querySelectorAll("[data-room-card]").forEach((card) => {
+                    const state = data.roomStates[card.dataset.roomId];
+                    if (!state || typeof state.status !== "string" || !statusClasses.includes(state.statusKey)) {
+                        return;
+                    }
+
+                    const currentState = {
+                        status: state.status,
+                        timing: typeof state.timing === "string" ? state.timing : "",
+                        details: typeof state.details === "string" ? state.details : "",
+                    };
+                    const previousState = previousRoomStates.get(card.dataset.roomId);
+                    if (
+                        previousState
+                        && (
+                            previousState.status !== currentState.status
+                            || previousState.timing !== currentState.timing
+                            || previousState.details !== currentState.details
+                        )
+                    ) {
+                        const roomName = card.querySelector("h3")?.textContent?.trim() || "A room";
+                        const roomChange = `${roomName} is ${currentState.status.toLowerCase()}. ${currentState.timing}`;
+                        changedRooms.push(currentState.details === "" ? roomChange : `${roomChange}. ${currentState.details}`);
+                    }
+                    previousRoomStates.set(card.dataset.roomId, currentState);
+
+                    statusClasses.forEach((statusClass) => {
+                        card.classList.remove(`room-monitor-card--${statusClass}`);
+                    });
+                    card.classList.add(`room-monitor-card--${state.statusKey}`);
+                    const status = card.querySelector("[data-room-status]");
+                    const timing = card.querySelector("[data-room-timing]");
+                    const details = card.querySelector("[data-room-details]");
+                    if (status) {
+                        status.textContent = state.status;
+                    }
+                    if (timing) {
+                        timing.textContent = currentState.timing;
+                    }
+                    if (details) {
+                        details.textContent = currentState.details;
+                    }
+                });
+
+                if (occupiedCount && Number.isInteger(data.occupiedCount)) {
+                    occupiedCount.textContent = String(data.occupiedCount);
+                }
+                if (availableCount && Number.isInteger(data.availableCount)) {
+                    availableCount.textContent = String(data.availableCount);
+                }
+                if (updatedTime && typeof data.updatedAt === "string" && typeof data.updatedLabel === "string") {
+                    updatedTime.dateTime = data.updatedAt;
+                    updatedTime.textContent = data.updatedLabel;
+                }
+                if (liveStatus) {
+                    let updateMessage = "";
+                    if (changedRooms.length > 0) {
+                        const visibleChanges = changedRooms.slice(0, 3);
+                        updateMessage = `Room occupancy changed: ${visibleChanges.join(" ")}${changedRooms.length > visibleChanges.length ? ` ${changedRooms.length - visibleChanges.length} more room(s) changed.` : ""}`;
+                    } else if (liveStatus.textContent.startsWith("Live refresh unavailable.")) {
+                        updateMessage = "Live room schedule updates have resumed.";
+                    }
+                    if (updateMessage !== "" && liveStatus.textContent !== updateMessage) {
+                        liveStatus.textContent = updateMessage;
+                    }
+                }
+            } catch (error) {
+                console.error("Unable to refresh room monitoring data.", error);
+                if (liveStatus) {
+                    liveStatus.textContent = "Live refresh unavailable. Showing the last successful update.";
+                }
+            } finally {
+                roomRefreshInProgress = false;
+            }
+        };
+
+        window.setInterval(refreshRoomStatuses, 30_000);
+        document.addEventListener("visibilitychange", () => {
+            if (!document.hidden) {
+                refreshRoomStatuses();
+            }
+        });
+    }
+
     const configurationVersion = document.body.dataset.configurationVersion;
     if (configurationVersion) {
         let currentConfigurationVersion = configurationVersion;

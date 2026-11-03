@@ -331,20 +331,26 @@ foreach ($lookupOptions as $lookupName => $options) {
             <?php
             $roomAvailableCount = 0;
             $roomOccupiedCount = 0;
-            foreach ($roomOverview['rooms'] as $room) {
-                if ($room['room_type'] === 'Facility' || $room['status'] !== 'Active') {
-                    continue;
-                }
-                if (!empty($roomOverview['occupancy'][(int) $room['room_id']])) {
+            foreach ($roomOverview['roomStates'] as $roomState) {
+                if ($roomState['status'] === 'Occupied') {
                     $roomOccupiedCount++;
-                } else {
+                } elseif ($roomState['status'] === 'Available') {
                     $roomAvailableCount++;
                 }
             }
+            $roomRefreshUrl = 'admin-section.php?' . http_build_query([
+                'section' => 'attendance-scheduling',
+                'attendance_view' => 'room-monitoring',
+                'building' => $roomOverview['building'],
+                'floor' => $roomOverview['floor'],
+                'q' => $roomOverview['search'],
+                'room_refresh' => '1',
+            ]);
             ?>
-            <div class="admin-panel">
+            <div class="admin-panel room-monitor-panel" data-room-monitor
+                 data-room-refresh-url="<?= dashboardEscape($roomRefreshUrl) ?>">
                 <h2>Room monitoring</h2>
-                <p class="admin-panel-description">Room availability based on the active schedule for <?= dashboardEscape($roomOverview['day']) ?> at <?= dashboardEscape(date('g:i A', strtotime($roomOverview['time']))) ?>.</p>
+                <p class="admin-panel-description">Live room availability from the active class schedule. This is schedule-based, not a physical sensor reading.</p>
                 <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
                     <input type="hidden" name="section" value="attendance-scheduling">
                     <input type="hidden" name="attendance_view" value="room-monitoring">
@@ -372,35 +378,61 @@ foreach ($lookupOptions as $lookupName => $options) {
                     </div>
                     <button class="admin-button" type="submit">Filter rooms</button>
                 </form>
-                <p class="schedule-context">Building <?= dashboardEscape($roomOverview['building']) ?> · <?= dashboardEscape($roomOverview['floor']) ?> · <?= dashboardEscape($roomOccupiedCount) ?> occupied · <?= dashboardEscape($roomAvailableCount) ?> available</p>
+                <p class="schedule-context" data-room-summary>
+                    Building <?= dashboardEscape($roomOverview['building']) ?> · <?= dashboardEscape($roomOverview['floor']) ?> ·
+                    <span data-room-occupied-count><?= dashboardEscape($roomOccupiedCount) ?></span> occupied ·
+                    <span data-room-available-count><?= dashboardEscape($roomAvailableCount) ?></span> available
+                </p>
                 <?php if ($roomOverview['rooms'] === []): ?>
                     <p class="admin-empty">No rooms match these filters.</p>
                 <?php else: ?>
-                    <ul class="room-monitor-grid">
-                        <?php foreach ($roomOverview['rooms'] as $room): ?>
-                            <?php
-                            $roomSchedules = $roomOverview['occupancy'][(int) $room['room_id']] ?? [];
-                            $isFacility = $room['room_type'] === 'Facility';
-                            $roomStatus = $room['status'] !== 'Active'
-                                ? 'Inactive'
-                                : ($isFacility ? 'Facility' : ($roomSchedules !== [] ? 'Occupied' : 'Available'));
-                            ?>
-                            <li class="room-monitor-card room-monitor-card--<?= dashboardEscape(strtolower($roomStatus)) ?>">
-                                <h3><?= dashboardEscape($room['room_name']) ?></h3>
-                                <p class="room-monitor-status"><?= dashboardEscape($roomStatus) ?></p>
-                                <p><?= dashboardEscape($room['room_code']) ?> · <?= dashboardEscape('Building ' . $room['building'] . ', floor ' . $room['floor_number']) ?></p>
-                                <?php if ($roomSchedules !== []): ?>
-                                    <p><?= dashboardEscape($roomSchedules[0]['subject_name'] . ' · ' . $roomSchedules[0]['section_name']) ?></p>
-                                    <p><?= dashboardEscape($roomSchedules[0]['teacher_first_name'] . ' ' . $roomSchedules[0]['teacher_last_name']) ?></p>
-                                <?php elseif ($room['room_type'] === 'Facility'): ?>
-                                    <p><?= dashboardEscape($room['room_type']) ?></p>
+                    <section class="room-monitor-floor-map" aria-label="Floor room occupancy board">
+                        <p class="room-monitor-map-note">Illustrative floor layout · not to scale</p>
+                        <ul class="room-monitor-grid">
+                            <?php $hallwayRendered = false; ?>
+                            <?php foreach ($roomOverview['rooms'] as $room): ?>
+                                <?php if (!$hallwayRendered && (int) $room['layout_row'] > 2): ?>
+                                    <li class="room-monitor-hallway" aria-hidden="true">Hallway</li>
+                                    <?php $hallwayRendered = true; ?>
                                 <?php endif; ?>
-                                <?php if ($room['capacity'] !== null): ?><p>Capacity: <?= dashboardEscape($room['capacity']) ?></p><?php endif; ?>
-                            </li>
-                        <?php endforeach; ?>
-                    </ul>
+                                <?php
+                                $roomState = $roomOverview['roomStates'][(int) $room['room_id']];
+                                $roomStatus = $roomState['status'];
+                                ?>
+                                <li class="room-monitor-card room-monitor-card--<?= dashboardEscape($roomState['statusKey']) ?>"
+                                    data-room-card data-room-id="<?= dashboardEscape($room['room_id']) ?>"
+                                    style="--room-row: <?= dashboardEscape((int) $room['layout_row']) ?>; --room-column: <?= dashboardEscape((int) $room['layout_column']) ?>; --room-column-span: <?= dashboardEscape((int) $room['column_span']) ?>;">
+                                    <h3><?= dashboardEscape($room['room_name']) ?></h3>
+                                    <p class="room-monitor-status">
+                                        <span class="room-monitor-status-dot" aria-hidden="true"></span>
+                                        <span data-room-status><?= dashboardEscape($roomStatus) ?></span>
+                                    </p>
+                                    <p><?= dashboardEscape($room['room_type']) ?> · <?= dashboardEscape($room['room_code']) ?></p>
+                                    <p class="room-monitor-timing" data-room-timing><?= dashboardEscape($roomState['timing']) ?></p>
+                                    <p class="room-monitor-details" data-room-details><?= dashboardEscape($roomState['details']) ?></p>
+                                    <?php if ($room['capacity'] !== null): ?><p>Capacity: <?= dashboardEscape($room['capacity']) ?></p><?php endif; ?>
+                                </li>
+                            <?php endforeach; ?>
+                            <?php if (!$hallwayRendered): ?>
+                                <li class="room-monitor-hallway" aria-hidden="true">Hallway</li>
+                            <?php endif; ?>
+                        </ul>
+                    </section>
                 <?php endif; ?>
-                <p class="schedule-updated">Updated <?= dashboardEscape(date('M j, Y, g:i A', strtotime($roomOverview['updatedAt']))) ?></p>
+                <div class="room-monitor-footer">
+                    <fieldset class="room-monitor-legend">
+                        <legend>Room status</legend>
+                        <ul>
+                            <li class="room-monitor-legend-item room-monitor-legend-item--available">Available</li>
+                            <li class="room-monitor-legend-item room-monitor-legend-item--occupied">Occupied by schedule</li>
+                            <li class="room-monitor-legend-item room-monitor-legend-item--maintenance">Maintenance or inactive</li>
+                        </ul>
+                    </fieldset>
+                    <p class="schedule-updated">
+                        <span data-room-live-status role="status">Automatic schedule refresh every 30 seconds.</span>
+                        <span>Updated <time data-room-updated datetime="<?= dashboardEscape($roomOverview['updatedAt']) ?>"><?= dashboardEscape($roomOverview['updatedLabel']) ?></time></span>
+                    </p>
+                </div>
             </div>
         <?php elseif ($attendanceView === 'conflict-review' && is_array($conflictOverview)): ?>
             <?php

@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The room filters use native keyboard-operable controls.",
+    "Static informational room cards are noninteractive list items and do not require Tab focus.",
+    "Live updates do not move focus or interrupt keyboard navigation."
+  ],
+  "notes": [
+    "The initial finding that informational room cards should be focusable was reassessed and withdrawn as invalid."
+  ]
+}

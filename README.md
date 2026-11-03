@@ -82,8 +82,15 @@ and year-level totals are based on the saved curriculum records across academic
 years. Attendance & Scheduling includes Attendance Overview, Teacher Schedule,
 Student Schedule, Room Monitoring, and Conflict Review views. Schedule and room
 availability views use the active class schedules saved in the school database;
-conflict review checks overlapping active schedules for shared teachers, rooms,
-or class sections.
+Room Monitoring displays an illustrative floor board with current scheduled
+occupancy times and the next class time, refreshing its schedule data every 30
+seconds while open. Occupancy is derived from the timetable and is not a
+physical sensor reading. Each room's position is stored in
+`room_monitor_layout` and stays fixed when refreshing or switching filters.
+Apply `database/migrations/202611040002_create_room_monitor_layout.sql` after the
+rooms table exists; seed additional room positions in this migration to add
+them to the fixed floor plan. Conflict review checks overlapping active
+schedules for shared teachers, rooms, or class sections.
 Create and edit forms across Super Admin account/configuration pages, Admin
 management modules, Teacher attendance/assessment/grade entry, and Student
 payment requests open in centered dialogs. Validation errors reopen the matching

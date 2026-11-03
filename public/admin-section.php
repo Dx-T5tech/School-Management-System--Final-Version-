@@ -1322,9 +1322,13 @@ if ($sectionKey === 'attendance-scheduling') {
         'SELECT department_id, department_name FROM departments ORDER BY department_name'
     )->fetchAll();
     $roomOptions = $connection->query(
-        "SELECT room_id, room_code, room_name, building, floor_number, room_type, capacity, status
-         FROM rooms
-         ORDER BY building, floor_number, room_code"
+        "SELECT r.room_id, r.room_code, r.room_name, r.building, r.floor_number,
+                r.room_type, r.capacity, r.status,
+                layout.layout_row, layout.layout_column, layout.column_span
+         FROM rooms r
+         LEFT JOIN room_monitor_layout layout ON layout.room_id = r.room_id
+         ORDER BY r.building, r.floor_number, layout.layout_row IS NULL,
+                  layout.layout_row, layout.layout_column, r.room_code"
     )->fetchAll();
     $sectionOptions = $connection->query(
         "SELECT se.section_id, se.section_name, se.year_level, se.program_id,
@@ -1573,16 +1577,52 @@ if ($sectionKey === 'attendance-scheduling') {
         }
         $roomSearch = $_GET['q'] ?? '';
         $roomSearch = is_string($roomSearch) ? trim($roomSearch) : '';
-        $currentDay = date('l');
-        $currentTime = date('H:i:s');
+        $occupiedLayoutSlots = [];
+        foreach ($roomOptions as $room) {
+            if ($room['layout_row'] === null || $room['layout_column'] === null) {
+                continue;
+            }
+            $floorKey = $room['building'] . ':' . $room['floor_number'];
+            $occupiedLayoutSlots[$floorKey][(int) $room['layout_row']][(int) $room['layout_column']] = true;
+        }
+        foreach ($roomOptions as $index => $room) {
+            if ($room['layout_row'] !== null && $room['layout_column'] !== null) {
+                continue;
+            }
+            $floorKey = $room['building'] . ':' . $room['floor_number'];
+            $layoutRow = 1;
+            $layoutColumn = 1;
+            while (isset($occupiedLayoutSlots[$floorKey][$layoutRow][$layoutColumn])) {
+                $layoutColumn += 2;
+                if ($layoutColumn > 5) {
+                    $layoutColumn = 1;
+                    $layoutRow = $layoutRow === 1 ? 3 : $layoutRow + 1;
+                }
+            }
+            $roomOptions[$index]['layout_row'] = $layoutRow;
+            $roomOptions[$index]['layout_column'] = $layoutColumn;
+            $roomOptions[$index]['column_span'] = 2;
+            $occupiedLayoutSlots[$floorKey][$layoutRow][$layoutColumn] = true;
+        }
+        $roomClock = $connection->query(
+            "SELECT DATE_FORMAT(CURRENT_DATE(), '%W') AS current_day,
+                    TIME_FORMAT(CURRENT_TIME(), '%H:%i:%s') AS clock_time,
+                    DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%dT%H:%i:%s') AS updated_at,
+                    DATE_FORMAT(CURRENT_TIMESTAMP(), '%b %e, %Y, %l:%i %p') AS updated_label"
+        )->fetch();
+        $currentDay = (string) $roomClock['current_day'];
+        $currentTime = (string) $roomClock['clock_time'];
         $currentOccupancy = [];
+        $nextOccupancy = [];
         foreach ($scheduleRows as $schedule) {
-            if (
-                $schedule['day_of_week'] === $currentDay
-                && (string) $schedule['start_time'] <= $currentTime
-                && (string) $schedule['end_time'] > $currentTime
-            ) {
-                $currentOccupancy[(int) $schedule['room_id']][] = $schedule;
+            if ($schedule['day_of_week'] !== $currentDay) {
+                continue;
+            }
+            $roomId = (int) $schedule['room_id'];
+            if ((string) $schedule['start_time'] <= $currentTime && (string) $schedule['end_time'] > $currentTime) {
+                $currentOccupancy[$roomId][] = $schedule;
+            } elseif ((string) $schedule['start_time'] > $currentTime) {
+                $nextOccupancy[$roomId][] = $schedule;
             }
         }
         $roomCards = array_values(array_filter(
@@ -1602,17 +1642,85 @@ if ($sectionKey === 'attendance-scheduling') {
                     && $matchesSearch;
             }
         ));
+        usort($roomCards, static fn (array $left, array $right): int =>
+            [(int) $left['layout_row'], (int) $left['layout_column'], $left['room_code']]
+            <=> [(int) $right['layout_row'], (int) $right['layout_column'], $right['room_code']]
+        );
+        $roomStates = [];
+        foreach ($roomCards as $room) {
+            $roomId = (int) $room['room_id'];
+            $currentSchedules = $currentOccupancy[$roomId] ?? [];
+            $nextSchedules = $nextOccupancy[$roomId] ?? [];
+            $isUnavailable = in_array($room['status'], ['Maintenance', 'Inactive'], true);
+            $isManuallyOccupied = $room['status'] === 'Occupied' && $currentSchedules === [];
+            $roomStatus = $isUnavailable
+                ? (string) $room['status']
+                : ($currentSchedules !== [] || $isManuallyOccupied ? 'Occupied' : 'Available');
+            $timing = '';
+            $details = '';
+
+            if ($isUnavailable) {
+                $timing = $roomStatus === 'Maintenance' ? 'Unavailable · maintenance' : 'Room is inactive';
+                if ($currentSchedules !== []) {
+                    $timing .= ' · scheduled class conflict';
+                    $details = implode('; ', array_map(
+                        static fn (array $schedule): string => $schedule['subject_code'] . ' · '
+                            . $schedule['section_name'] . ' · '
+                            . $schedule['teacher_first_name'] . ' ' . $schedule['teacher_last_name'],
+                        $currentSchedules
+                    ));
+                }
+            } elseif ($currentSchedules !== []) {
+                $scheduleTimes = array_map(
+                    static fn (array $schedule): string => date('g:i A', strtotime((string) $schedule['start_time']))
+                        . '–' . date('g:i A', strtotime((string) $schedule['end_time'])),
+                    $currentSchedules
+                );
+                $timing = 'Scheduled in use now · ' . implode(', ', $scheduleTimes);
+                $details = implode('; ', array_map(
+                    static fn (array $schedule): string => $schedule['subject_code'] . ' · '
+                        . $schedule['section_name'] . ' · '
+                        . $schedule['teacher_first_name'] . ' ' . $schedule['teacher_last_name'],
+                    $currentSchedules
+                ));
+            } elseif ($isManuallyOccupied) {
+                $timing = 'Marked occupied · no current class time recorded';
+            } elseif ($nextSchedules !== []) {
+                $nextSchedule = $nextSchedules[0];
+                $timing = 'Next occupied '
+                    . date('g:i A', strtotime((string) $nextSchedule['start_time']))
+                    . '–' . date('g:i A', strtotime((string) $nextSchedule['end_time']));
+                $details = $nextSchedule['subject_code'] . ' · '
+                    . $nextSchedule['section_name'] . ' · '
+                    . $nextSchedule['teacher_first_name'] . ' ' . $nextSchedule['teacher_last_name'];
+            } elseif ($roomStatus === 'Available') {
+                $timing = 'No more classes scheduled today';
+            }
+
+            $roomStates[$roomId] = [
+                'status' => $roomStatus,
+                'statusKey' => match ($roomStatus) {
+                    'Occupied' => 'occupied',
+                    'Maintenance' => 'maintenance',
+                    'Inactive' => 'inactive',
+                    default => 'available',
+                },
+                'timing' => $timing,
+                'details' => $details,
+            ];
+        }
         $roomOverview = [
             'rooms' => $roomCards,
+            'roomStates' => $roomStates,
             'buildings' => $buildingOptions,
             'floors' => $roomFloorOptions,
-            'occupancy' => $currentOccupancy,
             'building' => $roomFilterBuilding,
             'floor' => $roomFilterFloor,
             'search' => $roomSearch,
             'day' => $currentDay,
             'time' => $currentTime,
-            'updatedAt' => date(DATE_ATOM),
+            'updatedAt' => (string) $roomClock['updated_at'],
+            'updatedLabel' => (string) $roomClock['updated_label'],
         ];
     } elseif ($attendanceView === 'conflict-review') {
         $conflicts = [];
@@ -1666,6 +1774,34 @@ if ($sectionKey === 'attendance-scheduling') {
             'filter' => $conflictFilter,
         ];
     }
+}
+
+if (
+    $sectionKey === 'attendance-scheduling'
+    && $attendanceView === 'room-monitoring'
+    && ($_GET['room_refresh'] ?? null) === '1'
+    && is_array($roomOverview)
+) {
+    $occupiedCount = 0;
+    $availableCount = 0;
+    foreach ($roomOverview['roomStates'] as $roomState) {
+        if ($roomState['status'] === 'Occupied') {
+            $occupiedCount++;
+        } elseif ($roomState['status'] === 'Available') {
+            $availableCount++;
+        }
+    }
+
+    header('Content-Type: application/json; charset=UTF-8');
+    header('Cache-Control: no-store, private');
+    echo json_encode([
+        'roomStates' => $roomOverview['roomStates'],
+        'occupiedCount' => $occupiedCount,
+        'availableCount' => $availableCount,
+        'updatedAt' => $roomOverview['updatedAt'],
+        'updatedLabel' => $roomOverview['updatedLabel'],
+    ], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT);
+    exit;
 }
 
 if ($sectionKey === 'reports') {
