@@ -2022,6 +2022,12 @@ button.room-monitor-card:focus-visible {
     flex-wrap: wrap;
 }
 
+.schedule-filter-auto-submit-note {
+    margin: -4px 0 12px;
+    color: var(--ink-soft);
+    font-size: 12px;
+}
+
 .conflict-mode-tabs a[aria-current="page"] {
     text-decoration: underline;
     text-decoration-thickness: 2px;

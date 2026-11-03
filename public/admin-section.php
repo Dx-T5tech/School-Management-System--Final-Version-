@@ -1849,18 +1849,35 @@ if ($sectionKey === 'attendance-scheduling') {
         }
     } elseif ($attendanceView === 'teacher-schedule') {
         $weekDays = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-        $teacherFilterDepartmentId = filter_var(
-            $_GET['department_id'] ?? null,
+        $teacherCourseOptions = [];
+        foreach ($scheduleRows as $schedule) {
+            $subjectId = (int) $schedule['subject_id'];
+            if (!isset($teacherCourseOptions[$subjectId])) {
+                $teacherCourseOptions[$subjectId] = [
+                    'subject_id' => $subjectId,
+                    'subject_code' => (string) $schedule['subject_code'],
+                    'subject_name' => (string) $schedule['subject_name'],
+                ];
+            }
+        }
+        $teacherCourseOptions = array_values($teacherCourseOptions);
+        usort(
+            $teacherCourseOptions,
+            static fn (array $left, array $right): int => [$left['subject_code'], $left['subject_name']]
+                <=> [$right['subject_code'], $right['subject_name']]
+        );
+        $teacherFilterSubjectId = filter_var(
+            $_GET['subject_id'] ?? null,
             FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 1]]
         );
-        $teacherFilterDepartmentId = $teacherFilterDepartmentId === false ? null : $teacherFilterDepartmentId;
-        if ($teacherFilterDepartmentId !== null && !in_array(
-            $teacherFilterDepartmentId,
-            array_map(static fn (array $department): int => (int) $department['department_id'], $departmentOptions),
+        $teacherFilterSubjectId = $teacherFilterSubjectId === false ? null : $teacherFilterSubjectId;
+        if ($teacherFilterSubjectId !== null && !in_array(
+            $teacherFilterSubjectId,
+            array_column($teacherCourseOptions, 'subject_id'),
             true
         )) {
-            $teacherFilterDepartmentId = null;
+            $teacherFilterSubjectId = null;
         }
         $teacherFilterId = filter_var(
             $_GET['teacher_id'] ?? null,
@@ -1882,41 +1899,76 @@ if ($sectionKey === 'attendance-scheduling') {
         $teacherSchedules = array_values(array_filter(
             $scheduleRows,
             static fn (array $schedule): bool =>
-                ($teacherFilterDepartmentId === null || (int) $schedule['department_id'] === $teacherFilterDepartmentId)
+                ($teacherFilterSubjectId === null || (int) $schedule['subject_id'] === $teacherFilterSubjectId)
                 && ($teacherFilterId === null || (int) $schedule['teacher_id'] === $teacherFilterId)
                 && ($teacherFilterDay === 'All days' || $schedule['day_of_week'] === $teacherFilterDay)
         ));
         $teacherSchedule = [
             'teachers' => $teacherOptions,
-            'departments' => $departmentOptions,
+            'courses' => $teacherCourseOptions,
             'schedules' => $teacherSchedules,
             'weekDays' => $weekDays,
-            'departmentId' => $teacherFilterDepartmentId,
+            'subjectId' => $teacherFilterSubjectId,
             'teacherId' => $teacherFilterId,
             'day' => $teacherFilterDay,
         ];
     } elseif ($attendanceView === 'student-schedule') {
-        $programIds = array_values(array_unique(array_map(
-            static fn (array $section): int => (int) ($section['program_id'] ?? 0),
-            $sectionOptions
-        )));
+        $scheduledSectionIds = [];
+        $scheduledProgramsByYear = [];
+        $scheduledYears = [];
+        foreach ($scheduleRows as $schedule) {
+            $scheduledSectionIds[(int) $schedule['section_id']] = true;
+            $yearLevel = (int) $schedule['year_level'];
+            $scheduledYears[$yearLevel] = $yearLevel;
+            $programId = (int) ($schedule['program_id'] ?? 0);
+            if ($programId > 0 && !isset($scheduledProgramsByYear[$yearLevel][$programId])) {
+                $scheduledProgramsByYear[$yearLevel][$programId] = [
+                    'program_id' => $programId,
+                    'program_code' => (string) $schedule['program_code'],
+                    'program_name' => (string) $schedule['program_name'],
+                ];
+            }
+        }
+        sort($scheduledYears, SORT_NUMERIC);
         $studentFilterProgramId = filter_var(
             $_GET['program_id'] ?? null,
             FILTER_VALIDATE_INT,
             ['options' => ['min_range' => 1]]
         );
         $studentFilterProgramId = $studentFilterProgramId === false ? null : $studentFilterProgramId;
-        if ($studentFilterProgramId !== null && !in_array($studentFilterProgramId, $programIds, true)) {
-            $studentFilterProgramId = null;
-        }
         $studentFilterYearLevel = $_GET['year_level'] ?? '';
         if (!is_string($studentFilterYearLevel) || !preg_match('/^[1-9][0-9]*$/', $studentFilterYearLevel)) {
             $studentFilterYearLevel = '';
         }
+        if ($studentFilterYearLevel !== '' && !in_array((int) $studentFilterYearLevel, $scheduledYears, true)) {
+            $studentFilterYearLevel = '';
+        }
+        $studentProgramOptions = [];
+        foreach ($scheduledProgramsByYear as $yearLevel => $programs) {
+            if ($studentFilterYearLevel === '' || (int) $studentFilterYearLevel === $yearLevel) {
+                foreach ($programs as $programId => $program) {
+                    $studentProgramOptions[$programId] = $program;
+                }
+            }
+        }
+        $studentProgramOptions = array_values($studentProgramOptions);
+        usort(
+            $studentProgramOptions,
+            static fn (array $left, array $right): int => [$left['program_code'], $left['program_name']]
+                <=> [$right['program_code'], $right['program_name']]
+        );
+        if ($studentFilterProgramId !== null && !in_array(
+            $studentFilterProgramId,
+            array_column($studentProgramOptions, 'program_id'),
+            true
+        )) {
+            $studentFilterProgramId = null;
+        }
         $studentSections = array_values(array_filter(
             $sectionOptions,
             static fn (array $section): bool =>
-                ($studentFilterProgramId === null || (int) $section['program_id'] === $studentFilterProgramId)
+                isset($scheduledSectionIds[(int) $section['section_id']])
+                && ($studentFilterProgramId === null || (int) $section['program_id'] === $studentFilterProgramId)
                 && ($studentFilterYearLevel === '' || (int) $section['year_level'] === (int) $studentFilterYearLevel)
         ));
         $studentFilterSectionId = filter_var(
@@ -1949,10 +2001,8 @@ if ($sectionKey === 'attendance-scheduling') {
         ));
         $studentSchedule = [
             'sections' => $studentSections,
-            'programs' => $connection->query(
-                'SELECT program_id, program_code, program_name FROM programs ORDER BY program_name'
-            )->fetchAll(),
-            'allSections' => $sectionOptions,
+            'programs' => $studentProgramOptions,
+            'years' => $scheduledYears,
             'schedules' => $studentSchedules,
             'programId' => $studentFilterProgramId,
             'yearLevel' => $studentFilterYearLevel,

@@ -96,16 +96,17 @@ foreach ($lookupOptions as $lookupName => $options) {
         <?php elseif ($attendanceView === 'teacher-schedule' && is_array($teacherSchedule)): ?>
             <div class="admin-panel">
                 <h2>Teacher schedule</h2>
-                <p class="admin-panel-description">Review teaching assignments by department, teacher, and day. Open hours are shown when a teacher and day are selected.</p>
-                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
+                <p class="admin-panel-description">Review teaching assignments by course, teacher, and day. Open hours are shown when a teacher and day are selected.</p>
+                <p class="schedule-filter-auto-submit-note">Changing a filter applies it immediately and reloads this schedule. Focus returns to the changed filter.</p>
+                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php" data-auto-submit-on-change data-preserve-focus-on-change>
                     <input type="hidden" name="section" value="attendance-scheduling">
                     <input type="hidden" name="attendance_view" value="teacher-schedule">
                     <div class="admin-field">
-                        <label for="teacher-schedule-department">Department</label>
-                        <select id="teacher-schedule-department" name="department_id">
-                            <option value="">All departments</option>
-                            <?php foreach ($teacherSchedule['departments'] as $department): ?>
-                                <option value="<?= dashboardEscape($department['department_id']) ?>"<?= $teacherSchedule['departmentId'] === (int) $department['department_id'] ? ' selected' : '' ?>><?= dashboardEscape($department['department_name']) ?></option>
+                        <label for="teacher-schedule-department">Course</label>
+                        <select id="teacher-schedule-department" name="subject_id">
+                            <option value="">All courses</option>
+                            <?php foreach ($teacherSchedule['courses'] as $course): ?>
+                                <option value="<?= dashboardEscape($course['subject_id']) ?>"<?= $teacherSchedule['subjectId'] === (int) $course['subject_id'] ? ' selected' : '' ?>><?= dashboardEscape($course['subject_code'] . ' — ' . $course['subject_name']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -128,7 +129,6 @@ foreach ($lookupOptions as $lookupName => $options) {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button class="admin-button" type="submit">Show schedule</button>
                 </form>
                 <?php if ($teacherSchedule['schedules'] === []): ?>
                     <p class="admin-empty">No active class schedules match these filters.</p>
@@ -203,7 +203,8 @@ foreach ($lookupOptions as $lookupName => $options) {
             <div class="admin-panel">
                 <h2>Student schedule</h2>
                 <p class="admin-panel-description">Review the weekly class schedule and time allocation for an active section.</p>
-                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
+                <p class="schedule-filter-auto-submit-note">Changing a filter applies it immediately and reloads this schedule. Focus returns to the changed filter.</p>
+                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php" data-auto-submit-on-change data-preserve-focus-on-change>
                     <input type="hidden" name="section" value="attendance-scheduling">
                     <input type="hidden" name="attendance_view" value="student-schedule">
                     <div class="admin-field">
@@ -219,7 +220,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                         <label for="student-schedule-year">Year level</label>
                         <select id="student-schedule-year" name="year_level">
                             <option value="">All years</option>
-                            <?php foreach (array_values(array_unique(array_map(static fn (array $section): int => (int) $section['year_level'], $studentSchedule['allSections']))) as $yearLevel): ?>
+                            <?php foreach ($studentSchedule['years'] as $yearLevel): ?>
                                 <option value="<?= dashboardEscape($yearLevel) ?>"<?= $studentSchedule['yearLevel'] === (string) $yearLevel ? ' selected' : '' ?>>Year <?= dashboardEscape($yearLevel) ?></option>
                             <?php endforeach; ?>
                         </select>
@@ -229,7 +230,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                         <select id="student-schedule-section" name="section_id">
                             <option value="">Select a section</option>
                             <?php foreach ($studentSchedule['sections'] as $section): ?>
-                                <option value="<?= dashboardEscape($section['section_id']) ?>"<?= $studentSchedule['sectionId'] === (int) $section['section_id'] ? ' selected' : '' ?>><?= dashboardEscape($section['section_name'] . ' — Year ' . $section['year_level']) ?></option>
+                                <option value="<?= dashboardEscape($section['section_id']) ?>"<?= $studentSchedule['sectionId'] === (int) $section['section_id'] ? ' selected' : '' ?>><?= dashboardEscape($section['section_name'] . ' — ' . $section['program_code'] . ' — Year ' . $section['year_level']) ?></option>
                             <?php endforeach; ?>
                         </select>
                     </div>
@@ -242,7 +243,6 @@ foreach ($lookupOptions as $lookupName => $options) {
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <button class="admin-button" type="submit">Show schedule</button>
                 </form>
                 <?php if ($studentSchedule['sectionId'] === null): ?>
                     <p class="admin-empty">Choose a program, year level, and section to view its schedule.</p>

@@ -117,10 +117,21 @@ are retained for Conflict Review. Conflict review checks overlapping active
 schedules for shared teachers, rooms, or class sections. Apply
 `database/migrations/202611040012_create_schedule_conflict_workflow.sql` to
 enable acknowledged automatic conflicts and saved manual conflict reports.
+Apply `database/migrations/202611040013_distribute_demo_teaching_assignments.sql`
+after the screenshot schedule import to add 13 active demo teacher profiles
+without login accounts and distribute the active assignments across them and
+the existing Demo Teacher, avoiding teacher timetable overlaps.
 Manual reports reference two active schedules and include a reason. Conflict
 Review also reports advisory scheduling-policy warnings: at most 12 course
 units and 6 subjects per teacher per day, with 2–4 daily class sessions per
 assigned course. These policy warnings do not prevent schedule changes.
+Teacher Schedule's course filter lists courses present in active schedules.
+Student Schedule's year, program, and section options are derived from those
+same scheduled courses; selecting a year narrows the available programs and
+sections, and selecting a program further narrows sections. Submit the filters
+automatically when a selection changes. The schedule filter restores keyboard
+focus to the changed control after applying the selection, and retains its
+Show schedule fallback when JavaScript is unavailable.
 Create and edit forms across Super Admin account/configuration pages, Admin
 management modules, Teacher attendance/assessment/grade entry, and Student
 payment requests open in centered dialogs. Validation errors reopen the matching

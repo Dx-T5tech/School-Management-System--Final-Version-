@@ -1,0 +1,12 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Teacher and Student Schedule filters are labeled native selects in forms configured for automatic submission on change.",
+    "Changing either filter submits the form and focus is restored to the changed select after navigation."
+  ]
+}

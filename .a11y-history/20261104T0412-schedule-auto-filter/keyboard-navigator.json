@@ -1,0 +1,13 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The notice immediately precedes both schedule filter forms and explains that changing a filter reloads the schedule.",
+    "After automatic submission, JavaScript restores focus to the changed select.",
+    "The keyboard-reachable submit buttons remain available when JavaScript is unavailable."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Student Schedule filters do not auto-submit on change; the native Show schedule submit button remains keyboard reachable.",
+    "Teacher course and student program/year/section/day filters use labeled native select controls."
+  ]
+}

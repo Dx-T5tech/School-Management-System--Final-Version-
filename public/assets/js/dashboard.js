@@ -10,6 +10,20 @@
     const statusSummary = document.querySelector("[data-status-summary]");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+    const filterFocusUrl = new URL(window.location.href);
+    const filterFocusId = filterFocusUrl.searchParams.get("schedule_filter_focus");
+    if (filterFocusId) {
+        const filterFocusTarget = document.getElementById(filterFocusId);
+        if (
+            filterFocusTarget instanceof HTMLSelectElement
+            && filterFocusTarget.form?.matches("[data-preserve-focus-on-change]")
+        ) {
+            filterFocusTarget.focus({ preventScroll: true });
+        }
+        filterFocusUrl.searchParams.delete("schedule_filter_focus");
+        window.history.replaceState(window.history.state, "", filterFocusUrl);
+    }
+
     const roomMonitoring = document.querySelector("[data-room-monitor]");
     if (roomMonitoring instanceof HTMLElement) {
         const refreshUrl = new URL(roomMonitoring.dataset.roomRefreshUrl, window.location.href);
@@ -908,7 +922,19 @@
         }
 
         filters.forEach((filter) => {
-            filter.addEventListener("change", () => form.requestSubmit());
+            filter.addEventListener("change", () => {
+                if (form.matches("[data-preserve-focus-on-change]") && filter.id) {
+                    let focusField = form.querySelector('input[name="schedule_filter_focus"]');
+                    if (!(focusField instanceof HTMLInputElement)) {
+                        focusField = document.createElement("input");
+                        focusField.type = "hidden";
+                        focusField.name = "schedule_filter_focus";
+                        form.append(focusField);
+                    }
+                    focusField.value = filter.id;
+                }
+                form.requestSubmit();
+            });
         });
     });
 
