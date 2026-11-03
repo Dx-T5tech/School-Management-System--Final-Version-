@@ -15,6 +15,17 @@ Start MySQL in the XAMPP Control Panel and create the `isms_database` database
 before connecting. The connection function throws a `PDOException` if the
 database is unavailable or the credentials are invalid.
 
+## Demo data
+
+After applying the database migrations and creating the four active demo
+accounts, run `php database/seeds/demo_data.php` from the repository root to
+add fictional records for academic structure, classes, student and teacher
+profiles, enrollment, attendance, grading, fees, payments, announcements, and
+the school calendar. The script reuses the active Teacher and Student accounts,
+does not create login accounts or change existing records, and can be safely
+rerun. Use `php database/seeds/demo_data.php --dry-run` to validate the seed
+without keeping its inserts.
+
 ## User roles
 
 The `roles` table contains four default roles: Super Admin, Admin, Teacher, and
