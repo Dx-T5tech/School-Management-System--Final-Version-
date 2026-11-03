@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php",
+    "public/assets/css/admissions.css",
+    "app/Modules/StudentManagement/Admissions/Controllers/apply.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Four native file inputs follow the visible document order and each has a descriptive label.",
+    "All file inputs and the single shared submit button are keyboard reachable and have visible focus styling.",
+    "File inputs and the submit button meet the 44px minimum control height.",
+    "Runtime inspection confirmed the document inputs share one multipart form and one submit button."
+  ],
+  "notes": [
+    "Native file-picker keyboard behavior was not independently exercised."
+  ]
+}

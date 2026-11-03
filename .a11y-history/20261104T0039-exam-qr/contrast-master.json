@@ -1,0 +1,9 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/admissions.css",
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php",
+    "public/assets/js/admissions-exam.js"
+  ],
+  "findings": []
+}

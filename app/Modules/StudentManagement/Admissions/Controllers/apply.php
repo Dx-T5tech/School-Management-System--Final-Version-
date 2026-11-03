@@ -4,7 +4,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__, 5) . '/app/Core/dashboard.php';
 require_once dirname(__DIR__, 2) . '/Students/Services/student.php';
-require_once dirname(__DIR__) . '/Services/application_mail.php';
+require_once dirname(__DIR__) . '/Services/verification.php';
 require_once dirname(__DIR__) . '/Services/access.php';
 
 startAppSession();
@@ -122,6 +122,7 @@ $sendJson = static function (int $statusCode, array $payload): never {
     echo json_encode($payload, JSON_THROW_ON_ERROR);
     exit;
 };
+$localVerificationBaseUrl = admissionLocalVerificationBaseUrl();
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $readPostString('action');
@@ -131,6 +132,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
         http_response_code(400);
         $errorMessage = 'Your application session expired. Reload this page and try again.';
+    } elseif ($action === 'start' && $localVerificationBaseUrl === null) {
+        http_response_code(403);
+        $errorMessage = 'Application verification is available only through localhost in this demo.';
     } elseif ($application !== false && $action === 'save_exam_answer') {
         $questionId = filter_var(
             $_POST['question_id'] ?? null,
@@ -348,67 +352,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             }
                         }
 
-                        $baseUrl = getenv('APP_BASE_URL');
-                        if ($baseUrl === false || trim($baseUrl) === '') {
-                            $host = $_SERVER['HTTP_HOST'] ?? '';
-                            if (
-                                !is_string($host)
-                                || preg_match('/^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:]+\])(?::[0-9]{1,5})?$/', $host) !== 1
-                            ) {
-                                throw new RuntimeException('APP_BASE_URL is required when the request host is not valid.');
-                            }
-                            $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
-                            $scriptDirectory = str_replace(
-                                '\\',
-                                '/',
-                                dirname(is_string($_SERVER['SCRIPT_NAME'] ?? null) ? $_SERVER['SCRIPT_NAME'] : '/apply.php')
-                            );
-                            $scriptSegments = array_values(array_filter(
-                                explode('/', trim($scriptDirectory, '/')),
-                                static fn (string $segment): bool => $segment !== ''
-                            ));
-                            $encodedScriptPath = $scriptSegments === []
-                                ? ''
-                                : '/' . implode('/', array_map(
-                                    static fn (string $segment): string => rawurlencode(rawurldecode($segment)),
-                                    $scriptSegments
-                                ));
-                            $baseUrl = $scheme . '://' . $host . $encodedScriptPath;
-                        } else {
-                            $baseUrl = trim($baseUrl);
-                            $baseUrlParts = parse_url($baseUrl);
-                            if (
-                                filter_var($baseUrl, FILTER_VALIDATE_URL) === false
-                                || !is_array($baseUrlParts)
-                                || !in_array($baseUrlParts['scheme'] ?? '', ['http', 'https'], true)
-                                || !isset($baseUrlParts['host'])
-                                || isset($baseUrlParts['user'])
-                                || isset($baseUrlParts['pass'])
-                                || isset($baseUrlParts['query'])
-                                || isset($baseUrlParts['fragment'])
-                            ) {
-                                throw new RuntimeException('APP_BASE_URL must be an absolute HTTP or HTTPS base URL without credentials or query parameters.');
-                            }
-                        }
-                        $verificationUrl = rtrim($baseUrl, '/') . '/apply.php?token=' . $rawToken;
-                        try {
-                            $emailSent = admissionSendVerificationEmail(
-                                $formValues['email'],
-                                $formValues['first_name'],
-                                $verificationUrl
-                            );
-                            if ($emailSent) {
-                                $noticeMessage = 'Check your email for a verification link. It expires in 24 hours.';
-                            } else {
-                                $demoVerificationUrl = $verificationUrl;
-                                $noticeMessage = 'SMTP demo mode is enabled. No email was sent; use the local verification link below. It expires in 24 hours.';
-                            }
-                            $step = 'verify';
-                        } catch (RuntimeException $mailError) {
-                            error_log('Student application verification email failed: ' . $mailError->getMessage());
-                            http_response_code(503);
-                            $errorMessage = 'Your application was saved, but the verification email could not be sent. Check the SMTP configuration and try again.';
-                        }
+                        $verificationUrl = rtrim($localVerificationBaseUrl, '/') . '/apply.php?token=' . $rawToken;
+                        $demoVerificationUrl = $verificationUrl;
+                        $noticeMessage = 'Email delivery is disabled. Use the local verification link below within 24 hours to continue.';
+                        $step = 'verify';
                     }
                 }
             }
@@ -479,6 +426,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         if (!is_dir($storageDirectory) && !mkdir($storageDirectory, 0700, true) && !is_dir($storageDirectory)) {
             throw new RuntimeException('The private admissions document directory could not be created.');
         }
+        $existingDocuments = $connection->prepare(
+            'SELECT document_type
+             FROM student_application_documents
+             WHERE application_id = :application_id'
+        );
+        $existingDocuments->execute(['application_id' => (int) $application['application_id']]);
+        $existingDocumentTypes = array_fill_keys($existingDocuments->fetchAll(PDO::FETCH_COLUMN), true);
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         if ($finfo === false) {
             throw new RuntimeException('File type detection is not available on this server.');
@@ -490,10 +444,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 || !is_array($uploadSet['error'] ?? null)
                 || !isset($uploadSet['error'][$documentType])
             ) {
+                if (!isset($existingDocumentTypes[$documentType])) {
+                    $fieldErrors[$documentType] = $label . ' is required.';
+                }
                 continue;
             }
             $uploadError = $uploadSet['error'][$documentType];
             if ($uploadError === UPLOAD_ERR_NO_FILE) {
+                if (!isset($existingDocumentTypes[$documentType])) {
+                    $fieldErrors[$documentType] = $label . ' is required.';
+                }
                 continue;
             }
             if ($uploadError !== UPLOAD_ERR_OK) {
@@ -659,31 +619,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $subjectQuestions = array_map('intval', $questions->fetchAll(PDO::FETCH_COLUMN));
                     if (count($subjectQuestions) !== 10) {
                         $connection->rollBack();
-                        throw new RuntimeException('The entrance exam question bank needs at least 10 active questions per subject.');
+                        $errorMessage = 'The entrance exam is temporarily unavailable because its Math and English question bank is incomplete. Contact the school office before trying again.';
+                        break;
                     }
                     $selectedQuestions = array_merge($selectedQuestions, $subjectQuestions);
                 }
-                shuffle($selectedQuestions);
-                $saveExam = $connection->prepare(
-                    'INSERT INTO student_application_exams (application_id, started_at, expires_at)
-                     VALUES (:application_id, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 MINUTE))'
-                );
-                $saveExam->execute(['application_id' => (int) $application['application_id']]);
-                $examId = (int) $connection->lastInsertId();
-                $saveQuestion = $connection->prepare(
-                    'INSERT INTO student_application_exam_questions (exam_id, question_id, sequence_no)
-                     VALUES (:exam_id, :question_id, :sequence_no)'
-                );
-                foreach ($selectedQuestions as $index => $questionId) {
-                    $saveQuestion->execute([
-                        'exam_id' => $examId,
-                        'question_id' => $questionId,
-                        'sequence_no' => $index + 1,
-                    ]);
+                if ($errorMessage === '') {
+                    shuffle($selectedQuestions);
+                    $saveExam = $connection->prepare(
+                        'INSERT INTO student_application_exams (application_id, started_at, expires_at)
+                         VALUES (:application_id, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL 30 MINUTE))'
+                    );
+                    $saveExam->execute(['application_id' => (int) $application['application_id']]);
+                    $examId = (int) $connection->lastInsertId();
+                    $saveQuestion = $connection->prepare(
+                        'INSERT INTO student_application_exam_questions (exam_id, question_id, sequence_no)
+                         VALUES (:exam_id, :question_id, :sequence_no)'
+                    );
+                    foreach ($selectedQuestions as $index => $questionId) {
+                        $saveQuestion->execute([
+                            'exam_id' => $examId,
+                            'question_id' => $questionId,
+                            'sequence_no' => $index + 1,
+                        ]);
+                    }
+                    $connection->commit();
+                    header('Location: apply.php?step=exam', true, 303);
+                    exit;
                 }
-                $connection->commit();
-                header('Location: apply.php?step=exam', true, 303);
-                exit;
             }
         }
     } elseif ($application !== false && $action === 'submit_exam') {
@@ -880,6 +843,9 @@ if ($application !== false) {
             );
             $examStatement->execute(['application_id' => (int) $application['application_id']]);
             $exam = $examStatement->fetch();
+            if ($exam !== false) {
+                $examCode = 'FC-EXAM-' . str_pad((string) $exam['exam_id'], 8, '0', STR_PAD_LEFT);
+            }
             if ($exam !== false && $exam['submitted_at'] === null && strtotime($exam['expires_at']) <= time()) {
                 header('Location: apply.php?step=exam&expired=1', true, 303);
                 exit;

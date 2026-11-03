@@ -105,6 +105,17 @@ $profileStatement->execute(['user_id' => (int) $user['user_id']]);
 $profileRow = $profileStatement->fetch();
 $studentProfile = $profileRow !== false && $profileRow['student_id'] !== null ? $profileRow : null;
 $studentId = $studentProfile === null ? null : (int) $studentProfile['student_id'];
+$profileValues = [
+    'phone' => (string) ($studentProfile['phone'] ?? ''),
+    'address' => (string) ($studentProfile['address'] ?? ''),
+    'city' => (string) ($studentProfile['city'] ?? ''),
+    'province' => (string) ($studentProfile['province'] ?? ''),
+];
+$profileFieldErrors = [];
+$profileError = '';
+$profileNotice = $_SESSION['student_profile_flash'] ?? '';
+unset($_SESSION['student_profile_flash']);
+$profileEditMode = ($_GET['edit'] ?? null) === '1';
 if ($studentId !== null) {
     financeSyncStudentFeeNotifications(
         $connection,
@@ -131,6 +142,90 @@ $table = static fn (string $title, string $caption, array $columns, array $rows,
     'rows' => $rows,
     'empty' => $empty,
 ];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sectionKey === 'profile') {
+    $profileEditMode = true;
+    foreach ($profileValues as $fieldName => $_) {
+        $postedValue = $_POST[$fieldName] ?? '';
+        $profileValues[$fieldName] = is_string($postedValue) ? trim($postedValue) : '';
+    }
+
+    if (!is_string($_POST['action'] ?? null) || $_POST['action'] !== 'update-profile') {
+        $profileError = 'Choose a supported profile action.';
+    } elseif (!appCsrfTokenIsValid($_POST['csrf_token'] ?? null)) {
+        http_response_code(400);
+        $profileError = 'Your security token has expired. Reload this page and try again.';
+    } elseif ($studentId === null) {
+        $profileError = 'A linked student profile is required to update your contact information.';
+    } else {
+        if ($profileValues['phone'] !== '') {
+            $phoneDigits = preg_replace('/\D+/', '', $profileValues['phone']);
+            if (
+                preg_match('/^\+?[0-9(). -]{7,30}$/D', $profileValues['phone']) !== 1
+                || !is_string($phoneDigits)
+                || strlen($phoneDigits) < 7
+                || strlen($phoneDigits) > 15
+            ) {
+                $profileFieldErrors['phone'] = 'Enter a phone number with 7 to 15 digits.';
+            }
+        }
+
+        foreach ([
+            'phone' => 30,
+            'address' => 2000,
+            'city' => 100,
+            'province' => 100,
+        ] as $fieldName => $maxLength) {
+            if (mb_strlen($profileValues[$fieldName], 'UTF-8') > $maxLength) {
+                $profileFieldErrors[$fieldName] = sprintf(
+                    'Use no more than %d characters.',
+                    $maxLength
+                );
+            }
+        }
+
+        if ($profileFieldErrors === []) {
+            try {
+                $connection->beginTransaction();
+                $updateStudentProfile = $connection->prepare(
+                    'UPDATE students
+                     SET phone = :phone,
+                         address = :address,
+                         city = :city,
+                         province = :province
+                     WHERE student_id = :student_id
+                       AND user_id = :user_id'
+                );
+                $updateStudentProfile->execute([
+                    'phone' => $profileValues['phone'] !== '' ? $profileValues['phone'] : null,
+                    'address' => $profileValues['address'] !== '' ? $profileValues['address'] : null,
+                    'city' => $profileValues['city'] !== '' ? $profileValues['city'] : null,
+                    'province' => $profileValues['province'] !== '' ? $profileValues['province'] : null,
+                    'student_id' => $studentId,
+                    'user_id' => (int) $user['user_id'],
+                ]);
+                $updateUserPhone = $connection->prepare(
+                    'UPDATE users
+                     SET phone = :phone
+                     WHERE user_id = :user_id'
+                );
+                $updateUserPhone->execute([
+                    'phone' => $profileValues['phone'] !== '' ? $profileValues['phone'] : null,
+                    'user_id' => (int) $user['user_id'],
+                ]);
+                $connection->commit();
+                $_SESSION['student_profile_flash'] = 'Your contact information has been updated.';
+                header('Location: student-section.php?section=profile', true, 303);
+                exit;
+            } catch (PDOException $exception) {
+                if ($connection->inTransaction()) {
+                    $connection->rollBack();
+                }
+                throw $exception;
+            }
+        }
+    }
+}
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sectionKey === 'notifications') {
     if (!appCsrfTokenIsValid($_POST['csrf_token'] ?? null)) {

@@ -1,0 +1,22 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Views\\apply_page.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\admissions-exam.js"
+  ],
+  "findings": [
+    {
+      "rule": "LIVE-REGION-001",
+      "wcag": "4.1.3 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\admissions-exam.js:30",
+      "summary": "On QR failure, the code changes the image to a status role while inserting its message, so assistive technology may not announce the failure reliably.",
+      "fix": "Add an initially empty, persistent status element in the template and update its text on failure; keep the QR image separate rather than changing its role.",
+      "evidence": "qrContainer.setAttribute(\"role\", \"status\"); qrContainer.textContent = \"QR code unavailable...\""
+    }
+  ],
+  "notes": [
+    "After review, QR error output was moved to a persistent status live region and the QR image role remains unchanged. This fix was verified directly in source."
+  ]
+}

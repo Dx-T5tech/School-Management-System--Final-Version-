@@ -5,7 +5,6 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/app/Core/dashboard.php';
 require_once dirname(__DIR__) . '/app/Core/admin.php';
 require_once dirname(__DIR__) . '/app/Modules/TeacherManagement/Services/lifecycle.php';
-require_once dirname(__DIR__) . '/app/Modules/StudentManagement/Admissions/Services/application_mail.php';
 
 $user = requireDashboardUser('Admin');
 $connection = getDatabaseConnection();
@@ -19,7 +18,10 @@ $requestedView = $_GET['view'] ?? 'hiring';
 $view = is_string($requestedView) && isset($views[$requestedView]) ? $requestedView : 'hiring';
 $csrfToken = appCsrfToken();
 $flashMessage = $_SESSION['teacher_lifecycle_flash'] ?? null;
+$setupLink = $_SESSION['teacher_lifecycle_setup_link'] ?? null;
 unset($_SESSION['teacher_lifecycle_flash']);
+unset($_SESSION['teacher_lifecycle_setup_link']);
+$setupLink = is_string($setupLink) ? $setupLink : null;
 $errorMessage = '';
 $fieldErrors = [];
 $oldInput = [];
@@ -171,6 +173,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
 
                 if ($fieldErrors === []) {
+                    $setupBaseUrl = teacherLifecycleCreateBaseUrl();
                     $connection->beginTransaction();
                     try {
                         $candidateQuery = $connection->prepare(
@@ -295,21 +298,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         throw $exception;
                     }
 
-                    try {
-                        $setupUrl = teacherLifecycleCreateBaseUrl()
-                            . '/teacher-account-setup.php?token=' . rawurlencode($rawToken);
-                        teacherLifecycleSendSetupEmail(
-                            (string) $candidate['email'],
-                            (string) $candidate['first_name'],
-                            $setupUrl
-                        );
-                        $_SESSION['teacher_lifecycle_flash'] = 'Teacher hired. A one-time account setup link was emailed and expires in 24 hours.';
-                        $redirect('hiring');
-                    } catch (RuntimeException $mailError) {
-                        error_log('Teacher account setup email failed: ' . $mailError->getMessage());
-                        http_response_code(503);
-                        $errorMessage = 'The teacher was hired, but the setup email could not be sent. Check SMTP and use the resend invitation action below.';
-                    }
+                    $_SESSION['teacher_lifecycle_setup_link'] = $setupBaseUrl
+                        . '/teacher-account-setup.php?token=' . rawurlencode($rawToken);
+                    $_SESSION['teacher_lifecycle_flash'] = 'Teacher hired. Copy and share the one-time setup link below; it expires in 24 hours.';
+                    $redirect('hiring');
                 }
             } elseif ($action === 'resend_invite') {
                 $teacherId = adminPostInt('teacher_id');
@@ -333,6 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 if ($teacher === false) {
                     throw new RuntimeException('Only pending Teacher accounts can receive a new setup invitation.');
                 }
+                $setupBaseUrl = teacherLifecycleCreateBaseUrl();
                 $rawToken = bin2hex(random_bytes(32));
                 $updateInvite = $connection->prepare(
                     'UPDATE teacher_account_setup_invites
@@ -353,17 +346,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 }
                 $recordAudit('Resend setup invitation', 'Rotated the teacher setup invitation for teacher ' . $teacherId . '.');
 
-                try {
-                    $setupUrl = teacherLifecycleCreateBaseUrl()
-                        . '/teacher-account-setup.php?token=' . rawurlencode($rawToken);
-                    teacherLifecycleSendSetupEmail((string) $teacher['email'], (string) $teacher['first_name'], $setupUrl);
-                    $_SESSION['teacher_lifecycle_flash'] = 'A fresh one-time account setup link was emailed.';
-                    $redirect('hiring');
-                } catch (RuntimeException $mailError) {
-                    error_log('Teacher account setup email resend failed: ' . $mailError->getMessage());
-                    http_response_code(503);
-                    $errorMessage = 'The invitation was renewed, but SMTP could not deliver it. Check the email configuration and try again.';
-                }
+                $_SESSION['teacher_lifecycle_setup_link'] = $setupBaseUrl
+                    . '/teacher-account-setup.php?token=' . rawurlencode($rawToken);
+                $_SESSION['teacher_lifecycle_flash'] = 'A fresh one-time setup link is ready to copy and share; it expires in 24 hours.';
+                $redirect('hiring');
             } elseif ($action === 'create_review') {
                 $teacherId = adminPostInt('teacher_id');
                 $reviewDate = adminPostString('review_date');

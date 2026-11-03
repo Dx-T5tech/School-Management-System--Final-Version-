@@ -1,0 +1,27 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Core\\super_admin.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\super_admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\super-admin-section.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_teacher_lifecycle_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\admin-teacher-lifecycle.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Views\\apply_page.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Controllers\\apply.php"
+  ],
+  "findings": [
+    {
+      "rule": "KBD-001",
+      "wcag": "2.1.1 A",
+      "severity": "moderate",
+      "location": "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_teacher_lifecycle_content.php:57",
+      "summary": "The setup URL is shown only in a focusable preformatted block, without a keyboard-operable way to copy just the link.",
+      "fix": "Add a semantic “Copy link” button that copies the URL and reports success or failure; provide a selectable fallback if clipboard access is unavailable.",
+      "evidence": "<pre class=\"admin-code\" tabindex=\"0\" aria-label=\"One-time teacher setup link\">"
+    }
+  ],
+  "passed": [],
+  "notes": [
+    "The reported preformatted-block issue was fixed after review by replacing it with a labeled, read-only textarea for native keyboard selection and copying. The change was PHP-linted; no specialist re-scan was run."
+  ]
+}

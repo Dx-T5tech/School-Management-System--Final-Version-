@@ -23,9 +23,9 @@ The Integrated School Management System connects student enrollment and school o
 - Student dashboard access and current schedules are scoped to an Enrolled record in the active academic year. Admin-created Enrolled records must match the active year, active section/program, year level, and available section capacity.
 - Application documents are stored outside `public/` and are downloadable only by authorized Admin and Super Admin accounts.
 - Program and section availability depends on active school configuration in the database.
-- Entrance-exam QR access, online receipts, and digital student ID cards are not implemented capabilities and must not be promised by public admissions pages.
+- Entrance exams are generated from active Math and English question banks, identified with an exam code and QR, and scored automatically. The QR identifies the exam and does not provide cross-device quiz access. Online receipts and digital student ID cards are not implemented capabilities and must not be promised by public admissions pages.
 - The existing application is PHP with MySQL/MariaDB and server-rendered pages.
-- Verification email uses environment-configured SMTP; no mail credentials are stored in the repository.
+- Email is not sent by the application; enrollment verification links are limited to localhost demo requests.
 
 ## Brand Commitments
 

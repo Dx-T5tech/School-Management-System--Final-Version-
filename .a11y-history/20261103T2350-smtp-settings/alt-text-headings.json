@@ -1,0 +1,15 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/super-admin-section.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Heading structure: one page H1, followed by the SMTP content H2 and its configuration H3; automated heading check found no issues.",
+    "Page title: the SMTP section title resolves to SMTP Settings - ISMS and matches the visible page heading.",
+    "Landmarks: one main landmark, a labeled dashboard navigation, and page-level header and footer are present.",
+    "Skip link: its #main-content target exists on the main landmark, which has tabindex=-1."
+  ]
+}

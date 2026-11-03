@@ -12,15 +12,102 @@ declare(strict_types=1);
 
     <?php if ($sectionKey === 'profile' && $profileFields !== []): ?>
         <section class="student-panel" aria-labelledby="student-profile-heading">
-            <h2 id="student-profile-heading">Student details</h2>
-            <dl class="student-profile-list">
-                <?php foreach ($profileFields as $field): ?>
-                    <div>
-                        <dt><?= dashboardEscape($field['label']) ?></dt>
-                        <dd><?= dashboardEscape($field['value'] !== '' ? $field['value'] : '—') ?></dd>
+            <div class="student-profile-heading-row">
+                <h2 id="student-profile-heading">Student details</h2>
+                <?php if (!$profileEditMode): ?>
+                    <a class="admin-button" href="student-section.php?section=profile&amp;edit=1">Edit profile</a>
+                <?php endif; ?>
+            </div>
+
+            <?php if ($profileNotice !== ''): ?>
+                <p class="student-notice" role="status"><?= dashboardEscape($profileNotice) ?></p>
+            <?php endif; ?>
+
+            <?php if ($profileEditMode): ?>
+                <?php if ($profileError !== '' || $profileFieldErrors !== []): ?>
+                    <div class="student-notice student-notice--error" id="student-profile-error" role="alert" tabindex="-1" data-error-summary>
+                        <?php if ($profileError !== ''): ?>
+                            <p><?= dashboardEscape($profileError) ?></p>
+                        <?php else: ?>
+                            <p>Review and correct the following fields:</p>
+                            <?php
+                            $profileFieldLabels = [
+                                'phone' => 'Phone number',
+                                'city' => 'City or municipality',
+                                'province' => 'Province',
+                                'address' => 'Residential address',
+                            ];
+                            ?>
+                            <ul>
+                                <?php foreach ($profileFieldErrors as $fieldName => $message): ?>
+                                    <li>
+                                        <a href="#student-profile-<?= dashboardEscape($fieldName) ?>">
+                                            <?= dashboardEscape($profileFieldLabels[$fieldName]) ?>: <?= dashboardEscape($message) ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
                     </div>
-                <?php endforeach; ?>
-            </dl>
+                <?php endif; ?>
+                <p class="student-profile-help">
+                    Update your phone and residential address. For changes to your name, date of birth, or email, contact the school office.
+                </p>
+                <form class="student-profile-form" method="post" action="student-section.php?section=profile&amp;edit=1">
+                    <input type="hidden" name="csrf_token" value="<?= dashboardEscape(appCsrfToken()) ?>">
+                    <input type="hidden" name="action" value="update-profile">
+                    <div class="admin-form-grid">
+                        <div class="student-payment-field">
+                            <label for="student-profile-phone">Phone number</label>
+                            <input id="student-profile-phone" name="phone" type="tel" autocomplete="tel" maxlength="30"
+                                   value="<?= dashboardEscape($profileValues['phone']) ?>"
+                                   <?= isset($profileFieldErrors['phone']) ? 'aria-invalid="true" aria-describedby="student-profile-phone-error"' : '' ?>>
+                            <?php if (isset($profileFieldErrors['phone'])): ?>
+                                <span class="admin-field-error" id="student-profile-phone-error"><?= dashboardEscape($profileFieldErrors['phone']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="student-payment-field">
+                            <label for="student-profile-city">City or municipality</label>
+                            <input id="student-profile-city" name="city" type="text" autocomplete="address-level2" maxlength="100"
+                                   value="<?= dashboardEscape($profileValues['city']) ?>"
+                                   <?= isset($profileFieldErrors['city']) ? 'aria-invalid="true" aria-describedby="student-profile-city-error"' : '' ?>>
+                            <?php if (isset($profileFieldErrors['city'])): ?>
+                                <span class="admin-field-error" id="student-profile-city-error"><?= dashboardEscape($profileFieldErrors['city']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="student-payment-field">
+                            <label for="student-profile-province">Province</label>
+                            <input id="student-profile-province" name="province" type="text" autocomplete="address-level1" maxlength="100"
+                                   value="<?= dashboardEscape($profileValues['province']) ?>"
+                                   <?= isset($profileFieldErrors['province']) ? 'aria-invalid="true" aria-describedby="student-profile-province-error"' : '' ?>>
+                            <?php if (isset($profileFieldErrors['province'])): ?>
+                                <span class="admin-field-error" id="student-profile-province-error"><?= dashboardEscape($profileFieldErrors['province']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                        <div class="student-payment-field student-profile-address">
+                            <label for="student-profile-address">Residential address</label>
+                            <textarea id="student-profile-address" name="address" autocomplete="street-address" maxlength="2000"
+                                      <?= isset($profileFieldErrors['address']) ? 'aria-invalid="true" aria-describedby="student-profile-address-error"' : '' ?>><?= dashboardEscape($profileValues['address']) ?></textarea>
+                            <?php if (isset($profileFieldErrors['address'])): ?>
+                                <span class="admin-field-error" id="student-profile-address-error"><?= dashboardEscape($profileFieldErrors['address']) ?></span>
+                            <?php endif; ?>
+                        </div>
+                    </div>
+                    <div class="admin-form-actions">
+                        <button class="admin-button" type="submit">Save changes</button>
+                        <a class="admin-button admin-button--secondary" href="student-section.php?section=profile">Cancel</a>
+                    </div>
+                </form>
+            <?php else: ?>
+                <dl class="student-profile-list">
+                    <?php foreach ($profileFields as $field): ?>
+                        <div>
+                            <dt><?= dashboardEscape($field['label']) ?></dt>
+                            <dd><?= dashboardEscape($field['value'] !== '' ? $field['value'] : '—') ?></dd>
+                        </div>
+                    <?php endforeach; ?>
+                </dl>
+            <?php endif; ?>
         </section>
     <?php elseif ($sectionKey === 'profile'): ?>
         <section class="student-panel" aria-labelledby="student-profile-heading">

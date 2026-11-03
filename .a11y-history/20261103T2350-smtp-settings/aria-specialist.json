@@ -1,0 +1,14 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/super-admin-section.php",
+    "app/Core/super_admin.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The POST success message uses a status role, and the error message uses an alert role; both are focused after rendering.",
+    "The test-email button has visible text and uses the native disabled attribute when SMTP is not ready.",
+    "Static SMTP readiness messages no longer use role=status."
+  ]
+}

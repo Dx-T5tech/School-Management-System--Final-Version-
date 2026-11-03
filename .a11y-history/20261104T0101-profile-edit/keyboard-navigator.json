@@ -1,0 +1,22 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEY-FOCUS-001",
+      "wcag": "2.4.3 A",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:28",
+      "summary": "After profile validation errors reload the page, keyboard focus is not moved to the error or form.",
+      "fix": "Focus the error summary or first invalid field after a rejected profile update.",
+      "evidence": "The error message had tabindex=\"-1\", but was not selected by dashboard error-focus logic."
+    }
+  ],
+  "passed": [
+    "Profile fields and actions follow a sensible DOM tab order; Cancel is a native link.",
+    "Dashboard CSS provides visible focus indicators for links, buttons, inputs, and textareas."
+  ]
+}

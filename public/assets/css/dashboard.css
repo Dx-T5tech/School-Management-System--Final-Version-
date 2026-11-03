@@ -1844,6 +1844,40 @@ h1 {
     overflow-wrap: anywhere;
 }
 
+.student-profile-heading-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.student-profile-heading-row h2 {
+    margin: 0;
+}
+
+.student-profile-help {
+    max-width: 70ch;
+    margin: 0 0 16px;
+    color: var(--ink-soft);
+    font-size: 13px;
+}
+
+.student-profile-form {
+    display: grid;
+    gap: 18px;
+}
+
+.student-profile-address {
+    grid-column: 1 / -1;
+}
+
+.student-profile-form textarea {
+    min-height: 100px;
+    resize: vertical;
+}
+
 .student-table-scroll {
     max-width: 100%;
     overflow-x: auto;

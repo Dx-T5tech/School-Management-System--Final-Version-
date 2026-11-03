@@ -1,0 +1,16 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php",
+    "app/Modules/StudentManagement/Admissions/Controllers/apply.php",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Four independently labeled document inputs are submitted in one multipart form with one submit button.",
+    "Unsaved documents are required; previously uploaded documents may be kept or replaced.",
+    "File type, size, and current upload status instructions are associated with the relevant inputs.",
+    "Server-side errors are linked to inputs and the existing auth.js script focuses the error summary after a response."
+  ],
+  "notes": []
+}

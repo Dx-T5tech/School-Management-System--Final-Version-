@@ -1,0 +1,26 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Modules/StudentManagement/Students/Controllers/section.php"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-ERROR-FOCUS",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:27-29",
+      "summary": "Field validation errors do not trigger the form-level error alert or move focus, so users may not know why submission failed.",
+      "fix": "When profile field errors exist, render a focused error summary with links to affected controls and retain inline error associations.",
+      "evidence": "The alert was conditional on $profileError while field errors were rendered separately."
+    }
+  ],
+  "passed": [
+    "Editable controls have associated labels and appropriate autocomplete values.",
+    "Inline field errors are associated with their controls and set aria-invalid.",
+    "Save confirmation is rendered with role=status; successful saves use a POST/redirect/GET flow."
+  ],
+  "notes": [
+    "Assistive-technology announcement of the status message after the full-page redirect was not runtime-tested."
+  ]
+}

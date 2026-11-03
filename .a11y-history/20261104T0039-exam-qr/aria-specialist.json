@@ -1,0 +1,8 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php",
+    "public/assets/js/admissions-exam.js"
+  ],
+  "findings": []
+}

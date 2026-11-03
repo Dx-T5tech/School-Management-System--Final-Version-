@@ -28,7 +28,7 @@ function teacherLifecycleCreateBaseUrl(): string
 
     $host = $_SERVER['HTTP_HOST'] ?? '';
     if (!is_string($host) || preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/', $host) !== 1) {
-        throw new RuntimeException('APP_BASE_URL must be configured before sending a teacher account invitation.');
+        throw new RuntimeException('APP_BASE_URL must be configured before creating a teacher setup link.');
     }
 
     $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
@@ -49,24 +49,6 @@ function teacherLifecycleCreateBaseUrl(): string
         ));
 
     return $scheme . '://' . $host . $encodedScriptPath;
-}
-
-function teacherLifecycleSendSetupEmail(string $recipient, string $firstName, string $setupUrl): void
-{
-    applicationSendPlainTextEmail(
-        $recipient,
-        'Set up your Fullbright College teacher account',
-        implode("\r\n", [
-            'Hello ' . $firstName . ',',
-            '',
-            'Your Fullbright College teacher account is ready. Set your password using the secure link below.',
-            'This link expires in 24 hours and can be used once.',
-            '',
-            $setupUrl,
-            '',
-            'If you were not expecting this invitation, contact the school administrator.',
-        ])
-    );
 }
 
 function teacherLifecycleApplyDueResignations(PDO $connection, int $actorUserId): void

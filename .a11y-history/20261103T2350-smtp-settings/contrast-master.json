@@ -1,0 +1,18 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "WCAG 1.4.3: SMTP notice text passes AA; info text is 4.52:1 and success text is 4.88:1 against their backgrounds.",
+    "WCAG 1.4.3: Shared muted text is 5.68:1 on white; code-block text is 4.76:1 on its background.",
+    "WCAG 1.4.3: Enabled button text is 5.32:1 and disabled button text is 5.37:1 against their backgrounds.",
+    "WCAG 1.4.11: The shared accent focus outline is 5.32:1 against the white page background.",
+    "SMTP readiness states are described in text and are not conveyed by color alone."
+  ],
+  "notes": [
+    "Contrast was checked from declared CSS colors; no rendered browser scan was performed."
+  ]
+}

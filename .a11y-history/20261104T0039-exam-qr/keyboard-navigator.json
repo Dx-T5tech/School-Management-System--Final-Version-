@@ -1,0 +1,15 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Views\\apply_page.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\admissions.css",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\admissions-exam.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Generate Exam is a native submit button with a visible focus style and a 48px minimum height.",
+    "The exam code and QR are noninteractive and do not add unnecessary keyboard stops.",
+    "Quiz answers use native radio inputs with visible focus styling and labels providing a 42px-high clickable area.",
+    "Static review found no keyboard-order or keyboard-operation issues introduced by the scoped changes."
+  ]
+}

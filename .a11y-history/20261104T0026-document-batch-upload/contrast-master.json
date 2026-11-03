@@ -1,0 +1,14 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/admissions.css",
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Document-card text and required/uploaded badges meet contrast expectations.",
+    "File-input boundaries, focus indicators, and file-selector button text/background contrast were reviewed.",
+    "Runtime browser inspection confirmed the styled file-selector button and card boundary rules are applied."
+  ],
+  "notes": []
+}

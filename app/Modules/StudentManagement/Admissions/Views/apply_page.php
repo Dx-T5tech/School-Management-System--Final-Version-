@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-$stageNames = ['Email & program', 'Personal details', 'Documents', 'Entrance exam'];
+$stageNames = ['Start & program', 'Personal details', 'Documents', 'Entrance exam'];
 $stageShortNames = ['Start', 'Profile', 'Files', 'Exam'];
 $stageIndex = match ($step) {
     'details' => 1,
@@ -42,9 +42,10 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
     <meta name="theme-color" content="#172b3b">
     <title><?= dashboardEscape($pageTitle) ?></title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
-    <link rel="stylesheet" href="assets/css/admissions.css">
+    <link rel="stylesheet" href="assets/css/admissions.css?v=20261104-exam-qr">
     <script src="assets/js/auth.js" defer></script>
     <?php if ($step === 'exam' && isset($timeRemaining)): ?>
+        <script src="assets/js/vendor/qrcode-generator.js" defer></script>
         <script src="assets/js/admissions-exam.js" defer></script>
     <?php endif; ?>
 </head>
@@ -71,7 +72,7 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                 <p class="application-kicker">Student admissions · Step <?= dashboardEscape($stageIndex + 1) ?> of 4</p>
                 <h1 id="application-heading">
                     <?php if ($step === 'start'): ?>Start your application.
-                    <?php elseif ($step === 'verify'): ?>Verify your email.
+                    <?php elseif ($step === 'verify'): ?>Continue your application.
                     <?php elseif ($step === 'details'): ?>Your personal details.
                     <?php elseif ($step === 'documents'): ?>Upload your documents.
                     <?php else: ?>Entrance examination.
@@ -87,7 +88,7 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                     <?php endforeach; ?>
                 </ol>
                 <p class="application-intro">
-                    Complete the application, verify your email, and choose a class section. Your active Student account is created after you set a password in the final enrollment step.
+                    Complete the application and choose a class section. Your active Student account is created after you set a password in the final enrollment step.
                 </p>
 
                 <?php if ($errorMessage !== ''): ?>
@@ -170,19 +171,19 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                                     <?php endif; ?>
                                 </div>
                             </div>
-                            <button class="admissions-button admissions-button--primary application-submit" type="submit">Continue to email verification</button>
+                            <button class="admissions-button admissions-button--primary application-submit" type="submit">Continue to application details</button>
                         </form>
                     <?php endif; ?>
                 <?php elseif ($step === 'verify'): ?>
                     <section class="application-stage-panel" aria-labelledby="verify-heading">
                         <?php if (is_string($demoVerificationUrl)): ?>
-                            <h2 id="verify-heading">Verify your email in demo mode</h2>
-                            <p>No email was sent. Use this local verification link within 24 hours to continue your application.</p>
-                            <a class="admissions-button admissions-button--primary" href="<?= dashboardEscape($demoVerificationUrl) ?>">Verify email and continue</a>
+                            <h2 id="verify-heading">Confirm your application</h2>
+                            <p>Email delivery is disabled. Use this localhost-only verification link within 24 hours to continue.</p>
+                            <a class="admissions-button admissions-button--primary" href="<?= dashboardEscape($demoVerificationUrl) ?>">Confirm and continue</a>
                         <?php else: ?>
-                            <h2 id="verify-heading">Check your inbox</h2>
-                            <p>We sent a secure verification link to <?= dashboardEscape($formValues['email']) ?>. Open it within 24 hours to continue your application.</p>
-                            <p>If you can’t find the message, check your spam folder. You can also return to the application form to request a new link.</p>
+                            <h2 id="verify-heading">Start a new application</h2>
+                            <p>Local verification links are shown when you submit the application from localhost. Email is not sent.</p>
+                            <a class="admissions-button admissions-button--primary" href="apply.php">Return to the application form</a>
                         <?php endif; ?>
                         <a class="admissions-button admissions-button--secondary" href="apply.php">Return to application</a>
                     </section>
@@ -240,23 +241,34 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                         <button class="admissions-button admissions-button--primary application-submit" type="submit">Save and continue to documents</button>
                     </form>
                 <?php elseif ($step === 'documents' && $application !== false): ?>
-                    <p class="application-stage-copy">Upload one clear copy of each required document. Files must be PDF, JPG/JPEG, or PNG and no larger than 10 MB each. Upload each item separately; files are stored privately and are only available to authorized school staff.</p>
-                    <div class="application-document-fields">
-                        <?php foreach ($documentTypes as $documentType => $label): ?>
-                            <?php $isSaved = isset($savedDocuments[$documentType]); ?>
-                            <section class="application-document-card" aria-labelledby="document-heading-<?= dashboardEscape($documentType) ?>">
-                                <h2 id="document-heading-<?= dashboardEscape($documentType) ?>"><?= dashboardEscape($label) ?> <span>(required)</span></h2>
-                                <form
-                                    class="application-document-form"
-                                    method="post"
-                                    action="apply.php?step=documents"
-                                    enctype="multipart/form-data"
+                    <?php $allDocumentsSaved = count($savedDocuments) === count($documentTypes); ?>
+                    <p class="application-stage-copy" id="document-upload-instructions">
+                        Choose a file for each required document, then upload them together with one button. Files must be PDF, JPG/JPEG, or PNG and no larger than 10 MB each. Uploaded files are stored privately and are available only to authorized school staff.
+                    </p>
+                    <form
+                        class="application-document-form"
+                        method="post"
+                        action="apply.php?step=documents"
+                        enctype="multipart/form-data"
+                        aria-describedby="document-upload-instructions"
+                    >
+                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
+                        <input type="hidden" name="action" value="upload_documents">
+                        <input type="hidden" name="MAX_FILE_SIZE" value="10485760">
+                        <div class="application-document-fields">
+                            <?php foreach ($documentTypes as $documentType => $label): ?>
+                                <?php $isSaved = isset($savedDocuments[$documentType]); ?>
+                                <section
+                                    class="application-document-card<?= $isSaved ? ' is-uploaded' : '' ?>"
                                     aria-labelledby="document-heading-<?= dashboardEscape($documentType) ?>"
                                 >
-                                    <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
-                                    <input type="hidden" name="action" value="upload_documents">
-                                    <input type="hidden" name="MAX_FILE_SIZE" value="10485760">
-                                    <label for="document-<?= dashboardEscape($documentType) ?>">Choose file</label>
+                                    <h2 id="document-heading-<?= dashboardEscape($documentType) ?>">
+                                        <?= dashboardEscape($label) ?>
+                                        <span><?= $isSaved ? '(uploaded · replacement optional)' : '(required)' ?></span>
+                                    </h2>
+                                    <label for="document-<?= dashboardEscape($documentType) ?>">
+                                        <?= dashboardEscape($label) ?> file
+                                    </label>
                                     <input
                                         id="document-<?= dashboardEscape($documentType) ?>"
                                         name="documents[<?= dashboardEscape($documentType) ?>]"
@@ -267,24 +279,24 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                                         <?= isset($fieldErrors[$documentType]) ? 'aria-invalid="true"' : '' ?>
                                     >
                                     <span class="application-field-hint" id="document-hint-<?= dashboardEscape($documentType) ?>">
-                                        <?= $isSaved ? 'Document received. Choose a replacement only if needed.' : 'PDF, JPG/JPEG, or PNG · up to 10 MB' ?>
+                                        <?= $isSaved ? 'Received. Leave empty to keep this document, or choose a replacement.' : 'PDF, JPG/JPEG, or PNG · up to 10 MB' ?>
                                     </span>
                                     <?php if (isset($fieldErrors[$documentType])): ?>
                                         <span class="application-field-error" id="document-error-<?= dashboardEscape($documentType) ?>"><?= dashboardEscape($fieldErrors[$documentType]) ?></span>
                                     <?php endif; ?>
-                                    <button class="admissions-button admissions-button--secondary" type="submit">
-                                        <?= $isSaved ? 'Replace document' : 'Upload document' ?>
-                                    </button>
-                                </form>
-                            </section>
-                        <?php endforeach; ?>
-                    </div>
+                                </section>
+                            <?php endforeach; ?>
+                        </div>
+                        <button class="admissions-button admissions-button--primary application-submit" type="submit">
+                            <?= $allDocumentsSaved ? 'Continue to entrance exam' : 'Upload all required documents' ?>
+                        </button>
+                    </form>
                 <?php elseif ($step === 'exam' && $application !== false): ?>
                     <?php if (!isset($exam) || $exam === false): ?>
                         <section class="application-stage-panel" aria-labelledby="exam-intro-heading">
                             <h2 id="exam-intro-heading">Before you begin</h2>
                             <ul>
-                                <li>There are 20 multiple-choice questions: 10 Math and 10 English.</li>
+                                <li>Generating the exam selects 20 questions from the active question bank: 10 Math and 10 English.</li>
                                 <li>You have 30 minutes and one attempt. The timer begins when you start.</li>
                                 <li>Your score is recorded automatically. There is no passing cutoff.</li>
                                 <li>When time expires, the exam is submitted with the answers available to the system.</li>
@@ -292,13 +304,28 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                             <form method="post" action="apply.php?step=exam">
                                 <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
                                 <input type="hidden" name="action" value="start_exam">
-                                <button class="admissions-button admissions-button--primary application-submit" type="submit">Start the 30-minute exam</button>
+                                <button class="admissions-button admissions-button--primary application-submit" type="submit">Generate Exam</button>
                             </form>
                         </section>
                     <?php else: ?>
                         <div class="application-exam-timer" data-exam-timer data-seconds="<?= dashboardEscape($timeRemaining) ?>">
                             Time remaining: <strong data-timer-value></strong>
                         </div>
+                        <section class="application-exam-identity" aria-labelledby="exam-identity-heading">
+                            <div>
+                                <p class="application-exam-identity-kicker">Generated exam</p>
+                                <h2 id="exam-identity-heading">Your exam code</h2>
+                                <p class="application-exam-code"><?= dashboardEscape($examCode) ?></p>
+                                <p class="application-exam-identity-note">This QR identifies your exam only. Keep answering in this browser; it does not open the quiz on another device.</p>
+                            </div>
+                            <div
+                                class="application-exam-qr"
+                                data-exam-qr="<?= dashboardEscape($examCode) ?>"
+                                role="img"
+                                aria-label="QR code for exam <?= dashboardEscape($examCode) ?>"
+                            ></div>
+                            <p class="visually-hidden" data-qr-status role="status" aria-live="polite" aria-atomic="true"></p>
+                        </section>
                         <p class="visually-hidden" data-timer-announcement aria-live="polite" aria-atomic="true"></p>
                         <p class="visually-hidden" data-answer-save-status aria-live="polite" aria-atomic="true"></p>
                         <form class="application-form" method="post" action="apply.php?step=exam" data-exam-form>

@@ -133,10 +133,10 @@ after the existing migrations to enforce the single-active-year rule in MySQL.
 The password chosen during final enrollment must contain at least 12 characters
 and fit the byte limit shown on the form. Teacher accounts continue to sign in
 directly to the Teacher dashboard.
-Teacher Management tracks Admin-managed applicants, creates a pending Teacher
-account only after hiring, and sends a one-time email link for password setup.
-The link expires after 24 hours; SMTP settings and `APP_BASE_URL` must be
-configured for account invitations. Admins can add dated performance reviews,
+Teacher Management tracks Admin-managed applicants and creates a pending
+Teacher account after hiring. The Admin receives a one-time setup link to share
+with the teacher; it expires after 24 hours. Set `APP_BASE_URL` when the system
+is accessed through a non-local address. Admins can add dated performance reviews,
 approve or decline teacher leave requests, and schedule resignations. At the
 effective date, a resignation disables linked account access and ends
 assignments for academic years still in progress or yet to begin without
@@ -164,58 +164,36 @@ third-party chart service.
 Prospective students can browse the live program catalog at
 `public/admissions.php`. The `Enroll now` links open
 `public/enrollment-instructions.php` first. The application at
-`public/apply.php` requires email verification (link valid for 24 hours),
-personal and contact details, four required private document uploads (PDF,
+`public/apply.php` requires a one-time localhost verification link (valid for
+24 hours), personal and contact details, four required private document uploads (PDF,
 JPG/JPEG, or PNG; 10 MB maximum each), and a one-attempt, 30-minute entrance
-exam with 10 randomly selected Math and 10 English questions. The score is
-recorded automatically, with no passing cutoff. The student then selects an
-available class section and sets a password; only then are the active account,
-Enrolled profile, and enrollment record created and the student sent to the
-dashboard. Signed-in Admin, Super Admin, and Teacher accounts are redirected
+exam. Selecting **Generate Exam** draws 10 active Math and 10 active English
+questions, creates an exam code, and displays a QR code identifying that exam.
+The QR is an identifier, not a way to open the quiz on another device. Answers
+are saved as the quiz is completed and the score is recorded automatically when
+submitted; there is no passing cutoff. The student then selects an available
+class section and sets a password; only then are the active account, Enrolled
+profile, and enrollment record created and the student sent to the dashboard.
+Signed-in Admin, Super Admin, and Teacher accounts are redirected
 from the admissions, enrollment-instructions, and application pages to their
 role dashboards; signed-in students continue to their dashboard or enrollment
 step as appropriate. Apply migrations
 `202611020004_add_student_program_interest.sql` and
 `202611020005_create_verified_student_applications.sql` in order, then apply
-`database/migrations/202611020009_defer_student_account_creation.sql`. Admin and
-Super Admin accounts can review submitted applications and download documents
-at `public/admin-admissions.php`; private files are stored under
+`database/migrations/202611020009_defer_student_account_creation.sql` and
+`database/migrations/202611040001_seed_entrance_exam_question_bank.sql` to
+ensure the active Math and English question bank is populated. Admin and Super
+Admin accounts can review submitted applications and download documents at
+`public/admin-admissions.php`; private files are stored under
 `storage/uploads/admissions` and are never served through public file URLs.
 
-Verification email delivery uses settings supplied through the PHP/Apache
-environment. Gmail defaults are `smtp.gmail.com`, port `587`, and `tls`; set
-`SMTP_USERNAME` to the authorized Gmail/Workspace mailbox and
-`SMTP_PASSWORD` to that mailbox's Google App Password. Google requires
-2-Step Verification to create an App Password. The sender address defaults to
-`SMTP_USERNAME`; optionally set `SMTP_FROM_EMAIL` if the provider authorizes a
-different sender. Set `SMTP_HOST`, `SMTP_PORT`, and `SMTP_ENCRYPTION` (`tls` or
-`ssl`) to override the Gmail defaults for another SMTP provider. Optionally set
-`SMTP_FROM_NAME` and `APP_BASE_URL` (the base URL that contains `apply.php`).
-In XAMPP, configure these variables in the Apache/PHP environment and restart
-Apache so PHP can read them. For a local XAMPP setup, add the following
-directives to `C:\xampp\apache\conf\httpd.conf`, replacing both placeholders
-with the authorized Gmail mailbox and its Google App Password:
-
-```apache
-SetEnv SMTP_USERNAME "your-gmail-address"
-SetEnv SMTP_PASSWORD "your-google-app-password"
-```
-
-Keep these directives out of the repository and restart Apache after saving
-the configuration. Do not put SMTP secrets in tracked files.
-
-For local enrollment-flow testing without a mail account, add
-`SetEnv SMTP_MODE "demo"` to the local Apache configuration and restart Apache.
-Demo mode sends no email; it displays a one-time verification link on the
-application page. It only operates when both the browser request and generated
-verification URL use `localhost`, `127.0.0.1`, or `::1`. Remove this setting or
-set `SMTP_MODE` to `smtp` to use real SMTP delivery.
-
-The application logs delivery failures without exposing SMTP credentials or
-issuing a successful verification message. Never commit SMTP secrets.
-For single-file uploads of up to 10 MB, configure PHP with
-`upload_max_filesize = 10M` and `post_max_size` greater than 10 MB (for example,
-`12M`) and restart Apache.
+The application does not send email. Enrollment verification links
+are displayed only for localhost requests and use loopback addresses. Teacher
+setup links are shown to Admins to copy and share manually.
+The application accepts four required document files in one upload, up to 10 MB
+each. Configure PHP with `upload_max_filesize = 10M` and
+`post_max_size = 45M` to allow for the combined files and request overhead, then
+restart Apache.
 
 The Teacher sidebar links to assigned classes, student rosters, class schedules,
 attendance, assessments, grade management, and student performance. Teacher

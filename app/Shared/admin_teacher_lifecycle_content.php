@@ -52,6 +52,13 @@ $renderInput = static function (
 <?php if (is_string($flashMessage) && $flashMessage !== ''): ?>
     <p class="admin-notice admin-notice--success" role="status" tabindex="-1" data-status-summary><?= dashboardEscape($flashMessage) ?></p>
 <?php endif; ?>
+<?php if (is_string($setupLink) && $setupLink !== ''): ?>
+    <div class="admin-field">
+        <label for="teacher-setup-link">One-time teacher setup link</label>
+        <p class="admin-field-hint" id="teacher-setup-link-hint">Select this field and copy the link to share it with the teacher.</p>
+        <textarea id="teacher-setup-link" rows="3" readonly aria-describedby="teacher-setup-link-hint"><?= dashboardEscape($setupLink) ?></textarea>
+    </div>
+<?php endif; ?>
 <?php if ($errorMessage !== ''): ?>
     <p class="admin-notice admin-notice--error" role="alert" tabindex="-1" data-error-summary><?= dashboardEscape($errorMessage) ?></p>
 <?php endif; ?>
@@ -177,7 +184,7 @@ $renderInput = static function (
                                                     <?php if ($lifecycleError('hire_date') !== '' && $lifecycleValue('candidate_id') === (string) $candidateId): ?>
                                                         <p class="admin-field-error"><?= dashboardEscape($lifecycleError('hire_date')) ?></p>
                                                     <?php endif; ?>
-                                                    <button class="admin-button" type="submit">Hire and invite</button>
+                                                    <button class="admin-button" type="submit">Hire and create setup link</button>
                                                 </form>
                                             <?php endif; ?>
                                         <?php elseif ($candidate['application_status'] === 'Hired'): ?>
@@ -191,12 +198,12 @@ $renderInput = static function (
                                                     <input type="hidden" name="view" value="hiring">
                                                     <input type="hidden" name="action" value="resend_invite">
                                                     <input type="hidden" name="teacher_id" value="<?= dashboardEscape((int) $candidate['teacher_id']) ?>">
-                                                    <button class="admin-button admin-button--secondary" type="submit">Resend setup invitation</button>
+                                                    <button class="admin-button admin-button--secondary" type="submit">Generate new setup link</button>
                                                 </form>
                                                 <p class="admin-panel-description">
                                                     <?= $candidate['invite_used_at'] !== null
                                                         ? 'The invitation was used; account activation may be pending.'
-                                                        : 'Invitation expires ' . dashboardEscape((string) ($candidate['invite_expires_at'] ?? '')) . '.' ?>
+                                                        : 'Setup link expires ' . dashboardEscape((string) ($candidate['invite_expires_at'] ?? '')) . '.' ?>
                                                 </p>
                                             <?php endif; ?>
                                         <?php else: ?>

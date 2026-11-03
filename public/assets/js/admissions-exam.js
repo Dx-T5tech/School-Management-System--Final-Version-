@@ -8,6 +8,32 @@
         return;
     }
 
+    const qrContainer = document.querySelector("[data-exam-qr]");
+    const qrStatus = document.querySelector("[data-qr-status]");
+    if (qrContainer instanceof HTMLElement) {
+        try {
+            if (typeof window.qrcode !== "function") {
+                throw new Error("The QR generator is unavailable.");
+            }
+            const qr = window.qrcode(0, "M");
+            qr.addData(qrContainer.dataset.examQr ?? "");
+            qr.make();
+            const svg = new DOMParser().parseFromString(
+                qr.createSvgTag({ cellSize: 5, margin: 4, scalable: true }),
+                "image/svg+xml",
+            ).documentElement;
+            if (svg.localName !== "svg" || svg.querySelector("parsererror")) {
+                throw new Error("The exam QR code could not be rendered.");
+            }
+            svg.setAttribute("aria-hidden", "true");
+            qrContainer.replaceChildren(document.importNode(svg, true));
+        } catch {
+            if (qrStatus instanceof HTMLElement) {
+                qrStatus.textContent = "QR code unavailable. Use the exam code shown beside it.";
+            }
+        }
+    }
+
     let remaining = Number.parseInt(timer.dataset.seconds ?? "", 10);
     if (!Number.isFinite(remaining) || remaining < 0) {
         return;

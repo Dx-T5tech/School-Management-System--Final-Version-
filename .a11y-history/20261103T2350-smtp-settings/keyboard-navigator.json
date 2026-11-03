@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/super-admin-section.php",
+    "app/Core/super_admin.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The enabled test-email action uses a native submit button in the page’s sequential content order.",
+    "The shared dashboard script focuses the success or error summary after the test-email response.",
+    "Shared dashboard styles provide visible focus indicators for interactive elements.",
+    "The SMTP code block is keyboard-focusable and retains the shared visible focus outline."
+  ],
+  "notes": [
+    "Runtime keyboard scanning was unavailable because Playwright was not installed."
+  ]
+}
