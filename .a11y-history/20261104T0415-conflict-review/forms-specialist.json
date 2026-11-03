@@ -1,0 +1,15 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Each schedule select and the reason textarea has an explicitly associated label and visible Required marker; a required-fields note is provided.",
+    "Controls use native required attributes; the reason has maxlength 1000 and matching server-side validation.",
+    "Validation failures provide visible field-specific errors associated through aria-describedby and aria-invalid.",
+    "The first invalid control receives autofocus, and submitted values are preserved on validation errors.",
+    "The Scheduling policy title uses a correctly nested h3."
+  ]
+}

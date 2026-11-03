@@ -335,24 +335,4 @@ WHERE department_code LIKE 'DEMO-%'
       WHERE teacher_candidates.department_id = departments.department_id
   );
 
-DELETE FROM room_monitor_layout
-WHERE room_id IN (
-    SELECT r.room_id
-    FROM rooms r
-    WHERE r.room_code IN ('A-1-LAB-1', 'A-2-ROOM-101')
-      AND NOT EXISTS (
-          SELECT 1
-          FROM class_schedules cs
-          WHERE cs.room_id = r.room_id
-      )
-);
-
-DELETE FROM rooms
-WHERE room_code IN ('A-1-LAB-1', 'A-2-ROOM-101')
-  AND NOT EXISTS (
-      SELECT 1
-      FROM class_schedules
-      WHERE class_schedules.room_id = rooms.room_id
-  );
-
 COMMIT;

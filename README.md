@@ -23,6 +23,10 @@ records created by the former demo seed. It preserves all login accounts and
 account-linked teacher/student profiles, the active academic year and four
 requested programs, current semesters, and the configured room inventory. The
 former demo seed script has been removed so it cannot repopulate the database.
+Apply `database/migrations/202611040007_restore_building_a_lab_1.sql` and
+`database/migrations/202611040008_restore_building_a_room_101.sql` to restore
+the requested Building A first-floor Lab 1 and second-floor Room 101 floor-plan
+entries.
 
 ## User roles
 
@@ -77,10 +81,15 @@ school-wide announcement store. Academic Management includes a live Curriculum
 view organized by program, academic year, year level, semester, and subject.
 Curriculum entries can be added, edited, and removed from the same page; subject
 and year-level totals are based on the saved curriculum records across academic
-years. Class sections require a program, academic year, and whole-number year
+years. Apply
+`database/migrations/202611040009_import_program_curricula.sql` to add the 211
+supplied course entries for 2026-2027. Source BSCOE entries map to the existing
+BSCE program; course names and unit variations are kept on their individual
+curriculum entries. Class sections require a program, academic year, and whole-number year
 level. Teaching assignments are limited to active teachers and sections in the
 active academic year; their subject must be in that section's program curriculum
-for its year level and the selected semester. Attendance & Scheduling includes
+for its year level and the selected semester. Curriculum subject names and units
+are shown for the selected program, year, and semester. Attendance & Scheduling includes
 Attendance Overview, Teacher Schedule, Student Schedule, Room Monitoring, and
 Conflict Review views. Schedule and room
 availability views use the active class schedules saved in the school database;
@@ -93,8 +102,25 @@ sensor reading. Apply
 rooms table exists, then apply
 `database/migrations/202611040003_seed_reference_room_monitoring.sql` to seed
 the Building A-D rooms, facilities, and saved positions and remove the two
-demo-room records. Conflict review checks overlapping active schedules for
-shared teachers, rooms, or class sections.
+demo-room records. Apply
+`database/migrations/202611040010_create_screenshot_sections.sql` to create the
+section groups shown in the schedule screenshots for the active academic year
+(CS→BSCS, IT→BSIT, EN→BSELE, CE→BSCE). This adds sections only; the schedule
+migration below separately creates the approved teaching assignments and
+eligible class schedules. Apply
+`database/migrations/202611040011_import_screenshot_schedules.sql` to create
+teaching assignments for the active teacher and import screenshot schedule
+slots only when the course exists in that section's active-year curriculum and
+the room exists as an available classroom or laboratory. Online locations and
+unmatched courses/rooms are skipped. The imported screenshot's time overlaps
+are retained for Conflict Review. Conflict review checks overlapping active
+schedules for shared teachers, rooms, or class sections. Apply
+`database/migrations/202611040012_create_schedule_conflict_workflow.sql` to
+enable acknowledged automatic conflicts and saved manual conflict reports.
+Manual reports reference two active schedules and include a reason. Conflict
+Review also reports advisory scheduling-policy warnings: at most 12 course
+units and 6 subjects per teacher per day, with 2–4 daily class sessions per
+assigned course. These policy warnings do not prevent schedule changes.
 Create and edit forms across Super Admin account/configuration pages, Admin
 management modules, Teacher attendance/assessment/grade entry, and Student
 payment requests open in centered dialogs. Validation errors reopen the matching

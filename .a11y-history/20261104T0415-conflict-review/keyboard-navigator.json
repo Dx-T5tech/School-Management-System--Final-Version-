@@ -1,0 +1,19 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Conflict-mode links, acknowledged visibility links, re-scan, and report links are native links or buttons and follow a logical DOM order.",
+    "Conflict acknowledgement forms and manual report controls use native form elements; report fields have associated labels.",
+    "Visible focus styling is provided for links, buttons, form controls, and focusable conflict-table scroll containers.",
+    "Required indicators and field-specific validation errors are visible; invalid fields receive associated descriptions and focus.",
+    "The selected conflict mode has an underline cue in addition to aria-current.",
+    "The Scheduling policy label is a heading and correctly labels its section."
+  ],
+  "notes": [
+    "Source inspection only; live keyboard behavior was not runtime-tested."
+  ]
+}

@@ -2013,7 +2013,90 @@ button.room-monitor-card:focus-visible {
     background: var(--soft);
 }
 
-.conflict-policy strong {
+.conflict-review-toolbar,
+.conflict-review-actions,
+.conflict-mode-tabs {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.conflict-mode-tabs a[aria-current="page"] {
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 3px;
+}
+
+.conflict-review-toolbar {
+    justify-content: space-between;
+    margin: 18px 0 8px;
+}
+
+.conflict-review-actions {
+    justify-content: flex-end;
+}
+
+.conflict-review-actions .admin-button {
+    white-space: nowrap;
+}
+
+.conflict-scan-note,
+.conflict-scan-time {
+    margin: 8px 0 12px;
+    color: var(--ink-soft);
+    font-size: 12px;
+}
+
+.conflict-policy-details {
+    grid-column: 1 / -1;
+    color: var(--ink-soft);
+    font-size: 12px;
+}
+
+.conflict-policy-details summary {
+    width: fit-content;
+    color: var(--ink);
+    cursor: pointer;
+    font-weight: 700;
+}
+
+.conflict-policy-details ul {
+    display: grid;
+    gap: 6px;
+    margin: 10px 0 0;
+    padding-left: 20px;
+}
+
+.conflict-manual-report,
+.conflict-manual-reports {
+    margin-top: 24px;
+}
+
+.conflict-manual-report h3,
+.conflict-manual-reports h3 {
+    margin: 0 0 8px;
+    color: var(--ink);
+    font-size: 16px;
+}
+
+.conflict-manual-report > p {
+    margin: 0 0 14px;
+    color: var(--ink-soft);
+    font-size: 13px;
+}
+
+.conflict-report-fields {
+    margin-bottom: 14px;
+}
+
+.conflict-report-reason {
+    grid-column: 1 / -1;
+}
+
+.conflict-policy h3 {
+    grid-column: 1;
+    margin: 0;
     color: var(--ink);
     font-size: 13px;
 }
@@ -2033,6 +2116,10 @@ button.room-monitor-card:focus-visible {
     font-size: 10px;
     font-weight: 700;
     text-transform: uppercase;
+}
+
+.conflict-policy .is-warning {
+    color: var(--danger);
 }
 
 .teacher-section {
@@ -4549,6 +4636,23 @@ button.room-monitor-card:focus-visible {
     .conflict-policy span {
         grid-column: 1;
         grid-row: auto;
+    }
+
+    .conflict-review-toolbar {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .conflict-review-actions {
+        justify-content: flex-start;
+    }
+
+    .conflict-review-actions .admin-button {
+        white-space: normal;
+    }
+
+    .conflict-report-reason {
+        grid-column: auto;
     }
 
     .admin-form-grid,

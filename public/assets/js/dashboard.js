@@ -657,7 +657,7 @@
                 } catch (error) {
                     console.error("Unable to read curriculum options for a teaching assignment.", error);
                 }
-                option.disabled = !hasMatchingContext || !combinations.some((combination) => (
+                const matchingCombination = hasMatchingContext && combinations.find((combination) => (
                     String(combination.programId) === sectionOption.dataset.programId
                     && String(combination.academicYearId) === sectionYearId
                     && String(combination.yearLevel) === sectionOption.dataset.yearLevel
@@ -666,6 +666,15 @@
                         || String(combination.semesterNumber) === semesterNumber
                     )
                 ));
+                option.disabled = !matchingCombination;
+                if (!matchingCombination) {
+                    option.textContent = option.dataset.defaultLabel || option.textContent;
+                    return;
+                }
+                const unitsLabel = matchingCombination.units === null
+                    ? ""
+                    : ` · ${matchingCombination.units} units`;
+                option.textContent = `${matchingCombination.subjectCode} - ${matchingCombination.subjectName}${unitsLabel}`;
             });
 
             const subjectWasCleared = Boolean(assignmentSubjectSelect.selectedOptions[0]?.disabled);
@@ -688,13 +697,22 @@
             const hasAvailableSubjects = Array.from(assignmentSubjectSelect.options).some(
                 (option) => option.value && !option.disabled,
             );
-            assignmentRelationshipStatus.textContent = hasAvailableSubjects
-                ? ""
-                : "No curriculum subjects match this section and semester. Add the subject to the curriculum before assigning it.";
+            if (!hasAvailableSubjects) {
+                assignmentRelationshipStatus.textContent = "No curriculum subjects match this section and semester. Add the subject to the curriculum before assigning it.";
+                return;
+            }
+            const availableSubjectCount = Array.from(assignmentSubjectSelect.options).filter(
+                (option) => option.value && !option.disabled,
+            ).length;
+            const selectedSubjectLabel = assignmentSubjectSelect.selectedOptions[0]?.value
+                ? ` Selected ${assignmentSubjectSelect.selectedOptions[0].textContent}.`
+                : "";
+            assignmentRelationshipStatus.textContent = `${availableSubjectCount} curriculum subject${availableSubjectCount === 1 ? "" : "s"} available.${selectedSubjectLabel}`;
         };
 
         assignmentSectionSelect.addEventListener("change", updateAssignmentSubjectOptions);
         assignmentSemesterSelect.addEventListener("change", updateAssignmentSubjectOptions);
+        assignmentSubjectSelect.addEventListener("change", updateAssignmentSubjectOptions);
         updateAssignmentSubjectOptions();
     }
 

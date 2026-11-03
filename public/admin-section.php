@@ -193,6 +193,8 @@ $entityDefinitions = [
             'year_level' => $field('Year level', 'number', true, null, false),
             'semester_number' => $field('Semester number', 'number'),
             'subject_id' => $field('Subject', 'select', true, 'subjects', false),
+            'subject_name_override' => $field('Curriculum subject name'),
+            'units_override' => $field('Curriculum units', 'number'),
             'is_required' => $field('Subject requirement', 'select', true, ['1' => 'Required', '0' => 'Elective'], false),
         ],
         'delete' => ['type' => 'delete'],
@@ -225,9 +227,9 @@ $entityDefinitions = [
         'section' => 'academic-management', 'academicView' => 'teacher-assignments', 'table' => 'teaching_assignments', 'primaryKey' => 'assignment_id', 'label' => 'Teaching assignments',
         'fields' => [
             'teacher_id' => $field('Teacher', 'select', true, 'active_teachers', false),
-            'subject_id' => $field('Curriculum subject', 'select', true, 'assignment_subjects', false),
             'section_id' => $field('Class section', 'select', true, 'assignment_sections', false),
             'semester_id' => $field('Semester', 'select', true, 'assignment_semesters', false),
+            'subject_id' => $field('Curriculum subject', 'select', true, 'assignment_subjects', false),
         ],
         'delete' => ['type' => 'delete'],
     ],
@@ -426,7 +428,9 @@ foreach ($connection->query(
 }
 $assignmentCurriculumCombinations = [];
 foreach ($connection->query(
-    "SELECT c.subject_id, c.program_id, c.academic_year_id, c.year_level, c.semester_number
+    "SELECT c.subject_id, c.program_id, c.academic_year_id, c.year_level, c.semester_number,
+            c.subject_name_override, c.units_override, su.subject_code, su.subject_name,
+            COALESCE(c.units_override, su.units) AS curriculum_units
      FROM curriculum c
      INNER JOIN subjects su ON su.subject_id = c.subject_id AND su.status = 'Active'
      INNER JOIN programs p ON p.program_id = c.program_id AND p.status = 'Active'
@@ -439,6 +443,10 @@ foreach ($connection->query(
         'semesterNumber' => $curriculumCombination['semester_number'] === null
             ? null
             : (int) $curriculumCombination['semester_number'],
+        'subjectCode' => (string) $curriculumCombination['subject_code'],
+        'subjectName' => (string) ($curriculumCombination['subject_name_override']
+            ?? $curriculumCombination['subject_name']),
+        'units' => (float) $curriculumCombination['curriculum_units'],
     ];
 }
 
@@ -467,7 +475,213 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $recordId = adminPostInt('record_id');
         $hasRecordId = array_key_exists('record_id', $_POST);
 
-        if ($entity === null || $entity['section'] !== $sectionKey
+        $isConflictAction = $sectionKey === 'attendance-scheduling'
+            && $attendanceView === 'conflict-review'
+            && in_array($action, ['report_manual_conflict', 'acknowledge_conflict'], true);
+        if ($isConflictAction && $action === 'report_manual_conflict') {
+            $firstScheduleId = filter_var(
+                $_POST['schedule_one_id'] ?? null,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 1]]
+            );
+            $secondScheduleId = filter_var(
+                $_POST['schedule_two_id'] ?? null,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 1]]
+            );
+            $reason = trim(adminPostString('reason'));
+            $reasonLength = preg_match_all('/./us', $reason);
+            $oldInput = [
+                'schedule_one_id' => adminPostString('schedule_one_id'),
+                'schedule_two_id' => adminPostString('schedule_two_id'),
+                'reason' => $reason,
+            ];
+
+            if ($firstScheduleId === false || $secondScheduleId === false) {
+                $errorMessage = 'Select two different active schedules to report.';
+                if ($firstScheduleId === false) {
+                    $fieldErrors['schedule_one_id'] = 'Select the first schedule.';
+                }
+                if ($secondScheduleId === false) {
+                    $fieldErrors['schedule_two_id'] = 'Select the second schedule.';
+                }
+            } elseif ($firstScheduleId === $secondScheduleId) {
+                $errorMessage = 'Select two different active schedules to report.';
+                $fieldErrors['schedule_two_id'] = 'Choose a schedule different from the first selection.';
+            } elseif ($reason === '' || $reasonLength === false || $reasonLength > 1000) {
+                $errorMessage = 'Enter a reason for the report using no more than 1,000 characters.';
+                $fieldErrors['reason'] = 'Enter a reason using no more than 1,000 characters.';
+            } else {
+                $scheduleIds = [$firstScheduleId, $secondScheduleId];
+                sort($scheduleIds, SORT_NUMERIC);
+                $firstScheduleId = $scheduleIds[0];
+                $secondScheduleId = $scheduleIds[1];
+                $reportedSchedulesQuery = $connection->prepare(
+                    "SELECT cs.schedule_id, cs.day_of_week, cs.start_time, cs.end_time,
+                            su.subject_code, se.section_name, r.room_name
+                     FROM class_schedules cs
+                     INNER JOIN teaching_assignments ta ON ta.assignment_id = cs.assignment_id
+                     INNER JOIN subjects su ON su.subject_id = ta.subject_id
+                     INNER JOIN sections se ON se.section_id = ta.section_id
+                     INNER JOIN academic_years ay ON ay.academic_year_id = se.academic_year_id
+                     INNER JOIN rooms r ON r.room_id = cs.room_id
+                     WHERE cs.schedule_id IN (:first_id, :second_id)
+                       AND cs.schedule_status = 'Active'
+                       AND ta.assignment_status = 'Active'
+                       AND se.status = 'Active'
+                       AND ay.status = 'Active'
+                     ORDER BY cs.schedule_id"
+                );
+                $reportedSchedulesQuery->execute([
+                    'first_id' => $firstScheduleId,
+                    'second_id' => $secondScheduleId,
+                ]);
+                $reportedSchedules = $reportedSchedulesQuery->fetchAll();
+
+                if (count($reportedSchedules) !== 2) {
+                    $errorMessage = 'One or both selected schedules are no longer active. Reload and choose again.';
+                    $foundScheduleIds = array_map(
+                        static fn (array $schedule): string => (string) $schedule['schedule_id'],
+                        $reportedSchedules
+                    );
+                    if (!in_array((string) $firstScheduleId, $foundScheduleIds, true)) {
+                        $fieldErrors['schedule_one_id'] = 'This schedule is no longer active. Choose another.';
+                    }
+                    if (!in_array((string) $secondScheduleId, $foundScheduleIds, true)) {
+                        $fieldErrors['schedule_two_id'] = 'This schedule is no longer active. Choose another.';
+                    }
+                } else {
+                    $scheduleSnapshot = static function (array $schedule): string {
+                        return $schedule['subject_code'] . ' · ' . $schedule['section_name']
+                            . ' · ' . $schedule['day_of_week'] . ' '
+                            . date('g:i A', strtotime((string) $schedule['start_time']))
+                            . '–' . date('g:i A', strtotime((string) $schedule['end_time']))
+                            . ' · ' . $schedule['room_name'];
+                    };
+                    $reportQuery = $connection->prepare(
+                        'INSERT INTO manual_schedule_conflict_reports
+                            (schedule_id_one, schedule_id_two, schedule_one_snapshot,
+                             schedule_two_snapshot, reason, reported_by)
+                         VALUES (:schedule_one, :schedule_two, :snapshot_one,
+                                 :snapshot_two, :reason, :reported_by)'
+                    );
+                    $reportQuery->execute([
+                        'schedule_one' => $firstScheduleId,
+                        'schedule_two' => $secondScheduleId,
+                        'snapshot_one' => $scheduleSnapshot($reportedSchedules[0]),
+                        'snapshot_two' => $scheduleSnapshot($reportedSchedules[1]),
+                        'reason' => $reason,
+                        'reported_by' => (int) $user['user_id'],
+                    ]);
+                    adminRecordAudit(
+                        $connection,
+                        (int) $user['user_id'],
+                        'Create',
+                        'Schedule conflict report',
+                        'Reported a manual conflict between schedules '
+                            . $firstScheduleId . ' and ' . $secondScheduleId . '.'
+                    );
+                    $_SESSION['admin_flash'] = 'Manual conflict report submitted.';
+                    header(
+                        'Location: admin-section.php?section=attendance-scheduling'
+                            . '&attendance_view=conflict-review&conflict_mode=manual',
+                        true,
+                        303
+                    );
+                    exit;
+                }
+            }
+        } elseif ($isConflictAction && $action === 'acknowledge_conflict') {
+            $firstScheduleId = filter_var(
+                $_POST['schedule_one_id'] ?? null,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 1]]
+            );
+            $secondScheduleId = filter_var(
+                $_POST['schedule_two_id'] ?? null,
+                FILTER_VALIDATE_INT,
+                ['options' => ['min_range' => 1]]
+            );
+
+            if ($firstScheduleId === false || $secondScheduleId === false
+                || $firstScheduleId === $secondScheduleId) {
+                $errorMessage = 'The selected conflict is invalid. Reload the page and try again.';
+            } else {
+                $verifiedConflictQuery = $connection->prepare(
+                    "SELECT COUNT(*)
+                     FROM class_schedules first_schedule
+                     INNER JOIN teaching_assignments first_assignment
+                        ON first_assignment.assignment_id = first_schedule.assignment_id
+                     INNER JOIN sections first_section ON first_section.section_id = first_assignment.section_id
+                     INNER JOIN academic_years first_year
+                        ON first_year.academic_year_id = first_section.academic_year_id
+                     INNER JOIN class_schedules second_schedule
+                        ON second_schedule.schedule_id = :second_id
+                     INNER JOIN teaching_assignments second_assignment
+                        ON second_assignment.assignment_id = second_schedule.assignment_id
+                     INNER JOIN sections second_section ON second_section.section_id = second_assignment.section_id
+                     INNER JOIN academic_years second_year
+                        ON second_year.academic_year_id = second_section.academic_year_id
+                     WHERE first_schedule.schedule_id = :first_id
+                       AND first_schedule.schedule_status = 'Active'
+                       AND second_schedule.schedule_status = 'Active'
+                       AND first_assignment.assignment_status = 'Active'
+                       AND second_assignment.assignment_status = 'Active'
+                       AND first_section.status = 'Active'
+                       AND second_section.status = 'Active'
+                       AND first_year.status = 'Active'
+                       AND second_year.status = 'Active'
+                       AND first_schedule.day_of_week = second_schedule.day_of_week
+                       AND first_schedule.start_time < second_schedule.end_time
+                       AND second_schedule.start_time < first_schedule.end_time
+                       AND (
+                            first_assignment.teacher_id = second_assignment.teacher_id
+                            OR first_schedule.room_id = second_schedule.room_id
+                            OR first_assignment.section_id = second_assignment.section_id
+                       )"
+                );
+                $verifiedConflictQuery->execute([
+                    'first_id' => $firstScheduleId,
+                    'second_id' => $secondScheduleId,
+                ]);
+
+                if ((int) $verifiedConflictQuery->fetchColumn() === 0) {
+                    $errorMessage = 'That overlap is no longer an active conflict. Re-scan the schedule.';
+                } else {
+                    $scheduleIds = [$firstScheduleId, $secondScheduleId];
+                    sort($scheduleIds, SORT_NUMERIC);
+                    $acknowledgementQuery = $connection->prepare(
+                        'INSERT INTO schedule_conflict_acknowledgements
+                            (schedule_id_one, schedule_id_two, acknowledged_by)
+                         VALUES (:schedule_one, :schedule_two, :acknowledged_by)
+                         ON DUPLICATE KEY UPDATE
+                            acknowledged_by = VALUES(acknowledged_by),
+                            acknowledged_at = CURRENT_TIMESTAMP'
+                    );
+                    $acknowledgementQuery->execute([
+                        'schedule_one' => $scheduleIds[0],
+                        'schedule_two' => $scheduleIds[1],
+                        'acknowledged_by' => (int) $user['user_id'],
+                    ]);
+                    adminRecordAudit(
+                        $connection,
+                        (int) $user['user_id'],
+                        'Update',
+                        'Schedule conflict acknowledgement',
+                        'Acknowledged the conflict between schedules '
+                            . $scheduleIds[0] . ' and ' . $scheduleIds[1] . '.'
+                    );
+                    $_SESSION['admin_flash'] = 'Schedule conflict acknowledged.';
+                    header(
+                        'Location: admin-section.php?section=attendance-scheduling'
+                            . '&attendance_view=conflict-review&conflict_mode=automatic',
+                        true,
+                        303
+                    );
+                    exit;
+                }
+            }
+        } elseif ($entity === null || $entity['section'] !== $sectionKey
             || ($sectionKey === 'academic-management' && ($entity['academicView'] ?? null) !== $academicView)
             || ($sectionKey === 'attendance-scheduling' && ($entity['attendanceView'] ?? null) !== $attendanceView)
             || ($sectionKey === 'finance-payments' && ($entity['financeView'] ?? null) !== $financeView)) {
@@ -559,10 +773,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fieldErrors['score'] = 'Enter a score from 0 to the selected assessment’s total points.';
                 }
             }
-            foreach (['duration_years', 'year_level', 'semester_number', 'capacity', 'units'] as $positiveField) {
+            foreach (['duration_years', 'year_level', 'semester_number', 'capacity', 'units', 'units_override'] as $positiveField) {
                 if (isset($values[$positiveField]) && $values[$positiveField] !== null && $values[$positiveField] <= 0) {
                     $fieldErrors[$positiveField] = 'Enter a number greater than zero.';
                 }
+            }
+            if ($entityKey === 'curriculum' && isset($values['subject_name_override'])
+                && $values['subject_name_override'] !== null
+                && strlen($values['subject_name_override']) > 150) {
+                $fieldErrors['subject_name_override'] = 'Use 150 characters or fewer.';
             }
             if ($entityKey === 'sections' && isset($values['year_level'])
                 && floor((float) $values['year_level']) !== (float) $values['year_level']) {
@@ -1326,7 +1545,9 @@ if ($sectionKey === 'academic-management' && $academicView === 'subjects') {
     }
     $subjectWhere = $subjectFilters === [] ? '' : 'WHERE ' . implode(' AND ', $subjectFilters);
     $subjectCatalogQuery = $connection->prepare(
-        "SELECT s.subject_id, s.subject_code, s.subject_name, s.description, s.units,
+        "SELECT s.subject_id, s.subject_code,
+                COALESCE(c.subject_name_override, s.subject_name) AS subject_name,
+                s.description, COALESCE(c.units_override, s.units) AS units,
                 s.subject_type, s.status, c.program_id, p.program_code, p.program_name,
                 c.year_level, c.semester_number,
                 MAX(c.is_required) AS is_required,
@@ -1347,8 +1568,9 @@ if ($sectionKey === 'academic-management' && $academicView === 'subjects') {
            AND ta.section_id = sec.section_id
            AND ta.assignment_status = 'Active'
          {$subjectWhere}
-         GROUP BY s.subject_id, s.subject_code, s.subject_name, s.description,
-                  s.units, s.subject_type, s.status, c.program_id, p.program_code,
+         GROUP BY s.subject_id, s.subject_code, c.subject_name_override, s.subject_name,
+                  s.description, c.units_override, s.units, s.subject_type, s.status,
+                  c.program_id, p.program_code,
                   p.program_name, c.year_level, c.semester_number
          ORDER BY p.program_name, c.year_level, c.semester_number, s.subject_code"
     );
@@ -1425,7 +1647,9 @@ if ($sectionKey === 'academic-management') {
         'SELECT c.curriculum_id, c.program_id, c.subject_id, c.academic_year_id,
                 c.year_level, c.semester_number, c.is_required,
                 ay.year_name, ay.status AS academic_year_status, ay.start_date,
-                su.subject_code, su.subject_name, su.description, su.units,
+                su.subject_code,
+                COALESCE(c.subject_name_override, su.subject_name) AS subject_name,
+                su.description, COALESCE(c.units_override, su.units) AS units,
                 su.subject_type, su.status AS subject_status
          FROM curriculum c
          INNER JOIN academic_years ay ON ay.academic_year_id = c.academic_year_id
@@ -1465,10 +1689,18 @@ if ($sectionKey === 'attendance-scheduling') {
         "SELECT cs.schedule_id, cs.day_of_week, cs.start_time, cs.end_time,
                 cs.schedule_status, cs.room_id, r.room_code, r.room_name,
                 r.building, r.floor_number,
-                ta.assignment_id, ta.teacher_id, ta.section_id,
+                ta.assignment_id, ta.teacher_id, ta.subject_id, ta.section_id,
                 t.employee_number, t.first_name AS teacher_first_name,
                 t.last_name AS teacher_last_name, t.department_id,
                 d.department_name, su.subject_code, su.subject_name,
+                COALESCE((
+                    SELECT MAX(COALESCE(c.units_override, su.units))
+                    FROM curriculum c
+                    WHERE c.subject_id = su.subject_id
+                      AND c.program_id = se.program_id
+                      AND c.academic_year_id = se.academic_year_id
+                      AND c.year_level = se.year_level
+                ), su.units, 0) AS subject_units,
                 se.section_name, se.year_level, se.program_id,
                 p.program_code, p.program_name
          FROM class_schedules cs
@@ -1905,7 +2137,7 @@ if ($sectionKey === 'attendance-scheduling') {
             'buildings' => $buildingOptions,
             'floors' => $roomFloorOptions,
             'stairs' => match ($roomFilterBuilding . ':' . $roomFilterFloor) {
-                'A:2' => [['row' => 3, 'column' => 11, 'span' => 2]],
+                'A:1', 'A:2' => [['row' => 3, 'column' => 11, 'span' => 2]],
                 'C:1', 'C:2', 'C:3' => [['row' => 3, 'column' => 4, 'span' => 2]],
                 'D:1', 'D:2' => [
                     ['row' => 3, 'column' => 1, 'span' => 1],
@@ -1930,8 +2162,35 @@ if ($sectionKey === 'attendance-scheduling') {
     } elseif ($attendanceView === 'conflict-review') {
         $conflicts = [];
         $schedulesByDay = [];
+        $teacherDayMetrics = [];
+        $assignmentDayCounts = [];
         foreach ($scheduleRows as $schedule) {
             $schedulesByDay[$schedule['day_of_week']][] = $schedule;
+            $teacherDayKey = $schedule['teacher_id'] . ':' . $schedule['day_of_week'];
+            if (!isset($teacherDayMetrics[$teacherDayKey])) {
+                $teacherDayMetrics[$teacherDayKey] = [
+                    'name' => $schedule['teacher_first_name'] . ' ' . $schedule['teacher_last_name'],
+                    'day' => $schedule['day_of_week'],
+                    'units' => 0.0,
+                    'assignments' => [],
+                    'subjects' => [],
+                ];
+            }
+            if (!isset($teacherDayMetrics[$teacherDayKey]['assignments'][$schedule['assignment_id']])) {
+                $teacherDayMetrics[$teacherDayKey]['assignments'][$schedule['assignment_id']] = true;
+                $teacherDayMetrics[$teacherDayKey]['units'] += (float) $schedule['subject_units'];
+            }
+            $teacherDayMetrics[$teacherDayKey]['subjects'][$schedule['subject_id']] = true;
+
+            $assignmentDayKey = $schedule['assignment_id'] . ':' . $schedule['day_of_week'];
+            if (!isset($assignmentDayCounts[$assignmentDayKey])) {
+                $assignmentDayCounts[$assignmentDayKey] = [
+                    'count' => 0,
+                    'day' => $schedule['day_of_week'],
+                    'course' => $schedule['subject_code'] . ' · ' . $schedule['section_name'],
+                ];
+            }
+            $assignmentDayCounts[$assignmentDayKey]['count']++;
         }
         foreach ($schedulesByDay as $daySchedules) {
             $scheduleCount = count($daySchedules);
@@ -1963,20 +2222,103 @@ if ($sectionKey === 'attendance-scheduling') {
                 }
             }
         }
+
+        $acknowledgements = [];
+        foreach ($connection->query(
+            'SELECT schedule_id_one, schedule_id_two, acknowledged_at
+             FROM schedule_conflict_acknowledgements'
+        )->fetchAll() as $acknowledgement) {
+            $acknowledgements[$acknowledgement['schedule_id_one'] . ':' . $acknowledgement['schedule_id_two']]
+                = $acknowledgement['acknowledged_at'];
+        }
+        foreach ($conflicts as &$conflict) {
+            $scheduleIds = [
+                (int) $conflict['left']['schedule_id'],
+                (int) $conflict['right']['schedule_id'],
+            ];
+            sort($scheduleIds, SORT_NUMERIC);
+            $conflict['scheduleIds'] = $scheduleIds;
+            $conflict['acknowledgedAt'] = $acknowledgements[$scheduleIds[0] . ':' . $scheduleIds[1]] ?? null;
+        }
+        unset($conflict);
+
+        $policyWarnings = [];
+        foreach ($teacherDayMetrics as $metric) {
+            $subjectCount = count($metric['subjects']);
+            if ($metric['units'] > 12) {
+                $policyWarnings[] = [
+                    'day' => $metric['day'],
+                    'message' => $metric['name'] . ' has ' . rtrim(rtrim(number_format($metric['units'], 2), '0'), '.')
+                        . ' course units scheduled (limit: 12).',
+                ];
+            }
+            if ($subjectCount > 6) {
+                $policyWarnings[] = [
+                    'day' => $metric['day'],
+                    'message' => $metric['name'] . ' has ' . $subjectCount . ' subjects scheduled (limit: 6).',
+                ];
+            }
+        }
+        foreach ($assignmentDayCounts as $courseDay) {
+            if ($courseDay['count'] < 2 || $courseDay['count'] > 4) {
+                $policyWarnings[] = [
+                    'day' => $courseDay['day'],
+                    'message' => $courseDay['course'] . ' has ' . $courseDay['count']
+                        . ' class session' . ($courseDay['count'] === 1 ? '' : 's')
+                        . ' scheduled (target: 2–4).',
+                ];
+            }
+        }
+
         $conflictFilter = $_GET['type'] ?? 'All types';
         if (!is_string($conflictFilter) || !in_array($conflictFilter, ['All types', 'Teacher', 'Room', 'Section'], true)) {
             $conflictFilter = 'All types';
         }
-        $filteredConflicts = array_values(array_filter(
+        $conflictMode = $_GET['conflict_mode'] ?? 'automatic';
+        if (!is_string($conflictMode) || !in_array($conflictMode, ['automatic', 'manual'], true)) {
+            $conflictMode = 'automatic';
+        }
+        $showAcknowledged = ($_GET['show_acknowledged'] ?? null) === '1';
+        $acknowledgedCount = count(array_filter(
             $conflicts,
+            static fn (array $conflict): bool => $conflict['acknowledgedAt'] !== null
+        ));
+        $visibleConflicts = array_values(array_filter(
+            $conflicts,
+            static fn (array $conflict): bool => ($conflict['acknowledgedAt'] !== null) === $showAcknowledged
+        ));
+        $filteredConflicts = array_values(array_filter(
+            $visibleConflicts,
             static fn (array $conflict): bool => $conflictFilter === 'All types'
                 || in_array($conflictFilter, $conflict['types'], true)
         ));
+        $conflictTypeCounts = ['Teacher' => 0, 'Room' => 0, 'Section' => 0];
+        foreach ($visibleConflicts as $conflict) {
+            foreach ($conflict['types'] as $type) {
+                $conflictTypeCounts[$type]++;
+            }
+        }
+        $manualReports = $connection->query(
+            'SELECT report_id, schedule_one_snapshot, schedule_two_snapshot,
+                    reason, status, reported_at
+             FROM manual_schedule_conflict_reports
+             ORDER BY reported_at DESC, report_id DESC'
+        )->fetchAll();
+        $scanClock = $connection->query(
+            "SELECT DATE_FORMAT(CURRENT_TIMESTAMP(), '%b %e, %Y, %l:%i %p')"
+        )->fetchColumn();
         $conflictOverview = [
             'conflicts' => $filteredConflicts,
             'allConflicts' => $conflicts,
             'schedules' => $scheduleRows,
             'filter' => $conflictFilter,
+            'mode' => $conflictMode,
+            'showAcknowledged' => $showAcknowledged,
+            'acknowledgedCount' => $acknowledgedCount,
+            'typeCounts' => $conflictTypeCounts,
+            'manualReports' => $manualReports,
+            'policyWarnings' => $policyWarnings,
+            'scannedAt' => (string) $scanClock,
         ];
     }
 }

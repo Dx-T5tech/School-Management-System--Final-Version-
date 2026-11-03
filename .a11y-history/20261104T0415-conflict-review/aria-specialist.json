@@ -1,0 +1,15 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Conflict mode navigation has a distinct label and marks the active mode with aria-current.",
+    "Conflict tables have captions and scoped column headers; each automatic conflict row has a time row header.",
+    "Conflict notices use status and alert roles.",
+    "Manual form validation errors are visible and associated with invalid controls using aria-invalid and aria-describedby.",
+    "The Scheduling policy section is labelled by its visible h3."
+  ]
+}

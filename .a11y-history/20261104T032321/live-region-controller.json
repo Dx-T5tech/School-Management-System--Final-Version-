@@ -1,0 +1,11 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The existing role=status region announces the available curriculum subject count and selected subject label, including units, when section, semester, or subject changes."
+  ]
+}

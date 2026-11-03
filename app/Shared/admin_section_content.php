@@ -510,64 +510,207 @@ foreach ($lookupOptions as $lookupName => $options) {
                 </dialog>
             </div>
         <?php elseif ($attendanceView === 'conflict-review' && is_array($conflictOverview)): ?>
-            <?php
-            $conflictTypeCounts = ['Teacher' => 0, 'Room' => 0, 'Section' => 0];
-            foreach ($conflictOverview['allConflicts'] as $conflict) {
-                foreach ($conflict['types'] as $type) {
-                    $conflictTypeCounts[$type]++;
-                }
-            }
-            ?>
             <div class="admin-panel">
-                <h2>Conflict review</h2>
-                <p class="admin-panel-description">Review active schedules that overlap on the same day for a teacher, room, or class section.</p>
-                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
-                    <input type="hidden" name="section" value="attendance-scheduling">
-                    <input type="hidden" name="attendance_view" value="conflict-review">
-                    <div class="admin-field">
-                        <label for="conflict-type-filter">Conflict type</label>
-                        <select id="conflict-type-filter" name="type">
-                            <?php foreach (['All types', 'Teacher', 'Room', 'Section'] as $type): ?>
-                                <option value="<?= dashboardEscape($type) ?>"<?= $conflictOverview['filter'] === $type ? ' selected' : '' ?>><?= dashboardEscape($type) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <button class="admin-button" type="submit">Filter conflicts</button>
-                </form>
-                <div class="conflict-policy">
-                    <strong>Schedule checks</strong>
-                    <p>Active classes on the same weekday are compared for overlapping times and shared teachers, rooms, or sections.</p>
-                    <span><?= count($conflictOverview['allConflicts']) === 0 ? 'No overlaps found' : 'Review overlaps below' ?></span>
+                <h2>Conflict Detection</h2>
+                <p class="admin-panel-description">Detect conflicts in teachers, rooms, and sections using automatic checks or manual reports.</p>
+                <div class="conflict-review-toolbar">
+                    <nav class="conflict-mode-tabs" aria-label="Conflict review mode">
+                        <a class="admin-button<?= $conflictOverview['mode'] === 'automatic' ? '' : ' admin-button--secondary' ?>"
+                           href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=automatic"
+                           <?= $conflictOverview['mode'] === 'automatic' ? 'aria-current="page"' : '' ?>>Automatic</a>
+                        <a class="admin-button<?= $conflictOverview['mode'] === 'manual' ? '' : ' admin-button--secondary' ?>"
+                           href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=manual"
+                           <?= $conflictOverview['mode'] === 'manual' ? 'aria-current="page"' : '' ?>>Manual</a>
+                    </nav>
+                    <?php if ($conflictOverview['mode'] === 'automatic'): ?>
+                        <form class="conflict-review-actions" method="get" action="admin-section.php">
+                            <input type="hidden" name="section" value="attendance-scheduling">
+                            <input type="hidden" name="attendance_view" value="conflict-review">
+                            <input type="hidden" name="conflict_mode" value="automatic">
+                            <?php if ($conflictOverview['showAcknowledged']): ?>
+                                <a class="admin-button admin-button--secondary"
+                                   href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=automatic">
+                                    Hide acknowledged (<?= dashboardEscape($conflictOverview['acknowledgedCount']) ?>)
+                                </a>
+                            <?php else: ?>
+                                <a class="admin-button admin-button--secondary"
+                                   href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=automatic&amp;show_acknowledged=1">
+                                    Show acknowledged (<?= dashboardEscape($conflictOverview['acknowledgedCount']) ?>)
+                                </a>
+                            <?php endif; ?>
+                            <button class="admin-button admin-button--secondary" type="submit" name="rescan" value="1">Re-scan Schedule</button>
+                            <a class="admin-button" href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=manual">Report Conflict</a>
+                        </form>
+                    <?php else: ?>
+                        <a class="admin-button admin-button--secondary"
+                           href="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=automatic">Automatic conflict scan</a>
+                    <?php endif; ?>
                 </div>
-                <dl class="schedule-summary-grid">
-                    <div><dt>Teacher conflicts</dt><dd><?= dashboardEscape($conflictTypeCounts['Teacher']) ?></dd></div>
-                    <div><dt>Room conflicts</dt><dd><?= dashboardEscape($conflictTypeCounts['Room']) ?></dd></div>
-                    <div><dt>Section conflicts</dt><dd><?= dashboardEscape($conflictTypeCounts['Section']) ?></dd></div>
-                    <div><dt>Schedule pairs</dt><dd><?= dashboardEscape(count($conflictOverview['allConflicts'])) ?></dd></div>
-                </dl>
-                <?php if ($conflictOverview['conflicts'] === []): ?>
-                    <p class="admin-empty"><?= $conflictOverview['allConflicts'] === [] ? 'No conflicts detected. Active schedules have no teacher, room, or section overlaps.' : 'No conflicts match this type filter.' ?></p>
-                <?php else: ?>
-                    <div class="admin-table-scroll" role="group" tabindex="0" aria-label="Schedule conflicts; scroll horizontally to view all columns">
-                        <table class="admin-table">
-                            <caption>Overlapping schedule pairs</caption>
-                            <thead><tr><th scope="col">Type</th><th scope="col">Day and time</th><th scope="col">Schedule 1</th><th scope="col">Schedule 2</th></tr></thead>
-                            <tbody>
-                                <?php foreach ($conflictOverview['conflicts'] as $conflict): ?>
-                                    <?php
-                                    $left = $conflict['left'];
-                                    $right = $conflict['right'];
-                                    ?>
-                                    <tr>
-                                        <td><?= dashboardEscape(implode(', ', $conflict['types'])) ?></td>
-                                        <th scope="row"><?= dashboardEscape($left['day_of_week'] . ', ' . date('g:i A', strtotime((string) $left['start_time'])) . '–' . date('g:i A', strtotime((string) $left['end_time']))) ?></th>
-                                        <td><?= dashboardEscape($left['subject_name'] . ' · ' . $left['teacher_first_name'] . ' ' . $left['teacher_last_name'] . ' · ' . $left['section_name'] . ' · ' . $left['room_name']) ?></td>
-                                        <td><?= dashboardEscape($right['subject_name'] . ' · ' . $right['teacher_first_name'] . ' ' . $right['teacher_last_name'] . ' · ' . $right['section_name'] . ' · ' . $right['room_name']) ?></td>
-                                    </tr>
+                <p class="conflict-scan-note">
+                    <?= $conflictOverview['mode'] === 'automatic'
+                        ? 'Automatic conflicts are found by re-scanning the active schedule. Acknowledge conflicts that have been reviewed and accepted.'
+                        : 'Manual reports let you flag a concern between two active schedules for follow-up.' ?>
+                </p>
+                <section class="conflict-policy" aria-labelledby="conflict-policy-title">
+                    <h3 id="conflict-policy-title">Scheduling policy</h3>
+                    <p>Each teacher: no more than 12 course units and 6 subjects per day. Each assigned course: 2–4 class sessions per day.</p>
+                    <span class="<?= $conflictOverview['policyWarnings'] === [] ? '' : 'is-warning' ?>"><?= $conflictOverview['policyWarnings'] === [] ? 'All rules met' : count($conflictOverview['policyWarnings']) . ' warnings' ?></span>
+                    <?php if ($conflictOverview['policyWarnings'] !== []): ?>
+                        <details class="conflict-policy-details">
+                            <summary>View policy warnings</summary>
+                            <ul>
+                                <?php foreach ($conflictOverview['policyWarnings'] as $warning): ?>
+                                    <li><strong><?= dashboardEscape($warning['day']) ?>:</strong> <?= dashboardEscape($warning['message']) ?></li>
                                 <?php endforeach; ?>
-                            </tbody>
-                        </table>
-                    </div>
+                            </ul>
+                        </details>
+                    <?php endif; ?>
+                </section>
+
+                <?php if ($conflictOverview['mode'] === 'automatic'): ?>
+                    <p class="conflict-scan-time">Schedule scanned <?= dashboardEscape($conflictOverview['scannedAt']) ?></p>
+                    <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
+                        <input type="hidden" name="section" value="attendance-scheduling">
+                        <input type="hidden" name="attendance_view" value="conflict-review">
+                        <input type="hidden" name="conflict_mode" value="automatic">
+                        <?php if ($conflictOverview['showAcknowledged']): ?>
+                            <input type="hidden" name="show_acknowledged" value="1">
+                        <?php endif; ?>
+                        <div class="admin-field">
+                            <label for="conflict-type-filter">Conflict type</label>
+                            <select id="conflict-type-filter" name="type">
+                                <?php foreach (['All types', 'Teacher', 'Room', 'Section'] as $type): ?>
+                                    <option value="<?= dashboardEscape($type) ?>"<?= $conflictOverview['filter'] === $type ? ' selected' : '' ?>><?= dashboardEscape($type) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <button class="admin-button admin-button--secondary" type="submit">Filter conflicts</button>
+                    </form>
+                    <dl class="schedule-summary-grid">
+                        <div><dt>Teacher conflicts</dt><dd><?= dashboardEscape($conflictOverview['typeCounts']['Teacher']) ?></dd></div>
+                        <div><dt>Room conflicts</dt><dd><?= dashboardEscape($conflictOverview['typeCounts']['Room']) ?></dd></div>
+                        <div><dt>Section conflicts</dt><dd><?= dashboardEscape($conflictOverview['typeCounts']['Section']) ?></dd></div>
+                        <div><dt><?= $conflictOverview['showAcknowledged'] ? 'Acknowledged pairs' : 'Unacknowledged pairs' ?></dt><dd><?= dashboardEscape(count($conflictOverview['conflicts'])) ?></dd></div>
+                    </dl>
+                    <?php if ($conflictOverview['conflicts'] === []): ?>
+                        <p class="admin-empty">
+                            <?= $conflictOverview['showAcknowledged']
+                                ? 'No acknowledged conflicts are currently recorded.'
+                                : (count($conflictOverview['allConflicts']) === 0
+                                    ? 'No conflicts detected. Active schedules have no teacher, room, or section overlaps.'
+                                    : 'No unacknowledged conflicts match this filter.') ?>
+                        </p>
+                    <?php else: ?>
+                        <div class="admin-table-scroll" role="group" tabindex="0" aria-label="Schedule conflicts; scroll horizontally to view all columns">
+                            <table class="admin-table">
+                                <caption><?= $conflictOverview['showAcknowledged'] ? 'Acknowledged overlapping schedule pairs' : 'Unacknowledged overlapping schedule pairs' ?></caption>
+                                <thead>
+                                    <tr><th scope="col">Type</th><th scope="col">Day and time</th><th scope="col">Schedule 1</th><th scope="col">Schedule 2</th><th scope="col">Review</th></tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($conflictOverview['conflicts'] as $conflict): ?>
+                                        <?php
+                                        $left = $conflict['left'];
+                                        $right = $conflict['right'];
+                                        ?>
+                                        <tr>
+                                            <td><?= dashboardEscape(implode(', ', $conflict['types'])) ?></td>
+                                            <th scope="row"><?= dashboardEscape($left['day_of_week'] . ', ' . date('g:i A', strtotime((string) $left['start_time'])) . '–' . date('g:i A', strtotime((string) $left['end_time']))) ?></th>
+                                            <td><?= dashboardEscape($left['subject_name'] . ' · ' . $left['teacher_first_name'] . ' ' . $left['teacher_last_name'] . ' · ' . $left['section_name'] . ' · ' . $left['room_name']) ?></td>
+                                            <td><?= dashboardEscape($right['subject_name'] . ' · ' . $right['teacher_first_name'] . ' ' . $right['teacher_last_name'] . ' · ' . $right['section_name'] . ' · ' . $right['room_name']) ?></td>
+                                            <td>
+                                                <?php if ($conflict['acknowledgedAt'] !== null): ?>
+                                                    <span>Acknowledged <?= dashboardEscape(date('M j, Y g:i A', strtotime((string) $conflict['acknowledgedAt']))) ?></span>
+                                                <?php else: ?>
+                                                    <form method="post" action="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=automatic">
+                                                        <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
+                                                        <input type="hidden" name="action" value="acknowledge_conflict">
+                                                        <input type="hidden" name="schedule_one_id" value="<?= dashboardEscape($conflict['scheduleIds'][0]) ?>">
+                                                        <input type="hidden" name="schedule_two_id" value="<?= dashboardEscape($conflict['scheduleIds'][1]) ?>">
+                                                        <button class="admin-button admin-button--secondary" type="submit">Acknowledge</button>
+                                                    </form>
+                                                <?php endif; ?>
+                                            </td>
+                                        </tr>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                    <?php endif; ?>
+                <?php else: ?>
+                    <?php
+                    $scheduleOneError = $fieldError('schedule_one_id');
+                    $scheduleTwoError = $fieldError('schedule_two_id');
+                    $conflictReasonError = $fieldError('reason');
+                    $firstInvalidField = $scheduleOneError !== ''
+                        ? 'conflict-schedule-one'
+                        : ($scheduleTwoError !== '' ? 'conflict-schedule-two' : 'conflict-reason');
+                    ?>
+                    <section class="conflict-manual-report" aria-labelledby="manual-conflict-title">
+                        <h3 id="manual-conflict-title">Report a manual conflict</h3>
+                        <p>Select the two schedules involved and explain the concern. Manual reports are saved for follow-up.</p>
+                        <form class="admin-form" method="post" action="admin-section.php?section=attendance-scheduling&amp;attendance_view=conflict-review&amp;conflict_mode=manual">
+                            <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
+                            <input type="hidden" name="action" value="report_manual_conflict">
+                            <p class="admin-field-required-note"><span class="admin-required-marker">Required</span> fields must be completed.</p>
+                            <div class="admin-form-grid conflict-report-fields">
+                                <div class="admin-field">
+                                    <label for="conflict-schedule-one">First schedule <span class="admin-required-marker">Required</span></label>
+                                    <select id="conflict-schedule-one" name="schedule_one_id" required<?= $scheduleOneError !== '' ? ' aria-invalid="true" aria-describedby="conflict-schedule-one-error"' : '' ?><?= $firstInvalidField === 'conflict-schedule-one' && $scheduleOneError !== '' ? ' autofocus' : '' ?>>
+                                        <option value="">Select a schedule</option>
+                                        <?php foreach ($conflictOverview['schedules'] as $schedule): ?>
+                                            <option value="<?= dashboardEscape($schedule['schedule_id']) ?>"<?= ($oldInput['schedule_one_id'] ?? '') === (string) $schedule['schedule_id'] ? ' selected' : '' ?>>
+                                                <?= dashboardEscape($schedule['subject_code'] . ' · ' . $schedule['section_name'] . ' · ' . $schedule['day_of_week'] . ' ' . date('g:i A', strtotime((string) $schedule['start_time'])) . '–' . date('g:i A', strtotime((string) $schedule['end_time'])) . ' · ' . $schedule['room_name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <?php if ($scheduleOneError !== ''): ?><span class="admin-field-error" id="conflict-schedule-one-error"><?= dashboardEscape($scheduleOneError) ?></span><?php endif; ?>
+                                </div>
+                                <div class="admin-field">
+                                    <label for="conflict-schedule-two">Second schedule <span class="admin-required-marker">Required</span></label>
+                                    <select id="conflict-schedule-two" name="schedule_two_id" required<?= $scheduleTwoError !== '' ? ' aria-invalid="true" aria-describedby="conflict-schedule-two-error"' : '' ?><?= $firstInvalidField === 'conflict-schedule-two' && $scheduleTwoError !== '' ? ' autofocus' : '' ?>>
+                                        <option value="">Select a schedule</option>
+                                        <?php foreach ($conflictOverview['schedules'] as $schedule): ?>
+                                            <option value="<?= dashboardEscape($schedule['schedule_id']) ?>"<?= ($oldInput['schedule_two_id'] ?? '') === (string) $schedule['schedule_id'] ? ' selected' : '' ?>>
+                                                <?= dashboardEscape($schedule['subject_code'] . ' · ' . $schedule['section_name'] . ' · ' . $schedule['day_of_week'] . ' ' . date('g:i A', strtotime((string) $schedule['start_time'])) . '–' . date('g:i A', strtotime((string) $schedule['end_time'])) . ' · ' . $schedule['room_name']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                    <?php if ($scheduleTwoError !== ''): ?><span class="admin-field-error" id="conflict-schedule-two-error"><?= dashboardEscape($scheduleTwoError) ?></span><?php endif; ?>
+                                </div>
+                                <div class="admin-field conflict-report-reason">
+                                    <label for="conflict-reason">Reason for report <span class="admin-required-marker">Required</span></label>
+                                    <textarea id="conflict-reason" name="reason" rows="3" maxlength="1000" required<?= $conflictReasonError !== '' ? ' aria-invalid="true" aria-describedby="conflict-reason-error"' : '' ?><?= $firstInvalidField === 'conflict-reason' && $conflictReasonError !== '' ? ' autofocus' : '' ?>><?= dashboardEscape($oldInput['reason'] ?? '') ?></textarea>
+                                    <?php if ($conflictReasonError !== ''): ?><span class="admin-field-error" id="conflict-reason-error"><?= dashboardEscape($conflictReasonError) ?></span><?php endif; ?>
+                                </div>
+                            </div>
+                            <button class="admin-button" type="submit">Submit conflict report</button>
+                        </form>
+                    </section>
+                    <section class="conflict-manual-reports" aria-labelledby="manual-reports-title">
+                        <h3 id="manual-reports-title">Manual reports</h3>
+                        <?php if ($conflictOverview['manualReports'] === []): ?>
+                            <p class="admin-empty">No manual conflict reports have been submitted.</p>
+                        <?php else: ?>
+                            <div class="admin-table-scroll" role="group" tabindex="0" aria-label="Manual conflict reports; scroll horizontally to view all columns">
+                                <table class="admin-table">
+                                    <caption>Submitted manual conflict reports</caption>
+                                    <thead><tr><th scope="col">Status</th><th scope="col">Schedule 1</th><th scope="col">Schedule 2</th><th scope="col">Reason</th><th scope="col">Reported</th></tr></thead>
+                                    <tbody>
+                                        <?php foreach ($conflictOverview['manualReports'] as $report): ?>
+                                            <tr>
+                                                <td><?= dashboardEscape($report['status']) ?></td>
+                                                <td><?= dashboardEscape($report['schedule_one_snapshot']) ?></td>
+                                                <td><?= dashboardEscape($report['schedule_two_snapshot']) ?></td>
+                                                <td><?= dashboardEscape($report['reason']) ?></td>
+                                                <td><?= dashboardEscape(date('M j, Y g:i A', strtotime((string) $report['reported_at']))) ?></td>
+                                            </tr>
+                                        <?php endforeach; ?>
+                                    </tbody>
+                                </table>
+                            </div>
+                        <?php endif; ?>
+                    </section>
                 <?php endif; ?>
             </div>
         <?php endif; ?>
@@ -1215,6 +1358,13 @@ foreach ($lookupOptions as $lookupName => $options) {
                             $value = is_scalar($rawValue) ? (string) $rawValue : '';
                             $error = $fieldError($name);
                             $descriptionIds = [];
+                            if ($entityKey === 'curriculum' && in_array(
+                                $name,
+                                ['subject_id', 'subject_name_override', 'units_override'],
+                                true
+                            )) {
+                                $descriptionIds[] = 'admin-curriculum-subject-override-hint';
+                            }
                             if ($entityKey === 'payments' && in_array($name, ['student_fee_id', 'payment_term'], true)) {
                                 $descriptionIds[] = 'admin-payments-tuition-hint';
                             }
@@ -1278,12 +1428,16 @@ foreach ($lookupOptions as $lookupName => $options) {
                                                     throw new RuntimeException('Unable to encode curriculum options for a teaching assignment.');
                                                 }
                                                 $optionAttributes = ' data-curriculum-combinations="'
-                                                    . dashboardEscape($encodedCombinations) . '"';
+                                                    . dashboardEscape($encodedCombinations)
+                                                    . '" data-default-label="' . dashboardEscape((string) $optionLabel) . '"';
                                             }
                                             ?>
                                             <option value="<?= dashboardEscape((string) $optionValue) ?>"<?= $optionAttributes ?><?= $value === (string) $optionValue ? ' selected' : '' ?>><?= dashboardEscape((string) $optionLabel) ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <?php if ($entityKey === 'curriculum' && $name === 'subject_id'): ?>
+                                        <p class="admin-field-hint" id="admin-curriculum-subject-override-hint">Optional curriculum-specific name and units can differ by program. Leave either blank to use the shared subject catalog value.</p>
+                                    <?php endif; ?>
                                     <?php if ($entityKey === 'teaching_assignments' && $name === 'subject_id'): ?>
                                         <p class="admin-field-hint" id="admin-teaching-assignments-relationship-hint">Choose a class section and semester first. Only subjects in that program’s curriculum for the class year level and semester can be assigned.</p>
                                         <p class="admin-field-hint" id="admin-teaching-assignments-relationship-status" role="status" aria-atomic="true"></p>

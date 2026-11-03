@@ -1,0 +1,14 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Teaching-assignment field order is section, semester, then subject.",
+    "Dynamic subject labels use a separate subjectName value rather than parsing the displayed label.",
+    "The status region reports available-subject count and selected subject."
+  ]
+}
