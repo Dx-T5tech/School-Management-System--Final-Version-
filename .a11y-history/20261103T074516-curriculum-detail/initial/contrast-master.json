@@ -1,0 +1,24 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php"
+  ],
+  "findings": [
+    {
+      "rule": "CONTRAST-001",
+      "wcag": "1.4.11 AA",
+      "severity": "moderate",
+      "location": "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css:3227",
+      "summary": "The curriculum table's scrollable control boundary has insufficient contrast against its background.",
+      "fix": "Use a border color that contrasts at least 3:1 with the surrounding surface, such as a darker neutral than --line.",
+      "evidence": "The scroll container uses --line (#e3e1d8) against the near-white panel, approximately 1.3:1.",
+      "component": "Curriculum detail table scroll region"
+    }
+  ],
+  "passed": [
+    "Curriculum detail text colors meet normal-text contrast requirements.",
+    "Curriculum detail links, buttons, and the keyboard-focusable scroll region have visible focus indicators.",
+    "Required/elective and subject status are conveyed with text, not color alone."
+  ]
+}

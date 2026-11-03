@@ -1,0 +1,24 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/admin-dashboard.php"
+  ],
+  "findings": [
+    {
+      "rule": "HEADING-SECTION-NAME",
+      "wcag": "2.4.6 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/admin-dashboard.php:140",
+      "summary": "The page’s H1, “Make today run smoothly,” does not identify the Admin dashboard’s topic for users navigating by headings.",
+      "fix": "Use a topic-specific H1 such as “Admin dashboard” or “School operations dashboard,” and keep the current phrase as supporting text.",
+      "evidence": "The page title is “Admin dashboard,” but the H1 is “Make today run smoothly.”"
+    }
+  ],
+  "passed": [
+    "Heading levels are sequential, with one H1 and the tuition summary at H2.",
+    "The tuition summary section is named by its “Tuition by term” heading.",
+    "The document title identifies the Admin dashboard; main, navigation, header, and footer landmarks are present."
+  ]
+}

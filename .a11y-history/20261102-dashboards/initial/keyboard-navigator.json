@@ -1,0 +1,48 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-SKIP-LINK-TARGET",
+      "wcag": "2.4.1 A",
+      "severity": "moderate",
+      "location": "app/Shared/dashboard_layout.php:83",
+      "summary": "The skip link targets a main element that cannot receive programmatic focus, so keyboard users may continue tabbing through the sidebar instead of bypassing it.",
+      "fix": "Add tabindex=\"-1\" to the main element with id=\"main-content\" so activating the skip link moves focus to the content.",
+      "evidence": "<a href=\"#main-content\">; <main id=\"main-content\">"
+    },
+    {
+      "rule": "KEYBOARD-MENU-FRAGMENT-FOCUS",
+      "wcag": "2.4.3 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:46-49",
+      "summary": "Activating a mobile sidebar link returns focus to the menu button before navigating to a non-focusable section, leaving keyboard focus away from the newly displayed content.",
+      "fix": "Close the sidebar without returning focus when a navigation link is activated; make its destination focusable with tabindex=\"-1\" and move focus to that destination after navigation. Keep returning focus to the button for Escape dismissal.",
+      "evidence": "The sidebar click handler calls setMenuOpen(false), which calls menuButton.focus()."
+    },
+    {
+      "rule": "KEYBOARD-RESPONSIVE-FOCUS",
+      "wcag": "2.4.7 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:58-61; public/assets/css/dashboard.css:.sidebar, .menu-toggle",
+      "summary": "Crossing the mobile breakpoint can hide the element that currently has focus without moving focus to a visible control.",
+      "fix": "When the breakpoint changes, check whether focus is inside the sidebar or on the menu button; before hiding that element, move focus to a visible, logical control in the new layout.",
+      "evidence": "The breakpoint handler closes the sidebar but does not relocate focus; CSS hides the sidebar on mobile and the menu button on desktop."
+    }
+  ],
+  "passed": [
+    "Skip link is the first focusable element and is visually revealed on focus.",
+    "Links and buttons have a :focus-visible outline.",
+    "Mobile menu supports Escape dismissal and returns focus to its toggle.",
+    "No positive tabindex values were found in the scoped files."
+  ],
+  "notes": [
+    "Automated keyboard testing could not reach the dashboard routes because they require sign-in; findings are based on the scoped template, CSS, and JavaScript."
+  ]
+}

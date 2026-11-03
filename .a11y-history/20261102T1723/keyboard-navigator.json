@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/super-admin-dashboard.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Static review found no keyboard-order, focus-handling, or responsive-navigation issues.",
+    "At mobile width, opening the menu focuses the first navigation item, Escape closes it and returns focus to the toggle, and the page has no horizontal overflow."
+  ],
+  "notes": [
+    "The first browser check found focus landing on the brand link; the menu now focuses the first actual navigation item."
+  ]
+}

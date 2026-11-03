@@ -1,0 +1,20 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/admin-section.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-GROUP-001",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/admin-section.php:284-286,445-448",
+      "summary": "The tuition-fee and tuition-term controls are presented as independently optional, but validation requires both or neither, so their relationship is not conveyed before submission.",
+      "fix": "Group the native selects in a fieldset with a legend such as “Tuition assignment (optional)” and add visible instructions: “Select both fields or leave both blank.” Keep each select’s individual label.",
+      "evidence": "Both fields are configured as optional; validation rejects selecting only one."
+    }
+  ]
+}

@@ -1,0 +1,60 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Shared/admin_teacher_lifecycle_content.php",
+    "public/admin-teacher-lifecycle.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-ERROR-STATE",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "location": "app/Shared/admin_teacher_lifecycle_content.php:88",
+      "summary": "The applicant Department select shows an error description without exposing its invalid state programmatically.",
+      "fix": "When a department error exists, add aria-invalid=\"true\" to the select along with its existing aria-describedby reference; omit both error attributes when valid.",
+      "evidence": "The select conditionally references teacher-lifecycle-department_id-error but never sets aria-invalid."
+    },
+    {
+      "rule": "FORM-ERROR-ASSOCIATION",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "location": "app/Shared/admin_teacher_lifecycle_content.php:245",
+      "summary": "The performance-review Teacher error is not associated with its select, so assistive technology may not announce the error with the field.",
+      "fix": "Give the error paragraph an ID and conditionally reference it with aria-describedby on the select; also set aria-invalid=\"true\" while the error exists.",
+      "evidence": "The Teacher error paragraph has no ID, and the select has neither aria-describedby nor aria-invalid."
+    },
+    {
+      "rule": "FORM-ERROR-STATE",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "location": "app/Shared/admin_teacher_lifecycle_content.php:259",
+      "summary": "The performance-review rating select references its error text but does not expose its invalid state.",
+      "fix": "Conditionally add aria-invalid=\"true\" when the rating error exists, alongside the existing error description reference.",
+      "evidence": "The rating select references teacher-lifecycle-rating-error but never sets aria-invalid."
+    },
+    {
+      "rule": "FORM-ERROR-MISSING",
+      "wcag": "3.3.1 A",
+      "severity": "serious",
+      "location": "app/Shared/admin_teacher_lifecycle_content.php:381",
+      "summary": "A resignation Teacher validation error is generated server-side but is not rendered beside or associated with the select.",
+      "fix": "Render the teacher_id error as visible text with a unique ID, reference it from the select with aria-describedby, and set aria-invalid=\"true\" while the error exists.",
+      "evidence": "The server sets fieldErrors['teacher_id'] for schedule_resignation, but this select has no error rendering or error-state attributes."
+    },
+    {
+      "rule": "FORM-ERROR-FOCUS",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "location": "public/assets/js/dashboard.js:58",
+      "summary": "When a form reopens after field-level validation errors without a global error summary, focus goes to the first field rather than the first invalid field.",
+      "fix": "On error-driven modal reopening, focus a rendered error summary or the first [aria-invalid=\"true\"] control; ensure every field error is visible and programmatically associated.",
+      "evidence": "The modal selects the first input, select, or textarea; fieldErrors do not create data-error-summary, and the later focus fallback does not target lifecycle-form errors."
+    }
+  ],
+  "passed": [
+    "Applicant, performance-review, and resignation controls have visible, programmatically associated labels.",
+    "Required controls use native required attributes and visible Required indicators.",
+    "All three form panels are configured to reopen their modal after server-side validation errors."
+  ]
+}

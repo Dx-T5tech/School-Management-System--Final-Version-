@@ -1,0 +1,20 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public\\login.php",
+    "public\\assets\\js\\auth.js",
+    "public\\student-enrollment.php",
+    "app\\Shared\\student_enrollment_content.php",
+    "public\\assets\\js\\dashboard.js",
+    "public\\assets\\css\\auth.css",
+    "public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Login errors receive focus through auth.js, and the focused error summary has a visible focus style.",
+    "Invalid enrollment selection receives focus through dashboard.js, and the selector has a visible focus style."
+  ],
+  "notes": [
+    "Confirmed by code inspection; runtime keyboard verification was unavailable because Playwright is not installed."
+  ]
+}

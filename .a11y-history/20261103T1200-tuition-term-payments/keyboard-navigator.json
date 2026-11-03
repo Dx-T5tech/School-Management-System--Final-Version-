@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The tuition summary’s scrollable table is keyboard-focusable and has a visible focus indicator.",
+    "The payment assignment fieldset uses native fieldset and legend semantics; its labeled select controls follow the natural DOM tab order and have visible focus indicators."
+  ],
+  "notes": [
+    "Runtime keyboard scans could not run because Playwright is not installed; findings are based on source inspection."
+  ]
+}

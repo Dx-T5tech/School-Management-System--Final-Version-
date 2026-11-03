@@ -1,0 +1,61 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/assets/css/auth.css"
+  ],
+  "findings": [
+    {
+      "rule": "FORMS-REQUIRED-VISIBILITY",
+      "wcag": "3.3.2 A",
+      "severity": "moderate",
+      "location": "public/login.php:170-196; public/setup.php:169-197",
+      "summary": "All fields are required, but users receive no visible indication of that before submitting.",
+      "fix": "Add visible text such as “All fields are required” before each form, or mark each required label visibly; keep the native required attributes.",
+      "evidence": "Every visible input has required, but neither form shows a required-fields instruction or marker."
+    },
+    {
+      "rule": "FORMS-SETUP-ERROR-ASSOCIATION",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "location": "public/setup.php:171-197",
+      "summary": "The setup error is associated with every field, so screen reader users may hear unrelated feedback without knowing which field needs correction.",
+      "fix": "Identify the field or fields that failed validation, set aria-invalid=\"true\" on those controls, and associate each with its specific visible error using aria-describedby; keep general system errors separate from field errors.",
+      "evidence": "Each of the six inputs conditionally references the same setup-error paragraph."
+    },
+    {
+      "rule": "FORMS-SETUP-PASSWORD-INSTRUCTIONS",
+      "wcag": "3.3.2 A",
+      "severity": "moderate",
+      "location": "public/setup.php:169, 193-197",
+      "summary": "The 12-character password instruction is not programmatically associated with either password field.",
+      "fix": "Give visible password guidance an id and reference it from both password fields using aria-describedby, alongside any field-specific error description.",
+      "evidence": "The intro states the 12-character minimum, but the password inputs do not reference it."
+    },
+    {
+      "rule": "FORMS-SETUP-RETAIN-VALID-VALUES",
+      "wcag": "3.3.7 A",
+      "severity": "moderate",
+      "location": "public/setup.php:177-197",
+      "summary": "After a setup validation error, previously entered names, email, and username are cleared and must be entered again.",
+      "fix": "Republish escaped submitted values for non-password fields after validation errors; continue clearing password fields.",
+      "evidence": "The setup inputs have no value attributes, despite server-side validation returning the form."
+    },
+    {
+      "rule": "FORMS-PASSWORD-VISIBILITY",
+      "wcag": "n/a",
+      "severity": "minor",
+      "location": "public/login.php:189-196; public/setup.php:193-197",
+      "summary": "Password fields have no show/hide control, so users cannot verify what they typed before submitting.",
+      "fix": "Offer an accessible button to show or hide each password, with a clear state announcement; do not interfere with paste or password managers.",
+      "evidence": "The scoped forms contain password inputs but no visibility toggle."
+    }
+  ],
+  "passed": [
+    "Visible labels are programmatically associated with each visible input.",
+    "Login and setup inputs use native required constraints.",
+    "Username/email and password fields use appropriate autocomplete tokens.",
+    "Password inputs remain paste-compatible; no paste-blocking behavior was found."
+  ]
+}

@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#172b3b">
+    <title>Admissions - Fullbright College</title>
+    <link rel="stylesheet" href="assets/css/dashboard.css">
+    <link rel="stylesheet" href="assets/css/admissions.css">
+</head>
+<body class="admissions-page">
+    <a class="admissions-skip-link" href="#main-content">Skip to main content</a>
+    <header class="admissions-header">
+        <a class="admissions-brand" href="admissions.php" aria-label="Fullbright College admissions home">
+            <span class="admissions-brand-mark" aria-hidden="true">F</span>
+            <span class="admissions-brand-copy">
+                <span class="admissions-brand-name">Fullbright College</span>
+                <span class="admissions-brand-caption">Student Management System</span>
+            </span>
+        </a>
+        <nav class="admissions-nav" aria-label="Admissions">
+            <a class="admissions-nav-apply" href="enrollment-instructions.php">Enroll now</a>
+            <a href="login.php">Student login</a>
+        </nav>
+    </header>
+
+    <main class="admissions-main" id="main-content" tabindex="-1">
+        <div class="admissions-card">
+            <section class="admissions-intro" aria-labelledby="admissions-heading">
+                <h1 id="admissions-heading">Welcome to Fullbright College.</h1>
+                <p class="admissions-lead">
+                    Complete your application, choose an available class section, and create your Student account at the end of enrollment.
+                </p>
+
+                <ol class="admissions-steps" aria-label="Enrollment steps">
+                    <li>
+                        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                            <path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Choose a program with open sections
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                            <path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Choose a class section and set your password
+                    </li>
+                    <li>
+                        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+                            <path d="m5 10 3.2 3.2L15.5 6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2"></path>
+                        </svg>
+                        Your active Student account opens your dashboard
+                    </li>
+                </ol>
+
+                <div class="admissions-actions">
+                    <a class="admissions-button admissions-button--primary" href="enrollment-instructions.php">New student - enroll now</a>
+                    <a class="admissions-button admissions-button--secondary" href="login.php">Already enrolled - student login</a>
+                </div>
+            </section>
+
+            <section class="admissions-programs" aria-labelledby="programs-heading">
+                <div class="admissions-programs-heading">
+                    <h2 id="programs-heading">Programs &amp; departments</h2>
+                    <p>Current choices from the school catalog</p>
+                </div>
+
+                <?php if ($programGroups === []): ?>
+                    <p class="admissions-catalog-empty">
+                        No active programs are listed yet. Please check back or contact the school office.
+                    </p>
+                <?php else: ?>
+                    <div class="admissions-program-groups">
+                        <?php $departmentIndex = 0; ?>
+                        <?php foreach ($programGroups as $departmentName => $departmentPrograms): ?>
+                            <section class="admissions-program-group" aria-labelledby="department-<?= $departmentIndex ?>">
+                                <h3 id="department-<?= $departmentIndex ?>">
+                                    <?= dashboardEscape($departmentName) ?>
+                                </h3>
+                                <ul>
+                                    <?php foreach ($departmentPrograms as $program): ?>
+                                        <?php $hasOpenSections = (int) $program['available_sections'] > 0; ?>
+                                        <li class="admissions-program">
+                                            <h4><?= dashboardEscape($program['program_name']) ?></h4>
+                                            <?php if (is_string($program['description']) && trim($program['description']) !== ''): ?>
+                                                <p><?= dashboardEscape($program['description']) ?></p>
+                                            <?php elseif (is_string($program['program_code']) && $program['program_code'] !== ''): ?>
+                                                <p><?= dashboardEscape($program['program_code']) ?></p>
+                                            <?php endif; ?>
+                                            <span class="admissions-program-status<?= $hasOpenSections ? ' is-open' : '' ?>">
+                                                <?= $hasOpenSections ? 'Sections available' : 'No sections open right now' ?>
+                                            </span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            </section>
+                            <?php $departmentIndex++; ?>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+            </section>
+        </div>
+    </main>
+
+    <footer class="admissions-footer">
+        <p>© <?= dashboardEscape(date('Y')) ?> Fullbright College · Student Management System</p>
+    </footer>
+</body>
+</html>

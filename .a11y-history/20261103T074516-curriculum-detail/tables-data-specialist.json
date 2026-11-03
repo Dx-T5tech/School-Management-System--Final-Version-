@@ -1,0 +1,14 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Curriculum tables have descriptive captions identifying academic year, year level, and semester.",
+    "Column headers use th scope=\"col\"; subject codes use th scope=\"row\".",
+    "Tables are wrapped in keyboard-focusable, named horizontal-scroll containers; the CSS enables horizontal overflow and the minimum table width preserves columns.",
+    "Edit and Remove controls have names that identify the subject and curriculum action."
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\super_admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Sidebar text and current-page marker meet contrast requirements; the gold marker is 8.25:1 against the base navy and 6.26:1 against the hover surface.",
+    "Form text and helper text pass; the authored control border is 3.54:1 against its background, exceeding the 3:1 non-text minimum.",
+    "Success, error, and informational notice text measure 10.31:1, 8.99:1, and 5.67:1 respectively.",
+    "Table captions and body text pass on the authored row backgrounds; header text measures 12.65:1.",
+    "Responsive rules inspected change layout without changing the scoped components’ authored contrast colors."
+  ],
+  "notes": [
+    "Static source review only; browser-native placeholder and checkbox rendering was not runtime-sampled."
+  ]
+}

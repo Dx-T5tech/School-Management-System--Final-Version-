@@ -1,0 +1,12 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Disclosure summaries provide clear accessible names.",
+    "The program, year, semester, and subject heading levels remain coherent when disclosures are expanded.",
+    "Unassigned subjects have an h3 group heading followed by h4 subject headings."
+  ]
+}

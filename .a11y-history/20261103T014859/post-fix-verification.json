@@ -1,0 +1,22 @@
+{
+  "skill": "accessibility-lead",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "app/Core/admin.php",
+    "app/Core/super_admin.php",
+    "app/Core/teacher.php",
+    "app/Modules/StudentManagement/Students/Services/student.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "All four roles render grouped navigation headings with every existing destination retained.",
+    "Exactly one current page link is exposed for each role; Academic and Attendance parent state falls back to aria-current when no child is current.",
+    "Student unread-notification badge text remains available to assistive technology.",
+    "All submenu links are keyboard-reachable anchors in document order.",
+    "PHP syntax checks and grouped-sidebar render tests passed."
+  ],
+  "notes": [
+    "Review was source-based and used CLI rendering tests; browser keyboard interaction and screen-reader testing were unavailable because the dashboard requires an authenticated role session."
+  ]
+}

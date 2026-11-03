@@ -1,0 +1,20 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/assets/css/auth.css",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Both forms show that fields are required and retain native required validation.",
+    "Setup validation identifies invalid fields, associates specific messages, and preserves escaped non-password values.",
+    "Password length guidance is associated with both setup password fields; password values are not repopulated.",
+    "The show/hide password buttons are keyboard operable and update the input type, accessible name, and pressed state.",
+    "Autocomplete and paste support remain enabled."
+  ],
+  "notes": [
+    "The authenticated account fallback is used because the shared dashboard layout is absent."
+  ]
+}

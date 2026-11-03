@@ -1,0 +1,13 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/admin-dashboard.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Admin dashboard section and content-grid closing structure is correctly nested.",
+    "The page has one H1, “Admin dashboard,” and its topic headings follow a logical hierarchy.",
+    "The main, sidebar, review, header, and footer landmarks are correctly nested and named."
+  ]
+}

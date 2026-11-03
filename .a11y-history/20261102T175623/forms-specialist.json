@@ -1,0 +1,56 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app\\Shared\\super_admin_section_content.php",
+    "public\\super-admin-section.php",
+    "app\\Core\\super_admin.php",
+    "public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-REQUIRED-001",
+      "wcag": "3.3.2 A",
+      "severity": "moderate",
+      "location": "app\\Shared\\super_admin_section_content.php:29-45,206",
+      "summary": "Required fields have no visible indication, so sighted users may not know which Admin and school fields must be completed.",
+      "fix": "Keep the native required attributes and add visible “Required” text to those labels, or add a visible note explaining a required-field marker at the start of each affected form.",
+      "evidence": "Fields such as First name and School name have required attributes but no visible required marker or form-level instruction."
+    },
+    {
+      "rule": "FORM-ERROR-001",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "location": "app\\Shared\\super_admin_section_content.php:14-15",
+      "summary": "Validation errors appear only in a global alert and are not associated with the affected controls, leaving users without a direct path to correct them.",
+      "fix": "Render an inline text error beside each affected control, set that control's aria-invalid=\"true\", and reference the error ID with aria-describedby; focus the first invalid control or an error summary after validation fails.",
+      "evidence": "The only error markup is a page-level paragraph with role=\"alert\"; inputs have no error descriptions or invalid state."
+    },
+    {
+      "rule": "FORM-HELP-001",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "location": "app\\Shared\\super_admin_section_content.php:44-46",
+      "summary": "The temporary-password guidance is not programmatically associated with its input, so it may be missed when users navigate directly between form controls.",
+      "fix": "Give the hint an ID and add that ID to the password input's aria-describedby attribute.",
+      "evidence": "The password hint follows the input but has no ID, and the input has no aria-describedby."
+    },
+    {
+      "rule": "FORM-SAFE-SUBMIT-001",
+      "wcag": "3.3.4 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app\\Shared\\super_admin_section_content.php:73-78",
+      "summary": "Deactivating an Admin takes effect on a single submit, with no confirmation or in-interface way to reverse the account status.",
+      "fix": "Add an accessible review-and-confirm step that identifies the Admin and offers a clear cancel action, or provide an immediate, accessible way to undo the deactivation.",
+      "evidence": "The row's POST form submits action=deactivate directly from a button labeled “Deactivate.”"
+    }
+  ],
+  "passed": [
+    "Visible text inputs, selects, textareas, and permission checkboxes have associated native labels; permission checkboxes are grouped by module with fieldset and legend.",
+    "POST actions use CSRF tokens, and the route performs server-side validation for Admin creation, permission assignments, and school configuration.",
+    "Successful updates use post/redirect/get feedback, and the stylesheet provides visible focus outlines."
+  ],
+  "notes": [
+    "Static source review only; browser and assistive-technology behavior was not runtime-tested."
+  ]
+}

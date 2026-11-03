@@ -1,0 +1,31 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/auth.css",
+    "public/assets/css/dashboard.css",
+    "public/login.php",
+    "public/setup.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "CONTRAST-UI-001",
+      "wcag": "1.4.11 AA",
+      "severity": "moderate",
+      "location": "public/assets/css/auth.css:124-134",
+      "summary": "The default login and setup input borders have insufficient contrast to distinguish the fields from their backgrounds.",
+      "fix": "Darken the default input border to at least 3:1 against adjacent surfaces; for example, use #7d8a8c instead of #c9c8bf.",
+      "evidence": "#c9c8bf on #fffefa measures 1.67:1; 3:1 minimum.",
+      "component": "Login and setup form fields"
+    }
+  ],
+  "passed": [
+    "Login/setup error and success text combinations meet WCAG AA.",
+    "Auth button text passes contrast in default and hover states.",
+    "Source-defined auth focus rings use a contrasting navy outline.",
+    "Reviewed auth story text, form helper text, and setup link text combinations meet 4.5:1."
+  ],
+  "notes": [
+    "The shared dashboard layout was absent during review, so dashboard sign-out markup could not be inspected."
+  ]
+}

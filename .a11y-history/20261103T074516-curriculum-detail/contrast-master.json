@@ -1,0 +1,10 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The curriculum scroll-region border #8a887e exceeds 3:1 contrast against nearby surfaces: 3.52:1 against #fffefa, 3.37:1 against #faf9f4, and 3.23:1 against #f5f4ef."
+  ]
+}

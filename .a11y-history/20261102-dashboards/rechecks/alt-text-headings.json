@@ -1,0 +1,11 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The page-level footer is outside main and uses a native footer element, exposing the contentinfo landmark.",
+    "Heading structure has one H1 and a valid H1–H2–H3 hierarchy with no skipped levels."
+  ]
+}

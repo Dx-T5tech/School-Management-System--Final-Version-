@@ -1,0 +1,11 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public/super-admin-dashboard.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "ARIA roles, names, states, and references are appropriate for the dashboard sections."
+  ]
+}

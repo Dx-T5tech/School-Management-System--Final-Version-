@@ -1,0 +1,19 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/login.php",
+    "public/assets/css/auth.css",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The public Super Admin setup link is absent from the sign-in page.",
+    "The remaining sign-in focus order follows the page markup.",
+    "The password toggle remains keyboard-operable.",
+    "Visible focus styles remain on login inputs, toggle, submit button, and links.",
+    "No keyboard trap or positive tabindex was found."
+  ],
+  "notes": [
+    "The check was limited to the UI changed by removing the public setup link and form."
+  ]
+}

@@ -1,0 +1,30 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "app/Core/admin.php",
+    "app/Core/super_admin.php",
+    "app/Core/teacher.php",
+    "app/Modules/StudentManagement/Students/Services/student.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-CURRENT",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app/Shared/dashboard_layout.php:79-92",
+      "summary": "An active Academic or Attendance parent link can look current but lack aria-current whenever its submenu exists and no child link is current.",
+      "fix": "Suppress aria-current on a parent only when one of its submenu links is current; otherwise set aria-current=page on the active parent.",
+      "evidence": "The is-current class depends on item.current, but aria-current was suppressed based on submenu presence instead of whether a child was current."
+    }
+  ],
+  "passed": [
+    "Navigation groups preserve item order, and Academic/Attendance submenu links are ordinary anchors in sequential Tab order.",
+    "The skip link is first in document order; links and buttons have visible focus styling."
+  ],
+  "notes": [
+    "Static source review only; no browser keyboard scan was run."
+  ]
+}

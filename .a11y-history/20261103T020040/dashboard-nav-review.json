@@ -1,0 +1,21 @@
+{
+  "skill": "accessibility-lead",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Collapsed navigation groups are hidden from layout and interaction when closed.",
+    "Keyboard Space toggles a navigation group, updates aria-expanded, and returns focus to the toggle on close.",
+    "Hash-current links expand their group and receive aria-current=location.",
+    "The mobile menu control is exposed only after its handler is initialized; without JavaScript, the mobile sidebar remains visible as static navigation.",
+    "Reduced-motion mode opens and closes groups without spatial animation or delayed hiding.",
+    "A pagehide event cancels delayed navigation, and pageshow clears stale page-exit state."
+  ],
+  "notes": [
+    "Keyboard-navigator and aria-specialist agent launches failed before review because the runtime rejected the requested model. The accessibility lead completed a direct code review and targeted Playwright fixture checks instead.",
+    "The authenticated dashboard could not be visually reviewed because opening the route redirected to sign-in."
+  ]
+}

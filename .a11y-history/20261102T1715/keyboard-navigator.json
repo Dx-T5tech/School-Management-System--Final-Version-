@@ -1,0 +1,33 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/teacher-dashboard.php",
+    "public/student-dashboard.php",
+    "public/role-dashboard.php",
+    "public/login.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-001",
+      "wcag": "2.4.11 AA",
+      "severity": "moderate",
+      "location": "public/assets/css/dashboard.css:824-835",
+      "summary": "The fixed mobile sidebar has no vertical scrolling, so its navigation links can extend outside short viewports and receive focus while off-screen.",
+      "fix": "Make the mobile sidebar vertically scrollable within the viewport, for example with `max-height: 100dvh; overflow-y: auto`, and verify focused links remain visible on short screens.",
+      "evidence": "At max-width 860px the sidebar is displayed with 72px top padding, but no max-height or overflow-y is set.",
+      "component": "Shared teacher and student dashboard navigation"
+    }
+  ],
+  "passed": [
+    "Dashboard and login pages place a skip link first in the tab order and target a main element with tabindex=\"-1\".",
+    "The responsive navigation uses a native button and links; its script updates aria-expanded, supports Escape, and returns focus to the toggle.",
+    "No positive tabindex values were found; keyboard focus styles are defined for links, buttons, and programmatically focused dashboard sections.",
+    "The role dashboard performs a server redirect to the role-specific page rather than an in-page route change."
+  ],
+  "notes": [
+    "Automated keyboard and viewport scans could not run because Playwright is not installed; findings are based on source review."
+  ]
+}

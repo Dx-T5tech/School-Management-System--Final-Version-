@@ -1,0 +1,23 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-001",
+      "wcag": "2.1.1 A",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:235,262",
+      "summary": "The financial report's horizontally scrollable fee and payment tables cannot be scrolled using the keyboard.",
+      "fix": "Make both report table scroll containers keyboard-focusable with tabindex=0 and give each an accessible name.",
+      "evidence": "Both div.student-table-scroll wrappers lacked tabindex while dashboard.css applied overflow-x: auto."
+    }
+  ],
+  "notes": [
+    "Static source review only; no runtime keyboard or print-dialog scan was performed."
+  ]
+}

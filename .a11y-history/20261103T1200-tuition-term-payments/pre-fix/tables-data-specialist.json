@@ -1,0 +1,19 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "public/admin-dashboard.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "TABLE-CAPTION-001",
+      "wcag": "2.4.6 AA",
+      "severity": "moderate",
+      "location": "app/Shared/dashboard_layout.php:231",
+      "summary": "The table caption describes number formatting but not the tuition-by-term data.",
+      "fix": "Use a caption that names the table, such as “Tuition totals by term”; keep the currency-setting explanation as separate descriptive text.",
+      "evidence": "<caption>Amounts are shown without a currency symbol because no currency setting is defined.</caption>"
+    }
+  ]
+}

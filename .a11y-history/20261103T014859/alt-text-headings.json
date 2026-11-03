@@ -1,0 +1,14 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The sidebar uses a labeled navigation landmark with H2 group headings, followed by one H1 in the main landmark; no heading levels are skipped.",
+    "The template includes a skip link, labeled sidebar landmark, main landmark, and page-level header and footer."
+  ],
+  "notes": [
+    "Headings in section-content templates included at runtime were outside this scope."
+  ]
+}

@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\admin_section_content.php",
+    "public\\admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The five attendance sections use native navigation links, expose the selected page with aria-current, and retain visible text labels.",
+    "Each new filter has an associated label, and the page has one selected attendance section."
+  ]
+}

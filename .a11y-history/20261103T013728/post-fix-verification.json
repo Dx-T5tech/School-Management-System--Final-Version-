@@ -1,0 +1,21 @@
+{
+  "skill": "accessibility-lead",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Payment error summary now links to affected controls; field-level error descriptions and invalid states remain in place.",
+    "Post-submit success and error messages receive keyboard focus, and focus falls back to the first invalid payment field when needed.",
+    "Tuition term is visibly described as conditionally required and the form updates the native required state when the selected fee changes.",
+    "Financial report table regions are keyboard-focusable and named; payment-history rows use receipt numbers as row headers.",
+    "Static unlinked-payment notices no longer use live status semantics.",
+    "PHP syntax checks and JavaScript syntax checks passed; finance sections and payment error markup rendered in smoke tests."
+  ],
+  "notes": [
+    "This post-fix result is based on source inspection and CLI template smoke tests. No browser, assistive-technology, or forced-colors runtime scan was performed."
+  ]
+}

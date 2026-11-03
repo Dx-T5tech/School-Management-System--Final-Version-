@@ -1,0 +1,27 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_teacher_lifecycle_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "KBD-FOCUS-RETURN",
+      "wcag": "2.4.3 A",
+      "severity": "moderate",
+      "confidence": "high",
+      "location": "public/assets/js/dashboard.js:126",
+      "summary": "When a form dialog opens automatically after a validation error, closing it may return focus to the page body instead of its trigger.",
+      "fix": "On dialog close, explicitly return focus to its associated trigger when that trigger remains available; retain the error-summary focus while the dialog is open.",
+      "evidence": "The page-load path invokes dialogTrigger.click(), which does not focus the trigger before showModal(); the error summary is then focused inside the dialog."
+    }
+  ],
+  "passed": [
+    "The applicant, review, and resignation launchers are generated as semantic buttons with dialog labels and controls.",
+    "User-opened dialogs focus the first form field; native modal dialogs contain keyboard focus.",
+    "Each dialog has a semantic Close button, and Escape closes an open dialog."
+  ],
+  "notes": [
+    "Static source review only; no page-level keyboard scan was run."
+  ]
+}

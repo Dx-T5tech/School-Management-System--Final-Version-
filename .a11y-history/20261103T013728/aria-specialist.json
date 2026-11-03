@@ -1,0 +1,34 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-ERROR-FOCUS",
+      "wcag": "n/a",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:13-18",
+      "summary": "When payment fields have errors but no form-level error is rendered, focus has no error target and does not move to the first invalid field.",
+      "fix": "After checking [data-error-focus], focus the first invalid payment control before falling back to errorSummary or statusSummary.",
+      "evidence": "Payment field errors set aria-invalid and aria-describedby, but the script only focuses data-error-focus, data-error-summary, or data-status-summary."
+    },
+    {
+      "rule": "ARIA-STATUS-001",
+      "wcag": "n/a",
+      "severity": "minor",
+      "confidence": "medium",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:105,227",
+      "summary": "Static unlinked-payment notices use role=status despite not reporting a live update, adding unnecessary status-region semantics.",
+      "fix": "Remove role=status from static financial notices while retaining it for action-result messages.",
+      "evidence": "Unlinked completed-payment notices were rendered as role=status."
+    }
+  ],
+  "passed": [
+    "Unread counts are included in the notification navigation link's accessible name; the visual badge is hidden as duplicate content.",
+    "Fee reminders and payment-status notifications persist and render readable titles, messages, timestamps, and types."
+  ]
+}

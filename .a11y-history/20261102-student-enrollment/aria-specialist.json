@@ -1,0 +1,10 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app\\Shared\\student_enrollment_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The enrollment form is named by its visible heading through aria-labelledby."
+  ]
+}

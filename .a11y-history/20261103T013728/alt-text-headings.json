@@ -1,0 +1,17 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The shared layout provides one page-level H1; finance-page headings follow it with H2 sections and H3 subsections.",
+    "The document has an English language attribute, a main landmark, a skip link, and a title template.",
+    "The dashboard navigation and sidebar are named, and page-level header, main, and footer landmarks are present.",
+    "Decorative SVGs and visual-only icons or initials are hidden from assistive technology; no images requiring alt text appear in scope."
+  ],
+  "notes": [
+    "Actual page-title and H1 text are supplied dynamically outside these files, so their accuracy and uniqueness across finance pages could not be verified."
+  ]
+}

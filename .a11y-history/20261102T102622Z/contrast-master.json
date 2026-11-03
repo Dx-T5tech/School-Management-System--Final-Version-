@@ -1,0 +1,14 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php",
+    "app/Shared/admin_section_content.php",
+    "public/admin-dashboard.php"
+  ],
+  "findings": [],
+  "passed": [],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. No contrast findings were assessed."
+  ]
+}

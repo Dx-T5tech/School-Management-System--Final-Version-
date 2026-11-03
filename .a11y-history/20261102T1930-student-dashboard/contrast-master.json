@@ -1,0 +1,16 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\student_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Student sidebar text and active-state colors meet WCAG 1.4.3 AA; checked text/background pairs range from 7.49:1 to 15.57:1.",
+    "The student sidebar focus ring contrasts with its dark background at 15.97:1; the active accent contrasts at 9.98:1.",
+    "Notice text meets WCAG 1.4.3 AA at 9.65:1.",
+    "Student table text and profile labels meet WCAG 1.4.3 AA; checked pairs range from 5.57:1 to 12.65:1.",
+    "The student table focus outline contrasts with its light panel background at 14.4:1."
+  ]
+}

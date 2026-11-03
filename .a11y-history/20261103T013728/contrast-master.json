@@ -1,0 +1,22 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Text contrast: #526170 on #fffefa is 6.3:1; #1d2b37 on #fffefa is 14.32:1.",
+    "Status badge text: default 9.24:1, success 8.6:1, attention 7.18:1; all exceed 4.5:1.",
+    "Sidebar notification badge: white on #a33b37 is 6.49:1.",
+    "Notice text: standard 9.65:1 and error 8.99:1.",
+    "Payment input borders: #7d8a8c on #fffefa is 3.54:1, exceeding the 3:1 non-text threshold.",
+    "Finance progress indicator: #3d7188 against #e4e8f0 is 4.37:1, exceeding the 3:1 non-text threshold.",
+    "Focus indicators are defined for links, buttons, payment inputs/selects, and scrollable tables.",
+    "Unread notifications retain text and a Mark as read action in addition to the background distinction; status badges include text labels."
+  ],
+  "notes": [
+    "Review was based on source CSS and markup; no live-page browser sampling or forced-colors runtime test was performed."
+  ]
+}

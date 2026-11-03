@@ -1,0 +1,13 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public\\student-enrollment.php",
+    "app\\Shared\\student_enrollment_content.php",
+    "public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The field-error summary now links to the invalid class-section field.",
+    "The invalid select has aria-invalid=\"true\" and aria-describedby references the visible field error."
+  ]
+}

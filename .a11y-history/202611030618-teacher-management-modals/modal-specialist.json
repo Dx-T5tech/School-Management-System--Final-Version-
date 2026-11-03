@@ -1,0 +1,19 @@
+{
+  "skill": "modal-specialist",
+  "scope": [
+    "app/Shared/admin_teacher_lifecycle_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The applicant, performance-review, and resignation forms are converted to native dialogs opened with showModal(), with their headings connected through aria-labelledby.",
+    "Each launcher is a button with aria-controls and aria-haspopup=\"dialog\"; opening moves focus to the first form field.",
+    "Dialogs have a visible Close button, support Escape dismissal, and close on backdrop clicks outside the dialog bounds.",
+    "Native dialog closing restores focus to the previously focused launcher for normal user-opened dialogs.",
+    "Dialog content can scroll within the viewport, and forms remain available inline if JavaScript or showModal() support is unavailable."
+  ],
+  "notes": [
+    "This was a static source review; focus behavior was not verified in a browser or with assistive technology."
+  ]
+}

@@ -1,0 +1,26 @@
+{
+  "skill": "modal-specialist",
+  "scope": [
+    "C:/xampp/htdocs/School Management System (Final Version)/app/Shared/admin_section_content.php",
+    "C:/xampp/htdocs/School Management System (Final Version)/public/assets/js/dashboard.js",
+    "C:/xampp/htdocs/School Management System (Final Version)/public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "DIALOG-FOCUS-ERROR",
+      "wcag": "4.1.3 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "C:/xampp/htdocs/School Management System (Final Version)/public/assets/js/dashboard.js:54-56",
+      "summary": "When validation errors open the curriculum dialog, the error summary is not focused or reliably announced.",
+      "fix": "After showModal(), focus the in-dialog error summary when present before returning; otherwise focus the first invalid field. This ensures the error is announced when the modal opens.",
+      "evidence": "showModal() is followed by an early return when dialog.contains(errorSummary), bypassing the later error-focused field selection."
+    }
+  ],
+  "passed": [
+    "The overlay is created as a native dialog and opened with showModal(), providing modal semantics and focus containment.",
+    "The dialog is labelled by its form heading.",
+    "Normal opening moves focus into the form; native dialog closing supports focus return to the opener.",
+    "A visible Close button closes the dialog, and Escape closes an open dialog."
+  ]
+}

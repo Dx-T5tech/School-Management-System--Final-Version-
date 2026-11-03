@@ -1,0 +1,14 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Skip link targets the main element, which has tabindex=\"-1\" and a visible focus style.",
+    "Sidebar fragment-link activation closes the mobile menu and focuses the destination.",
+    "When the viewport crosses to mobile while focus is in the sidebar, :focus-within keeps it displayed until the resize handler moves focus to the visible menu toggle."
+  ]
+}

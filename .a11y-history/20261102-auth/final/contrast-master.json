@@ -1,0 +1,20 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/auth.css",
+    "public/assets/css/dashboard.css",
+    "public/login.php",
+    "public/setup.php",
+    "public/account.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Default form borders measure 3.54:1 against the input surface.",
+    "Focus indicators measure at least 3:1 against adjacent surfaces.",
+    "Helper text measures 5.77:1 against the page background.",
+    "Error and success status text use high-contrast color combinations."
+  ],
+  "notes": [
+    "The shared dashboard layout is absent; the account fallback uses the reviewed auth and dashboard stylesheets."
+  ]
+}

@@ -1,0 +1,10 @@
+{
+  "skill": "modal-specialist",
+  "scope": [
+    "C:/xampp/htdocs/School Management System (Final Version)/public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "When validation errors open the dialog, the error summary is moved inside it and focused after showModal(), so it is announced."
+  ]
+}

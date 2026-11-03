@@ -1,0 +1,14 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Curriculum overview and program detail headings follow the page H1 with sequential levels.",
+    "The curriculum section has an accessible name; the shared layout provides main and navigation landmarks.",
+    "The page title is descriptive: Curriculum - ISMS.",
+    "The folder SVG icon is hidden from assistive technology; no meaningful images lack text alternatives."
+  ]
+}

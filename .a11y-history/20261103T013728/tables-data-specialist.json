@@ -1,0 +1,22 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [
+    {
+      "rule": "TABLE-ROW-HEADER-001",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:190,269",
+      "summary": "Payment-history rows have no row header to identify which payment the remaining cell values describe.",
+      "fix": "Use a stable payment identifier, such as the receipt number, as a th scope=row in each history table.",
+      "evidence": "Each payment row began with td for payment_date, and all remaining cells were also td.",
+      "component": "Payment history tables"
+    }
+  ],
+  "passed": [
+    "Fee-balance and financial-report tables have captions, scoped column headers, and scoped fee row headers.",
+    "Payment-history tables have captions and scoped column headers."
+  ]
+}

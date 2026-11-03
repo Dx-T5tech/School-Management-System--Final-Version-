@@ -1,0 +1,27 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public\\student-dashboard.php",
+    "public\\student-section.php",
+    "app\\Shared\\student_section_content.php",
+    "app\\Shared\\dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "CONTENT-001",
+      "wcag": "n/a",
+      "severity": "minor",
+      "location": "app\\Shared\\dashboard_layout.php:135-153",
+      "summary": "The Announcements section repeats the latest announcements in both the shared feed and the section table.",
+      "fix": "Suppress the shared announcement feed on the dedicated student Announcements page so each announcement is presented once.",
+      "evidence": "Shared feed shows recent announcements; public\\student-section.php:348-350 also renders the latest 100 in a table."
+    }
+  ],
+  "passed": [
+    "Heading hierarchy: one page-specific H1, followed by sequential H2/H3 headings.",
+    "Page titles: descriptive titles are generated from each page’s title.",
+    "Landmarks: one main landmark, a skip link, and named navigation are present.",
+    "Image alternatives: no img elements; SVGs and the brand mark are hidden as decorative.",
+    "Content structure: profile details use a description list; read-only data tables have captions and column headers."
+  ]
+}

@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/admin_section_content.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The Edit link precedes the Deactivate button in the DOM and remains in the same visual order.",
+    "At a 360 CSS-pixel viewport, Edit and Deactivate remain on one horizontal line.",
+    "At narrow widths, the existing table wrapper remains horizontally scrollable and keyboard-focusable."
+  ],
+  "notes": [
+    "Verified the rendered controls have the same top coordinate after the layout change.",
+    "The layout detector reported no findings."
+  ]
+}

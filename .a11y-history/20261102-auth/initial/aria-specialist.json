@@ -1,0 +1,18 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "app/Shared/dashboard_layout.php",
+    "app/Core/auth.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Form controls have associated semantic labels.",
+    "Success and informational messages use status semantics; submission errors use alert semantics.",
+    "ARIA label and description references resolve to existing IDs when rendered."
+  ],
+  "notes": [
+    "The shared dashboard layout was absent during review, so its markup could not be inspected."
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "skill": "remediation-verification",
+  "scope": [
+    "app/Shared/admin_teacher_lifecycle_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css",
+    "public/admin-teacher-lifecycle.php"
+  ],
+  "findings": [],
+  "passed": [
+    "After server-side validation, the modal opens and focus moves to the first invalid field when no general error summary exists.",
+    "Field validation errors are visibly rendered and associated with their controls; invalid controls expose aria-invalid.",
+    "When a validation modal opens programmatically, focus is moved to its trigger first so closing the dialog restores focus appropriately.",
+    "Applicant, performance-review, and resignation dialogs opened with the expected titles; Escape closed them and restored focus to the trigger.",
+    "An empty performance-review submission reopened its dialog, focused the first invalid field, and exposed its associated error text.",
+    "The resignation effective-date control allows future dates.",
+    "PHP lint and node --check passed; the UI detector reported no findings."
+  ],
+  "notes": [
+    "These checks verify the accessibility findings captured in the initial specialist review were addressed.",
+    "An independent axe/Playwright scan could not run because Playwright is not installed in the accessibility tool environment."
+  ]
+}

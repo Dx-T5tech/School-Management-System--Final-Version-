@@ -1,0 +1,23 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/student-enrollment.php",
+    "public/student-dashboard.php",
+    "public/student-section.php",
+    "app/Modules/StudentManagement/Admissions/Views/self_enrollment_content.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Manual keyboard check confirmed the skip-link/menu path is reachable by Tab and the menu opens with Enter and closes with Escape.",
+    "The enrollment form uses a native required select and submit button; source review confirms invalid-section errors are associated with the select and focus is directed to it after reload.",
+    "Visible focus styles are defined for links, buttons, the enrollment select, the error summary, and dashboard focus destinations.",
+    "The mobile menu uses a native button, updates aria-expanded, moves focus into the opened menu, and returns focus to the toggle on Escape.",
+    "Responsive checks at 320, 768, and 1280px found no horizontal overflow or mobile overlap in menu/action areas."
+  ],
+  "notes": [
+    "Invalid-section focus recovery was confirmed by source review, but was not included in the reported manual browser checks."
+  ]
+}

@@ -1,0 +1,29 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-ERROR-ASSOCIATION",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "confidence": "high",
+      "location": "public/admin-section.php:728,751,813-818; app/Shared/admin_section_content.php:685-719",
+      "summary": "Tuition-fee and term-balance validation errors appear only in the focused alert, leaving the affected controls without an inline error or programmatic association.",
+      "fix": "Map the fee mismatch to student_fee_id and the overpayment to total_amount in fieldErrors; render their messages beside the controls so the shared template applies aria-invalid and aria-describedby, while retaining the summary.",
+      "evidence": "The transaction throws RuntimeException for both checks; the catch sets only $errorMessage, while aria-invalid and aria-describedby depend on $fieldErrors."
+    },
+    {
+      "rule": "FORM-ERROR-SUGGESTION",
+      "wcag": "3.3.3 AA",
+      "severity": "moderate",
+      "confidence": "high",
+      "location": "public/admin-section.php:733-751",
+      "summary": "The overpayment error says the amount exceeds the term balance but does not tell the user the remaining amount to enter.",
+      "fix": "Calculate the remaining term balance from the installment and amount already paid, then include the maximum in the error and advise entering no more than it or selecting a term with a balance.",
+      "evidence": "The original error states only that the payment exceeds the remaining balance."
+    }
+  ]
+}

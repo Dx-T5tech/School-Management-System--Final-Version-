@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Keyboard focus indicators are provided for links and buttons with a 3px outline and contrasting halo; no outline removal was found.",
+    "The Workspace label is noninteractive text before the navigation, so it does not add a tab stop or change link order.",
+    "The shared layout uses a skip link and programmatically focusable main content; no positive tabindex values were found.",
+    "The mobile menu uses a native button, updates aria-expanded, focuses the first navigation link when opened, and Escape closes it and returns focus to the button. Breakpoint changes also reset the menu state and move focus when needed."
+  ],
+  "notes": [
+    "This was a source review; authenticated runtime keyboard scans for the four role pages were not performed."
+  ]
+}

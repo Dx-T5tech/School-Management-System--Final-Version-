@@ -1,0 +1,18 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\super_admin_section_content.php",
+    "public\\super-admin-dashboard.php",
+    "public\\super-admin-section.php",
+    "app\\Core\\super_admin.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Page titles are descriptive and section-specific; pages declare English as the document language.",
+    "Dashboard and section pages use a logical heading hierarchy with one page-level H1.",
+    "Main, navigation, sidebar, and review landmarks are present and appropriately labeled.",
+    "Decorative icons and visual indicators are hidden from assistive technology; functional controls have text labels.",
+    "Data tables have descriptive captions and column headers."
+  ]
+}

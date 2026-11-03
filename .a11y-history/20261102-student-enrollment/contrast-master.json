@@ -1,0 +1,11 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The student error notice border contrast is 5.5:1 against #fbefed, exceeding the 3:1 minimum."
+  ],
+  "notes": []
+}

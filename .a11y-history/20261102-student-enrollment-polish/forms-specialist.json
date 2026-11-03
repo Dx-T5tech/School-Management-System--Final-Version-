@@ -1,0 +1,16 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/self_enrollment_content.php",
+    "app/Modules/StudentManagement/Admissions/Controllers/self_enrollment.php",
+    "public/student-enrollment.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The class-section select has a visible, programmatically associated label and native required attribute.",
+    "Field errors are associated with the select, which receives aria-invalid when an error is present.",
+    "Error handling directs focus to the invalid field or error message.",
+    "The empty state explains why enrollment options are unavailable and who can help."
+  ]
+}

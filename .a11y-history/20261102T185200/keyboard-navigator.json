@@ -1,0 +1,20 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/super-admin-section.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Teacher/Student field-validation errors receive a generic error message, which renders in a focusable role=alert summary; dashboard.js moves focus to that summary.",
+    "The show/hide control is a native type=button, reachable by Tab and operable with Enter or Space without submitting the form.",
+    "Tab order follows the form: password field, show/hide button, then submit button; the control has a visible focus indicator.",
+    "The account form uses native controls with visible focus styles, and its layout collapses to one column at narrow viewport widths."
+  ],
+  "notes": [
+    "Keyboard behavior was reviewed from source; automated Playwright scans could not run because Playwright is unavailable, and the protected account route could not be independently verified in an authenticated runtime session."
+  ]
+}

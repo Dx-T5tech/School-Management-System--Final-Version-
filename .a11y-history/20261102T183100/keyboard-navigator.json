@@ -1,0 +1,14 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The CSS-only change retains the existing anchor navigation and focus-visible styling."
+  ],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. The Admin sidebar was hidden at a 360 CSS-pixel viewport, the Menu button remained visible, and the page had no horizontal overflow; keyboard interaction was not independently tested."
+  ]
+}

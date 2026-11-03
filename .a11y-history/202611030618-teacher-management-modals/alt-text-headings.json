@@ -1,0 +1,15 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/admin_teacher_lifecycle_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The applicant, performance-review, and resignation forms each have a descriptive H2 heading.",
+    "The dialog script preserves each heading and uses its ID as the dialog's aria-labelledby value; it does not change heading levels."
+  ],
+  "notes": [
+    "The page-level H1 is outside the scoped files, so the complete page heading outline could not be verified."
+  ]
+}

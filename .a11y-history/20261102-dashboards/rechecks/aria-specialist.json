@@ -1,0 +1,12 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The brand link’s accessible name includes its visible text.",
+    "Current-location state updates on initial load and fragment changes."
+  ]
+}

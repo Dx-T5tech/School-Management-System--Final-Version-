@@ -1,0 +1,16 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/self_enrollment_content.php",
+    "app/Modules/StudentManagement/Admissions/Controllers/self_enrollment.php",
+    "app/Shared/dashboard_layout.php",
+    "public/student-enrollment.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The enrollment page has one descriptive H1 followed by a contextual H2; no heading levels are skipped.",
+    "The page title is descriptive, the document language is set to English, and the skip link targets the single main landmark.",
+    "The sidebar and navigation landmarks are labeled, and the page-level header and footer are present.",
+    "Both enrollment empty states are presented as readable content within a section labeled by its heading."
+  ]
+}

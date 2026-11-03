@@ -1,0 +1,15 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The Super Admin brand remains a native anchor, so it remains keyboard reachable.",
+    "The shared :focus-visible rule remains in place and the CSS-only grid change does not alter focus styling."
+  ],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. The live Super Admin dashboard was unavailable in the browser session, so rendered keyboard behavior was not verified."
+  ]
+}

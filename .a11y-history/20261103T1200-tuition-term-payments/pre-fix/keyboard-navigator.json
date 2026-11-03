@@ -1,0 +1,15 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/admin-section.php",
+    "public/admin-dashboard.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The tuition summary’s horizontally scrollable wrapper is keyboard-focusable and has a visible focus indicator.",
+    "Payment form fields and actions use native controls, follow their DOM order, and have visible focus indicators.",
+    "A skip-to-main-content link is present before the dashboard content."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "WCAG 1.4.3 AA: sidebar text combinations, including inherited Admin colors, pass; sampled ratios range from 6.60:1 to 11.83:1.",
+    "WCAG 1.4.3 AA: white active/hover link text on the composed hover surface passes at 9.01:1.",
+    "WCAG 1.4.11 AA: the gold active marker on the composed hover surface passes at 5.11:1.",
+    "WCAG 2.4.7 AA: sidebar links inherit a visible focus style with a 2px paper-colored shadow ring and a 3px outline."
+  ],
+  "notes": [
+    "CSS-only review; the translucent gradient and hover layers were assessed using composed colors, not live-browser rendering."
+  ]
+}

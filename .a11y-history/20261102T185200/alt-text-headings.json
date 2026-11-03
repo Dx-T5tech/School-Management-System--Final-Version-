@@ -1,0 +1,16 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "public/super-admin-section.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The User Management page title is descriptive and includes the ISMS name.",
+    "The page has exactly one page-specific H1 and a sequential heading hierarchy.",
+    "The page has one main landmark, labeled navigation, page header and footer, and a skip link.",
+    "The account directory table has a descriptive caption and column headings."
+  ],
+  "notes": []
+}

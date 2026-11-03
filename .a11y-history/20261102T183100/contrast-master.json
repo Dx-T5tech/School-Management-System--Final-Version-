@@ -1,0 +1,14 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Static contrast calculations for sidebar brand copy, caption, workspace label, normal links, and signed-in footer colors all exceed WCAG AA 4.5:1."
+  ],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. Contrast ratios were independently calculated from the inherited Super Admin palette."
+  ]
+}

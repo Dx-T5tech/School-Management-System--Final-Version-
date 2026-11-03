@@ -1,0 +1,33 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Shared/dashboard_layout.php",
+    "app/Modules/StudentManagement/Students/Controllers/section.php",
+    "app/Core/finance.php"
+  ],
+  "findings": [
+    {
+      "rule": "LIVE-001",
+      "wcag": "4.1.3 AA",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:109,285",
+      "summary": "Post-submit confirmations are rendered as populated status regions on the redirected page, so assistive technology may not announce that the payment request or read-state change succeeded.",
+      "fix": "After redirect, move focus to the confirmation or populate a status region already present in the page shell; keep the confirmation text in page content.",
+      "evidence": "Conditional role=status elements render a session flash after it is read and unset."
+    },
+    {
+      "rule": "LIVE-002",
+      "wcag": "4.1.3 AA",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:110",
+      "summary": "Payment errors appear in a newly rendered alert after submission without focus being moved to the error summary, so the error may not be announced or encountered promptly.",
+      "fix": "Move focus to the existing error summary or first invalid field after an unsuccessful submission while preserving field-level descriptions and invalid states.",
+      "evidence": "The conditional role=alert had tabindex=-1, but no focus management was shown in scope."
+    }
+  ],
+  "passed": [
+    "Unread counts are included in the notification navigation link's accessible name, and the visual badge is hidden from assistive technology as duplicate content.",
+    "Fee reminders and payment-status notifications persist and render readable titles, messages, timestamps, and types."
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\super_admin_section_content.php",
+    "public\\super-admin-dashboard.php",
+    "public\\super-admin-section.php",
+    "app\\Core\\super_admin.php"
+  ],
+  "findings": [
+    {
+      "rule": "ARIA-REGION-DUPLICATE",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "location": "app\\Shared\\super_admin_section_content.php:18",
+      "summary": "Each section page exposes a second region with the same name as the page-intro region, creating duplicate, indistinguishable destinations in landmark navigation.",
+      "fix": "Remove the aria-label and use a div for this wrapper; retain the individual panel headings for content navigation.",
+      "evidence": "The wrapper is labeled with sectionDefinition['title'], which is also the page-intro h1 referenced by aria-labelledby=\"page-title\"."
+    },
+    {
+      "rule": "ARIA-NAME-GENERIC",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "confidence": "high",
+      "location": "app\\Shared\\super_admin_section_content.php:58",
+      "summary": "The focusable table-scroll wrappers put aria-label on generic divs, so assistive technology may not expose the intended name when users focus them.",
+      "fix": "Give each focusable wrapper a nameable role such as role=\"group\" while retaining its descriptive aria-label and the table caption; use role=\"region\" only if landmark navigation is intended.",
+      "evidence": "<div class=\"admin-table-scroll\" tabindex=\"0\" aria-label=\"Admin accounts table; scroll horizontally to view all columns\">",
+      "component": "Super Admin table overflow wrappers"
+    }
+  ]
+}

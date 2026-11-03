@@ -1,0 +1,8 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "public\\admin-section.php"
+  ],
+  "findings": []
+}

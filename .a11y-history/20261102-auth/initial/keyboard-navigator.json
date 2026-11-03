@@ -1,0 +1,31 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/logout.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/auth.css",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-FOCUS-001",
+      "wcag": "2.4.7 AA",
+      "severity": "moderate",
+      "location": "public/login.php:133; public/setup.php:135; public/assets/css/dashboard.css:51-54",
+      "summary": "Activating either skip link moves focus to the authentication main element, which has no visible focus indicator.",
+      "fix": "Add a clear, high-contrast focus style for `.auth-shell:focus` or `.auth-shell:focus-visible` in auth.css so the skip-link destination is visibly indicated.",
+      "evidence": "Both pages use `<main class=\"auth-shell\" id=\"main-content\" tabindex=\"-1\">`; existing main focus styles target `.main-content`, not `.auth-shell`.",
+      "component": "Authentication pages"
+    }
+  ],
+  "passed": [
+    "Login and setup skip links are first in the page and become visible on focus; their target is a main element with tabindex=\"-1\".",
+    "Login and setup controls use native, labeled inputs, buttons, and links with a sequential DOM order.",
+    "Visible focus styles are defined for links, buttons, and form inputs; no positive tabindex values were found."
+  ],
+  "notes": [
+    "The shared dashboard layout was absent during review; dashboard sign-out markup could not be inspected."
+  ]
+}

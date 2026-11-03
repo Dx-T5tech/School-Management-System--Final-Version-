@@ -1,0 +1,41 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "FOCUS-CONTRAST-001",
+      "wcag": "1.4.11 AA",
+      "severity": "moderate",
+      "location": "public/assets/css/dashboard.css:45-47",
+      "summary": "The gold focus outline does not contrast sufficiently with light surfaces, making focused controls harder to identify.",
+      "fix": "Replace the single gold outline with a contrasting double ring, such as a 3px navy outline and an outer cream ring, so focus remains visible on both light surfaces and the dark sidebar.",
+      "evidence": "#df9c38 against --paper #f5f4ef: 2.13:1; against --panel #fffefa: 2.33:1; minimum 3:1."
+    },
+    {
+      "rule": "TEXT-CONTRAST-001",
+      "wcag": "1.4.3 AA",
+      "severity": "moderate",
+      "location": "public/assets/css/dashboard.css:562, 664-669",
+      "summary": "Responsibility list numbers have insufficient text contrast in both dashboard themes.",
+      "fix": "Use a dedicated darker gold text color for .responsibility-number in both themes, such as #76521f, which exceeds 4.5:1 on the panel.",
+      "evidence": "On #fffefa: executive #c18b3b is 2.96:1; operations #b88439 is 3.25:1; 4.5:1 required."
+    },
+    {
+      "rule": "TEXT-CONTRAST-002",
+      "wcag": "1.4.3 AA",
+      "severity": "moderate",
+      "location": "public/assets/css/dashboard.css:654-659",
+      "summary": "Small page-footer text has insufficient contrast against the page background.",
+      "fix": "Darken the .page-footer text color; for example, #5d6a72 provides 5.06:1 against --paper #f5f4ef.",
+      "evidence": "#6a7780 on #f5f4ef: 4.18:1; 4.5:1 required."
+    }
+  ],
+  "passed": [
+    "Checked executive and operations themes across responsive breakpoints; no responsive color overrides are present.",
+    "Review status indicators contrast with the navy panel: good #9cbea5 is 7.14:1 and attention #efc26e is 8.73:1. The template also renders status text beside each aria-hidden indicator.",
+    "Checked shared body and dark-panel text colors, plus theme blue text on panels; the tested combinations meet WCAG AA."
+  ]
+}

@@ -1,0 +1,14 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/admin-dashboard.php",
+    "public/admin-section.php",
+    "app/Shared/dashboard_layout.php",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. No heading or landmark findings were assessed."
+  ]
+}

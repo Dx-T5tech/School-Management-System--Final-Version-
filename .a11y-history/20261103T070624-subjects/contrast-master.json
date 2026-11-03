@@ -1,0 +1,17 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Catalog text and badges meet WCAG AA text contrast; the lowest measured combination is 5.09:1.",
+    "Status and requirement badges use readable text/background combinations and do not rely on color alone.",
+    "Disclosure focus outlines exceed the 3:1 non-text contrast requirement.",
+    "Filter control borders exceed 3:1 contrast against their light fill."
+  ],
+  "notes": [
+    "The automated Playwright contrast scanner could not run because Playwright is not installed for the accessibility MCP server; specialist source review completed."
+  ]
+}

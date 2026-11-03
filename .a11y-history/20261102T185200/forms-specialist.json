@@ -1,0 +1,20 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/super-admin-section.php",
+    "app/Shared/super_admin_section_content.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Server validation enforces a minimum of 12 Unicode characters and the UTF-8 byte limit; both are explained in the visible hint and linked field error.",
+    "The keyboard-operable Show password button keeps its label stable and exposes state through aria-pressed only.",
+    "Teacher/Student controls have visible associated labels, native required states where applicable, and relevant autocomplete tokens.",
+    "The profile-number hint explains when the number is needed; field errors are linked to affected controls and marked invalid.",
+    "Success and error summaries are focusable and receive focus through the shared dashboard script."
+  ],
+  "notes": [
+    "Password recovery is not represented in the scoped account-creation form, so recovery availability at sign-in was not assessed."
+  ]
+}

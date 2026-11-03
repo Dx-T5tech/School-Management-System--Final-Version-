@@ -1,0 +1,28 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/logout.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "HEAD-003",
+      "wcag": "2.4.6 AA",
+      "severity": "minor",
+      "confidence": "medium",
+      "location": "public/login.php:147,159",
+      "summary": "The sign-in page headings do not clearly identify the page’s purpose when navigating by headings.",
+      "fix": "Use a task-specific H1 such as “Sign in to Fullbright College ISMS” and an H2 such as “Sign in to your account.”",
+      "evidence": "<h1>A clear view of school life.</h1><h2>Welcome back</h2>"
+    }
+  ],
+  "passed": [
+    "Login and setup pages use English document language, descriptive page titles, main landmarks, skip links, and heading hierarchies.",
+    "Logout endpoint emits no HTML document."
+  ],
+  "notes": [
+    "The shared dashboard layout was absent during review."
+  ]
+}

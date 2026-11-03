@@ -1,0 +1,8 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": []
+}

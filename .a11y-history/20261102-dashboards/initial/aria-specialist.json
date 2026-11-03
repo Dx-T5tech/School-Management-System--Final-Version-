@@ -1,0 +1,36 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Core\\dashboard.php",
+    "public\\admin-dashboard.php",
+    "public\\super-admin-dashboard.php",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "ARIA-LABEL-VISIBLE-NAME",
+      "wcag": "2.5.3 A",
+      "severity": "moderate",
+      "location": "app\\Shared\\dashboard_layout.php:27",
+      "summary": "The link's aria-label replaces its visible brand text, so its accessible name does not include “Fullbright,” making it harder to identify by speech input.",
+      "fix": "Remove aria-label so the link name comes from its visible text, or use an aria-label that begins with “Fullbright Integrated School Management.”",
+      "evidence": "<a class=\"brand\" href=\"#overview\" aria-label=\"ISMS home\">"
+    },
+    {
+      "rule": "ARIA-CURRENT-LOCATION",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app\\Shared\\dashboard_layout.php:41",
+      "summary": "The overview fragment link is marked as the current page and remains so after navigation to other dashboard sections, misreporting the current location to assistive technology.",
+      "fix": "Use aria-current=\"location\" for the link matching the current fragment, and update it when the fragment changes; omit it when no link represents the current location.",
+      "evidence": "<?= $index === 0 ? 'aria-current=\"page\"' : '' ?>"
+    }
+  ],
+  "passed": [
+    "The menu toggle is a native button with a visible accessible name; aria-controls references the existing dashboard-sidebar ID.",
+    "aria-expanded is initialized and updated by the toggle script, including reset on Escape and viewport changes.",
+    "The aria-labelledby references, skip-link target, and dashboard fragment targets resolve to IDs in the shared layout."
+  ]
+}

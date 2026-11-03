@@ -1,0 +1,13 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The Program selector has a visible label and a programmatically associated hint.",
+    "Changing the selection submits the GET filter automatically when requestSubmit is supported.",
+    "A manual Apply filter button remains available when JavaScript or requestSubmit is unavailable."
+  ]
+}

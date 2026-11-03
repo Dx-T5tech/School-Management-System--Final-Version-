@@ -1,0 +1,22 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public\\student-dashboard.php",
+    "public\\student-section.php",
+    "app\\Core\\student.php",
+    "app\\Shared\\student_section_content.php",
+    "app\\Shared\\dashboard_layout.php",
+    "public\\assets\\css\\dashboard.css",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The skip link precedes the dashboard content and targets a programmatically focusable main landmark.",
+    "The student navigation uses links with valid section keys and marks the active page.",
+    "The responsive menu uses a button with aria-expanded, supports Escape to close, and returns focus to the toggle.",
+    "Student table scroll containers are keyboard-focusable, named regions with visible focus styling."
+  ],
+  "notes": [
+    "Automated keyboard scans could not run because Playwright is not installed; responsive behavior was reviewed statically."
+  ]
+}

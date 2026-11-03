@@ -1,0 +1,13 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. No form findings were assessed."
+  ]
+}

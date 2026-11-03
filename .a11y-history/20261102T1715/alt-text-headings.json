@@ -1,0 +1,21 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/teacher-dashboard.php",
+    "public/student-dashboard.php",
+    "public/role-dashboard.php",
+    "public/login.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "heading hierarchy",
+    "page titles",
+    "language attributes",
+    "landmark structure",
+    "text alternatives"
+  ],
+  "notes": [
+    "public/role-dashboard.php redirects to the role-specific dashboard and does not render a page; the shared template supplies the dashboard title and structure."
+  ]
+}

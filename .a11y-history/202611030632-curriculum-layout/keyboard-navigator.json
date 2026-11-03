@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The curriculum region, individual program cards, and nested headings have accessible names and a logical heading sequence.",
+    "Curriculum folders and semesters use native details/summary controls in document order.",
+    "Folder summaries receive a visible focus outline.",
+    "The program-card grid collapses to one column at narrow widths."
+  ],
+  "notes": [
+    "The selector and responsive behavior were also verified in the integrated browser."
+  ]
+}

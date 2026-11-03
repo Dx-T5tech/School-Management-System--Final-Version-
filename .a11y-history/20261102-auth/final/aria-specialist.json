@@ -1,0 +1,19 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/account.php",
+    "app/Core/auth.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Login and setup inputs have visible labels.",
+    "Submission errors use alert semantics, and success information uses status semantics.",
+    "Setup field error descriptions and password guidance reference their matching IDs.",
+    "Browser accessibility snapshot exposes the sign-in heading, labels, fields, password toggle, and submit action with names."
+  ],
+  "notes": [
+    "The shared dashboard layout is absent; the account fallback provides the sign-out control."
+  ]
+}

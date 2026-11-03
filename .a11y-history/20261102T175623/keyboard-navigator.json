@@ -1,0 +1,33 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\super_admin_section_content.php",
+    "public\\super-admin-dashboard.php",
+    "public\\super-admin-section.php",
+    "app\\Core\\super_admin.php",
+    "public\\assets\\css\\dashboard.css",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "KBD-001",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app\\Shared\\super_admin_section_content.php:58, 98, 242, 260, 274, 288, 318, 371",
+      "summary": "Focusable table-scroll wrappers use aria-label on generic divs without a region role, so assistive technology may not expose their scroll purpose when focused.",
+      "fix": "Add role=\"region\" to each named, keyboard-focusable table-scroll wrapper so its existing aria-label identifies the scrollable area.",
+      "evidence": "<div class=\"admin-table-scroll\" tabindex=\"0\" aria-label=\"Admin accounts table; scroll horizontally to view all columns\">"
+    }
+  ],
+  "passed": [
+    "Skip link targets the focusable main content area.",
+    "Mobile menu uses a button with aria-expanded; opening moves focus into the menu and Escape returns focus to the button.",
+    "Menu links, form controls, and buttons have visible focus styles; form fields have associated labels.",
+    "Long sidebar and responsive table containers are keyboard-focusable for scrolling."
+  ],
+  "notes": [
+    "Runtime keyboard and viewport scans could not run because Playwright is not installed."
+  ]
+}

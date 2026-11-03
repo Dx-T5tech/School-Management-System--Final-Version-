@@ -1,0 +1,13 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Nested-link text (#d3dcde) contrast: 10.42:1 against the Admin sidebar base (#172b3b) and 8.55:1 against the composited radial-gradient tint; both exceed WCAG 2.2 AA’s 4.5:1 minimum.",
+    "Hover and active link text (#ffffff) contrast: 11.03:1 against the hover surface and 10.66:1 against the hover surface over the radial tint; both exceed 4.5:1.",
+    "The active-state gold indicator (#e7bd72) has 8.25:1 contrast against the base sidebar and 6.05:1 against the hover surface over the radial tint; both exceed the 3:1 non-text minimum."
+  ]
+}

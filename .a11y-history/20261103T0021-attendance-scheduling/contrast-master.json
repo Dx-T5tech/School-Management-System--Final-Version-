@@ -1,0 +1,12 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The attendance tabs, status summaries, schedule cards, room states, and conflict messaging meet their applicable WCAG contrast thresholds.",
+    "The facility/inactive room-state border was adjusted and measured at 6.08:1 against its card surface."
+  ]
+}

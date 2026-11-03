@@ -1,0 +1,26 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\admin-section.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "ROUTE-001",
+      "wcag": "n/a",
+      "severity": "minor",
+      "location": "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php:1161",
+      "summary": "Cancel editing leaves the program detail view and returns to the unfiltered curriculum list.",
+      "fix": "When editing a curriculum entry, include the selected program_id and curriculum_program_id in the Cancel editing URL so it returns to the originating program detail.",
+      "evidence": "The edit URL preserves both program IDs (line 592), but the Cancel editing URL includes only section and academic_view."
+    }
+  ],
+  "passed": [
+    "Source review: detail actions use native links, buttons, and forms; curriculum table scrollers are keyboard-focusable and have visible focus styling."
+  ],
+  "notes": [
+    "Runtime keyboard testing was blocked: the local admin route returned HTTP 401 Unauthorized."
+  ]
+}

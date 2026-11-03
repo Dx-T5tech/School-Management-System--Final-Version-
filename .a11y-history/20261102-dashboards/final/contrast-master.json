@@ -1,0 +1,13 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    ".responsibility-number text (#76521f on #fffefa) measures 6.94:1 in both themes.",
+    "Footer text (#5d6a72 on #f5f4ef) measures 5.06:1 in both themes.",
+    "Focus indicators use a 3px navy outline and paper-colored ring; the ring contrasts 13.2:1 against the navy sidebar, and the outline contrasts at least 13.2:1 against light surfaces. These styles are shared by both themes."
+  ]
+}

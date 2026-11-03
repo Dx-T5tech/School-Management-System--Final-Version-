@@ -1,0 +1,14 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\admin-section.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Curriculum controls have associated labels, visible required indicators, and native required attributes.",
+    "Validation errors are visible, associated with affected controls, and marked with aria-invalid; error focus is handled.",
+    "The selected program is populated in the add form on the curriculum detail route."
+  ]
+}

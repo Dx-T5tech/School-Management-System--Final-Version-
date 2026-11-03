@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Native details/summary disclosures remain keyboard-operable and have visible focus styling.",
+    "The automatic filter submission is explained in visible text associated with each filter.",
+    "The subject add form uses the existing native dialog, a descriptive name, and first-field focus."
+  ],
+  "notes": [
+    "Integrated-browser checks confirmed automatic program, year, and semester filter submission and no horizontal overflow at 320, 768, 1024, and 1280 CSS pixels."
+  ]
+}

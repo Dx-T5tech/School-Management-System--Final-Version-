@@ -1,0 +1,18 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/super_admin_section_content.php",
+    "app/Shared/admin_section_content.php",
+    "public/super-admin-section.php",
+    "app/Shared/dashboard_layout.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The password toggle keeps Show password as its stable accessible name and updates only aria-pressed when visibility changes.",
+    "aria-controls references the existing school-account-password input ID.",
+    "The Super Admin success notice has data-status-summary and tabindex=-1; dashboard.js finds and focuses it."
+  ],
+  "notes": []
+}

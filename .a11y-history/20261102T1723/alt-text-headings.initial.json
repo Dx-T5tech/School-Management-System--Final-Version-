@@ -1,0 +1,19 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/super-admin-dashboard.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "HEADING-003",
+      "wcag": "2.4.6 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/super-admin-dashboard.php:39",
+      "summary": "The page H1, “The whole school, in view,” does not clearly identify this page as the Super Admin dashboard when encountered in a heading list.",
+      "fix": "Use a purpose-specific H1 such as “Super Admin dashboard” or “Super Admin overview.”",
+      "evidence": "'heading' => 'The whole school, in view.'"
+    }
+  ]
+}

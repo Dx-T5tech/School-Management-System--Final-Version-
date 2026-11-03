@@ -1,0 +1,27 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/admin-dashboard.php",
+    "public/super-admin-dashboard.php"
+  ],
+  "findings": [
+    {
+      "rule": "LANDMARK-FOOTER",
+      "wcag": "1.3.1 A",
+      "severity": "minor",
+      "location": "app/Shared/dashboard_layout.php:166",
+      "summary": "The page footer is inside the main landmark, so it is not exposed as a contentinfo landmark for landmark navigation.",
+      "fix": "Move the closing </main> before this footer so the footer is a sibling of main within .workspace.",
+      "evidence": "<main id=\"main-content\"> contains <footer class=\"page-footer\">.",
+      "component": "Shared dashboard layout"
+    }
+  ],
+  "passed": [
+    "Both dashboards set the document language to English.",
+    "Both dashboards have descriptive, distinct page titles.",
+    "Both dashboards have one H1 and a logical, sequential heading hierarchy.",
+    "The shared layout provides a skip link, one main landmark, and labeled navigation.",
+    "No images or SVGs requiring text alternatives appear in the scoped files."
+  ]
+}

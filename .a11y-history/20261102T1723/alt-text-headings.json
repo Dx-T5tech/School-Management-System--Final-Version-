@@ -1,0 +1,15 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/super-admin-dashboard.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The H1 now identifies the page as the Super Admin overview.",
+    "Heading hierarchy, page title, language attribute, landmarks, and text alternatives are clear."
+  ],
+  "notes": [
+    "The initial review flagged a generic H1; it was changed to “Super Admin overview” and confirmed in the browser."
+  ]
+}

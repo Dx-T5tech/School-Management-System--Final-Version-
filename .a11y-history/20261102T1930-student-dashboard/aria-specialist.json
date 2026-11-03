@@ -1,0 +1,31 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public\\student-dashboard.php",
+    "public\\student-section.php",
+    "app\\Core\\student.php",
+    "app\\Shared\\student_section_content.php",
+    "app\\Shared\\dashboard_layout.php"
+  ],
+  "findings": [
+    {
+      "rule": "ARIA-REGION-OVERUSE",
+      "wcag": "n/a",
+      "severity": "minor",
+      "location": "app\\Shared\\student_section_content.php:33,38",
+      "summary": "Each populated table creates nested named region landmarks for the same content, adding redundant stops to screen-reader landmark navigation.",
+      "fix": "Keep the table heading and section, but remove the parent section’s aria-labelledby so it remains a semantic grouping; retain the named, focusable scroll region.",
+      "evidence": "<section aria-labelledby=\"student-table-heading-…\"> contains <div tabindex=\"0\" role=\"region\" aria-label=\"Scrollable table: …\">",
+      "component": "Student section table panels"
+    }
+  ],
+  "passed": [
+    "Student navigation marks the active link with aria-current=\"page\".",
+    "The sidebar navigation, main content, page header, and footer use appropriate landmark semantics and names.",
+    "Table regions have accessible names; tables use captions and column headers with scope=\"col\".",
+    "ARIA references in the reviewed templates point to existing IDs."
+  ],
+  "notes": [
+    "The Menu button has aria-expanded=\"false\" and aria-controls references the sidebar; runtime state updates are outside the requested file scope."
+  ]
+}

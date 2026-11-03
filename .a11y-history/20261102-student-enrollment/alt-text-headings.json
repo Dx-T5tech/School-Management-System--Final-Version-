@@ -1,0 +1,16 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public\\student-enrollment.php",
+    "app\\Shared\\student_enrollment_content.php",
+    "app\\Shared\\dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Heading hierarchy",
+    "Page title",
+    "Landmarks",
+    "Empty-state structure",
+    "Error and status structure"
+  ]
+}

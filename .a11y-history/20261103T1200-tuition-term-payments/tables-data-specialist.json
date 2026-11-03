@@ -1,0 +1,13 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The table has a first-child caption identifying tuition billed and collected by term.",
+    "The no-currency-symbol guidance is a separate paragraph outside the table.",
+    "Column and row headers use explicit scope attributes; the caption is visibly styled."
+  ]
+}

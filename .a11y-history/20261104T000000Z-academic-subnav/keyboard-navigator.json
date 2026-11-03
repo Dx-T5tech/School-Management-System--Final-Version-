@@ -1,0 +1,30 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "public\\assets\\css\\dashboard.css",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-001",
+      "wcag": "2.4.3 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app/Shared/dashboard_layout.php:47-63,110-119; public/assets/js/dashboard.js:78-90",
+      "summary": "On mobile, opening the menu moves focus into the sidebar even though the Menu button follows the sidebar in DOM order, making subsequent tab order loop back to the button after the navigation links.",
+      "fix": "Place the Menu button before the sidebar navigation in DOM order and align focus behavior with that order, so forward and reverse Tab navigation proceed predictably.",
+      "evidence": "The sidebar precedes the workspace and Menu button in the template; setMenuOpen(true) moves focus to the first sidebar link."
+    },
+    {
+      "rule": "KEYBOARD-002",
+      "wcag": "2.4.11 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:101-123; public/assets/css/dashboard.css:1866-1884",
+      "summary": "On mobile, Tab can move focus from the open sidebar into page content while the drawer remains over the content, obscuring focused controls or their focus indicators.",
+      "fix": "When keyboard focus leaves the open drawer for page content, close it and update aria-expanded, or implement a modal drawer that keeps focus contained and the background unavailable.",
+      "evidence": "The drawer stays displayed while .is-open is set; only a link click or Escape closes it, and there is no focus-exit handling."
+    }
+  ]
+}

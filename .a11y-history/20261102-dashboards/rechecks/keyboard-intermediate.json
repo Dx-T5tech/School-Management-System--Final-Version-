@@ -1,0 +1,27 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-FOCUS-RESPONSIVE",
+      "wcag": "2.4.3 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:89-95",
+      "summary": "Focus can be lost when the desktop sidebar becomes hidden at the mobile breakpoint.",
+      "fix": "Preserve the sidebar focus state before it becomes hidden, then move focus to the visible menu toggle when crossing to mobile.",
+      "evidence": "The breakpoint handler checks sidebar.contains(document.activeElement) only after the sidebar becomes display:none."
+    }
+  ],
+  "passed": [
+    "Skip link targets the main element, which has tabindex=\"-1\" and a visible focus style.",
+    "Sidebar fragment-link activation closes the mobile menu and focuses the destination."
+  ],
+  "notes": [
+    "Assessment was limited to the specified code; breakpoint behavior was not runtime-tested in a browser."
+  ]
+}

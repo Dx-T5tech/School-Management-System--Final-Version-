@@ -1,0 +1,20 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/account.php",
+    "public/assets/css/auth.css",
+    "public/assets/js/auth.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Skip links move focus to main content and the target has a visible focus indicator.",
+    "Login and setup controls have a sequential DOM order and visible focus styles.",
+    "The password-toggle control works with native button activation.",
+    "The account fallback sign-out button submits by keyboard."
+  ],
+  "notes": [
+    "The shared dashboard layout is absent, so its original dashboard navigation markup could not be reviewed."
+  ]
+}

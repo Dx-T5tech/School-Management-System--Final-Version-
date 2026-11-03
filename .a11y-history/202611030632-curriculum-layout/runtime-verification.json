@@ -1,0 +1,20 @@
+{
+  "skill": "runtime-verification",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Selecting a program immediately reloads the curriculum with program_id in the URL and shows the selected program.",
+    "Choosing All programs clears the selection and returns the all-program results.",
+    "The JavaScript-enabled view hides the manual fallback button without removing the no-JavaScript fallback.",
+    "At a 360 CSS-pixel viewport, the curriculum grid is one column and the document has no horizontal overflow.",
+    "The empty program card exposes an Open curriculum folder control and a separate Add a subject link.",
+    "PHP lint and JavaScript syntax checks passed."
+  ],
+  "notes": [
+    "The Impeccable detector reported existing accent-border warnings in unrelated dashboard styles; it reported no findings in the new curriculum layout rules."
+  ]
+}

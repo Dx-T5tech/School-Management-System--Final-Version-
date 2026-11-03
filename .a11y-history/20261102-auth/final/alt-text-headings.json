@@ -1,0 +1,19 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "public/login.php",
+    "public/setup.php",
+    "public/account.php",
+    "public/logout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Login, setup, and account pages have descriptive titles and English document language.",
+    "Headings describe each page task and retain a logical hierarchy.",
+    "Pages have semantic main landmarks and skip links.",
+    "Links and form actions have clear text."
+  ],
+  "notes": [
+    "The logout endpoint intentionally redirects rather than rendering a separate page."
+  ]
+}

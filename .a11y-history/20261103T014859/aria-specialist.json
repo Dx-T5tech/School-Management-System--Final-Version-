@@ -1,0 +1,32 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "app/Core/admin.php",
+    "app/Core/super_admin.php",
+    "app/Core/teacher.php",
+    "app/Modules/StudentManagement/Students/Services/student.php"
+  ],
+  "findings": [
+    {
+      "rule": "NAV-GROUP-SEMANTICS-001",
+      "wcag": "1.3.1 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app/Shared/dashboard_layout.php:73",
+      "summary": "The visible navigation-group captions are plain spans, so their heading-like structure is not exposed to assistive technology.",
+      "fix": "Use appropriate heading elements for the group captions so users can identify and navigate the sidebar sections by heading.",
+      "evidence": "The group caption used a span element."
+    },
+    {
+      "rule": "NAV-CURRENT-PAGE-001",
+      "wcag": "4.1.2 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app/Shared/dashboard_layout.php:79,92",
+      "summary": "A current Academic Management or Attendance & Scheduling parent link loses aria-current whenever its submenu exists, so a landing page can appear current visually without exposing that state to assistive technology.",
+      "fix": "Suppress aria-current on the parent only when a nested link is current; otherwise retain aria-current=page on the current parent link.",
+      "evidence": "The condition checked whether the submenu existed rather than whether it contained the current destination."
+    }
+  ]
+}

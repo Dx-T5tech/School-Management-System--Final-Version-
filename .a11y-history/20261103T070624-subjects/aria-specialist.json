@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Disclosure summaries contain phrasing text and counts that provide meaningful accessible names.",
+    "Native details/summary controls supply disclosure semantics and state without redundant ARIA.",
+    "Headings are outside summary controls, remain within their details, and follow the catalog hierarchy."
+  ]
+}

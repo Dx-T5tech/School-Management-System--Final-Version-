@@ -1,0 +1,24 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app\\Shared\\dashboard_layout.php",
+    "app\\Shared\\admin_section_content.php",
+    "public\\assets\\css\\dashboard.css",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [
+    {
+      "rule": "focus-not-obscured",
+      "wcag": "2.4.11 AA",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "public/assets/js/dashboard.js:78-94; public/assets/css/dashboard.css:81-86, 2092-2104",
+      "summary": "On mobile, Tab can move focus to page controls behind the open fixed sidebar while the drawer remains visible, obscuring the focused control.",
+      "fix": "Close the drawer when keyboard focus leaves it, without stealing focus, or make it modal by keeping focus inside and making background content inert; keep the expanded state synchronized.",
+      "evidence": "The sidebar stays open until Escape, a fragment link, or the toggle closes it; no focus-leave handler closes the fixed drawer."
+    }
+  ],
+  "notes": [
+    "The focus-obscuring behavior is in the existing mobile sidebar interaction; this navigation-only change did not modify the drawer behavior."
+  ]
+}

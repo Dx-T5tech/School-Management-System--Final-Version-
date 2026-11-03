@@ -1,0 +1,13 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/admin-section.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [],
+  "notes": [
+    "Specialist dispatch failed before review: 400 The requested model is not supported. No table findings were assessed."
+  ]
+}

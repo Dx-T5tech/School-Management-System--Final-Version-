@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app\\Shared\\admin_section_content.php",
+    "public\\assets\\css\\dashboard.css",
+    "app\\Shared\\dashboard_layout.php",
+    "public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The horizontal section links, filters, and table wrappers use native keyboard-operable elements in DOM order.",
+    "Scrollable data tables have visible focus styles and accessible labels."
+  ],
+  "notes": [
+    "A browser keyboard/viewport scan was not completed; the protected Admin page was not available to the browser scan. PHP render smoke tests covered all five views."
+  ]
+}

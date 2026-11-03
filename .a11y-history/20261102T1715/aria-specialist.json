@@ -1,0 +1,16 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public/teacher-dashboard.php",
+    "public/student-dashboard.php",
+    "public/role-dashboard.php",
+    "public/login.php",
+    "app/Shared/dashboard_layout.php"
+  ],
+  "findings": [],
+  "passed": [
+    "ARIA ID references resolve to existing elements.",
+    "The mobile menu's aria-expanded state is updated when the menu opens, closes, or the viewport changes.",
+    "Decorative icons are hidden from assistive technology, and the menu button has an accessible name."
+  ]
+}

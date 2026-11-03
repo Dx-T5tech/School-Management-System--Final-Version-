@@ -1,0 +1,14 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Tuition assignment uses a native fieldset and legend to group the optional tuition fee and term controls.",
+    "Both tuition controls reference the visible tuition hint with aria-describedby; any error description is also included when present.",
+    "The dashboard metrics summary section uses aria-labelledby pointing to its visible heading."
+  ]
+}

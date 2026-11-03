@@ -1,0 +1,36 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "app/Modules/StudentManagement/Students/Controllers/section.php"
+  ],
+  "findings": [
+    {
+      "rule": "FORM-REQUIRED-001",
+      "wcag": "3.3.2 AA",
+      "severity": "moderate",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:117-174",
+      "summary": "Required payment fields have no visible required-state convention, and the tuition term is conditionally mandatory without a programmatically exposed required state.",
+      "fix": "Add a visible required cue or short form instruction identifying required fields. When a tuition fee is selected, expose the tuition-term field as required and state that it is optional for other fees.",
+      "evidence": "Fee, Amount, and Payment method used required; Tuition term did not, and there was no visible required-field convention."
+    },
+    {
+      "rule": "FORM-ERROR-RECOVERY-001",
+      "wcag": "3.3.1 A",
+      "severity": "moderate",
+      "confidence": "medium",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:110,122-170; app/Modules/StudentManagement/Students/Controllers/section.php:188-203",
+      "summary": "Payment field errors render inline without a summary or focus target, so after submission users must locate each error in the reloaded form.",
+      "fix": "Render an error summary with links to affected controls, focus it after the response, and keep inline messages and their aria-invalid and aria-describedby associations.",
+      "evidence": "The controller populates paymentFieldErrors; the view rendered inline errors while the alert summary appeared only for paymentError."
+    }
+  ],
+  "passed": [
+    "Payment and notification controls have programmatically associated labels and named submit buttons.",
+    "Payment field errors use aria-invalid and aria-describedby associations.",
+    "Notification actions provide status feedback and retry guidance for an expired security token."
+  ],
+  "notes": [
+    "Autocomplete was reviewed; collected fields do not require standard personal-information or payment-credential autocomplete tokens."
+  ]
+}

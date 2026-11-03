@@ -1,0 +1,45 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "app\\Shared\\super_admin_section_content.php",
+    "public\\super-admin-section.php",
+    "public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "TABLE-ROW-001",
+      "wcag": "1.3.1 A",
+      "severity": "minor",
+      "location": "app\\Shared\\super_admin_section_content.php:325",
+      "summary": "Audit log rows have no row header identifying each event.",
+      "fix": "If Date and time identifies each event, mark each row’s date/time cell as <th scope=\"row\"> while retaining the column header.",
+      "evidence": "Audit log data rows begin with <td> for created_at and contain no row-scoped <th>."
+    },
+    {
+      "rule": "TABLE-RESPONSIVE-001",
+      "wcag": "4.1.2 A",
+      "severity": "minor",
+      "location": "app\\Shared\\super_admin_section_content.php:58, 98, 242, 260, 274, 288, 318, 371",
+      "summary": "Keyboard-focusable table scroll wrappers lack a region role for their accessible labels.",
+      "fix": "Add role=\"region\" to each focusable .admin-table-scroll wrapper so its existing aria-label names the scrollable region.",
+      "evidence": "The wrappers have tabindex=\"0\" and aria-label but no explicit semantic role."
+    },
+    {
+      "rule": "TABLE-RESPONSIVE-002",
+      "wcag": "n/a",
+      "severity": "minor",
+      "location": "public\\assets\\css\\dashboard.css:918",
+      "summary": "The horizontal-scroll containers have no visible cue that additional columns may be off-screen.",
+      "fix": "Provide a visible horizontal-scroll hint or other clear overflow cue for tables that require scrolling; do not rely on the non-visible aria-label as the visual instruction.",
+      "evidence": ".admin-table-scroll enables overflow-x: auto but defines no visible scroll hint or overflow indicator."
+    }
+  ],
+  "passed": [
+    "Admin, user, academic, and enrollment-summary tables have captions and explicit column scopes.",
+    "Admin, user, academic, department, program, section, and enrollment-summary rows use row headers.",
+    "Table scroll wrappers are keyboard-focusable and have overflow-x: auto."
+  ],
+  "notes": [
+    "Static source review; rendered behavior and assistive-technology output were not runtime-tested."
+  ]
+}
