@@ -110,7 +110,7 @@ function financeSyncStudentFeeNotifications(
                 'notification_key' => 'fee-due-' . (int) $fee['student_fee_id'] . '-' . ($overdue ? 'overdue' : 'upcoming'),
                 'title' => $overdue ? 'Fee payment overdue' : 'Fee payment due soon',
                 'message' => $fee['fee_name'] . ' ' . $dueDescription . '. Remaining balance: '
-                    . number_format(max(0, (int) $fee['net_cents'] - (int) $fee['paid_cents']) / 100, 2) . '.',
+                    . dashboardFormatCurrency(max(0, (int) $fee['net_cents'] - (int) $fee['paid_cents']) / 100) . '.',
             ]);
         }
 

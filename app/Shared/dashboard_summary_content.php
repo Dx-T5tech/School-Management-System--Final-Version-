@@ -5,7 +5,7 @@ declare(strict_types=1);
 $summary = $dashboard['summary'];
 $summaryFormatValue = static function (float|int $value, string $format): string {
     return match ($format) {
-        'amount' => number_format((float) $value, 2),
+        'amount' => dashboardFormatCurrency($value),
         'percent' => number_format((float) $value, 1) . '%',
         default => number_format((float) $value),
     };

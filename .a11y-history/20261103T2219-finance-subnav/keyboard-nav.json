@@ -1,0 +1,19 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/dashboard_layout.php",
+    "app/Shared/admin_section_content.php",
+    "public/admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Finance submenu items are native links with href targets, so they are keyboard reachable and activate with Enter.",
+    "The submenu follows its Finance parent link in DOM order, providing a coherent focus sequence.",
+    "The current finance view is marked with aria-current=\"page\"; the parent link does not also claim to be the current page.",
+    "The skip link precedes the sidebar and points to the main content."
+  ],
+  "notes": [
+    "Focus-indicator visibility could not be verified within the requested PHP-only scope; the template links dashboard.css, which was not in scope.",
+    "Keyboard behavior was reviewed from source; it was not runtime-tested."
+  ]
+}

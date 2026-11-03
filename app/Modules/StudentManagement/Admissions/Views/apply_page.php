@@ -175,9 +175,15 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
                     <?php endif; ?>
                 <?php elseif ($step === 'verify'): ?>
                     <section class="application-stage-panel" aria-labelledby="verify-heading">
-                        <h2 id="verify-heading">Check your inbox</h2>
-                        <p>We sent a secure verification link to <?= dashboardEscape($formValues['email']) ?>. Open it within 24 hours to continue your application.</p>
-                        <p>If you can’t find the message, check your spam folder. You can also return to the application form to request a new link.</p>
+                        <?php if (is_string($demoVerificationUrl)): ?>
+                            <h2 id="verify-heading">Verify your email in demo mode</h2>
+                            <p>No email was sent. Use this local verification link within 24 hours to continue your application.</p>
+                            <a class="admissions-button admissions-button--primary" href="<?= dashboardEscape($demoVerificationUrl) ?>">Verify email and continue</a>
+                        <?php else: ?>
+                            <h2 id="verify-heading">Check your inbox</h2>
+                            <p>We sent a secure verification link to <?= dashboardEscape($formValues['email']) ?>. Open it within 24 hours to continue your application.</p>
+                            <p>If you can’t find the message, check your spam folder. You can also return to the application form to request a new link.</p>
+                        <?php endif; ?>
                         <a class="admissions-button admissions-button--secondary" href="apply.php">Return to application</a>
                     </section>
                 <?php elseif ($step === 'details' && $application !== false): ?>

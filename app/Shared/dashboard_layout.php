@@ -105,6 +105,12 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                         static fn (array $subitem): bool => !empty($subitem['current'])
                                     )) > 0
                                 ) || (
+                                    ($item['key'] ?? '') === 'finance-payments'
+                                    && count(array_filter(
+                                        $dashboard['financeSubnav'] ?? [],
+                                        static fn (array $subitem): bool => !empty($subitem['current'])
+                                    )) > 0
+                                ) || (
                                     ($item['key'] ?? '') === 'teachers'
                                     && count(array_filter(
                                         $dashboard['teacherSubnav'] ?? [],
@@ -158,6 +164,18 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                     <?php elseif (($item['key'] ?? '') === 'assessment-grading' && !empty($dashboard['assessmentSubnav'])): ?>
                                         <ul class="sidebar-subnav" aria-label="Assessment and grading sections">
                                             <?php foreach ($dashboard['assessmentSubnav'] as $subitem): ?>
+                                                <li>
+                                                    <a
+                                                        class="sidebar-subnav-link<?= !empty($subitem['current']) ? ' is-current' : '' ?>"
+                                                        href="<?= dashboardEscape($subitem['href']) ?>"
+                                                        <?= !empty($subitem['current']) ? 'aria-current="page"' : '' ?>
+                                                    ><?= dashboardEscape($subitem['label']) ?></a>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php elseif (($item['key'] ?? '') === 'finance-payments' && !empty($dashboard['financeSubnav'])): ?>
+                                        <ul class="sidebar-subnav" aria-label="Finance and payments sections">
+                                            <?php foreach ($dashboard['financeSubnav'] as $subitem): ?>
                                                 <li>
                                                     <a
                                                         class="sidebar-subnav-link<?= !empty($subitem['current']) ? ' is-current' : '' ?>"
@@ -333,9 +351,9 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                         <?php foreach ($dashboard['tuitionTermSummary'] as $termName => $termTotals): ?>
                                             <tr>
                                                 <th scope="row"><?= dashboardEscape($termName) ?></th>
-                                                <td><?= dashboardEscape(number_format($termTotals['billed_cents'] / 100, 2)) ?></td>
-                                                <td><?= dashboardEscape(number_format($termTotals['collected_cents'] / 100, 2)) ?></td>
-                                                <td><?= dashboardEscape(number_format($termTotals['outstanding_cents'] / 100, 2)) ?></td>
+                                                <td><?= dashboardEscape(dashboardFormatCurrency($termTotals['billed_cents'] / 100)) ?></td>
+                                                <td><?= dashboardEscape(dashboardFormatCurrency($termTotals['collected_cents'] / 100)) ?></td>
+                                                <td><?= dashboardEscape(dashboardFormatCurrency($termTotals['outstanding_cents'] / 100)) ?></td>
                                                 <td><?= dashboardEscape(number_format($termTotals['paid_students'])) ?></td>
                                                 <td><?= dashboardEscape(number_format($termTotals['unpaid_students'])) ?></td>
                                                 <td><?= dashboardEscape(number_format($termTotals['partial_students'])) ?></td>
@@ -344,12 +362,12 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                     </tbody>
                                 </table>
                             </div>
-                            <p class="admin-panel-description">Amounts are shown without a currency symbol because no currency setting is defined.</p>
+                            <p class="admin-panel-description">Amounts are shown in Philippine pesos (PHP).</p>
                             <?php if ($dashboard['unassignedTuitionPayments']['count'] > 0): ?>
                                 <p class="admin-notice admin-notice--info">
                                     <?= dashboardEscape(number_format($dashboard['unassignedTuitionPayments']['count'])) ?>
                                     completed payment(s), totaling
-                                    <?= dashboardEscape(number_format($dashboard['unassignedTuitionPayments']['amount'], 2)) ?>
+                                    <?= dashboardEscape(dashboardFormatCurrency($dashboard['unassignedTuitionPayments']['amount'])) ?>
                                     have no tuition fee and term assignment, so they are excluded from term collections.
                                 </p>
                             <?php endif; ?>

@@ -59,3 +59,8 @@ function dashboardEscape(string|int $value): string
 {
     return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
 }
+
+function dashboardFormatCurrency(float|int $amount): string
+{
+    return '₱' . number_format((float) $amount, 2);
+}

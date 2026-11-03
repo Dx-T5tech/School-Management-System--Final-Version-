@@ -67,6 +67,17 @@ if ($sectionKey === 'assessment-grading') {
         $assessmentView = $requestedAssessmentView;
     }
 }
+$financeSubnav = [
+    'student-fees' => ['label' => 'Student Fees', 'description' => 'Manage student fee records, due dates, discounts, and fee status.'],
+    'payment-records' => ['label' => 'Payment Records', 'description' => 'Review payments and maintain the financial audit trail.'],
+];
+$financeView = 'student-fees';
+if ($sectionKey === 'finance-payments') {
+    $requestedFinanceView = $_GET['finance_view'] ?? $_POST['finance_view'] ?? 'student-fees';
+    if (is_string($requestedFinanceView) && isset($financeSubnav[$requestedFinanceView])) {
+        $financeView = $requestedFinanceView;
+    }
+}
 $errorMessage = '';
 $flashMessage = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
@@ -283,7 +294,7 @@ $entityDefinitions = [
         'delete' => ['type' => 'delete'],
     ],
     'student_fees' => [
-        'section' => 'finance-payments', 'table' => 'student_fees', 'primaryKey' => 'student_fee_id', 'label' => 'Student fees',
+        'section' => 'finance-payments', 'financeView' => 'student-fees', 'table' => 'student_fees', 'primaryKey' => 'student_fee_id', 'label' => 'Student fees',
         'fields' => [
             'enrollment_id' => $field('Student enrollment', 'select', true, 'enrollments', false),
             'fee_structure_id' => $field('Fee structure', 'select', true, 'fee_structures', false),
@@ -296,7 +307,7 @@ $entityDefinitions = [
         'delete' => ['type' => 'status', 'field' => 'fee_status', 'value' => 'Waived', 'label' => 'Waive'],
     ],
     'payments' => [
-        'section' => 'finance-payments', 'table' => 'payments', 'primaryKey' => 'payment_id', 'label' => 'Payment records',
+        'section' => 'finance-payments', 'financeView' => 'payment-records', 'table' => 'payments', 'primaryKey' => 'payment_id', 'label' => 'Payment records',
         'fields' => [
             'enrollment_id' => $field('Student enrollment', 'select', true, 'enrollments', false),
             'student_fee_id' => $field('Fee (optional)', 'select', false, 'tuition_fees'),
@@ -337,12 +348,12 @@ $lookupDefinitions = [
     'grading_periods' => ['SELECT grading_period_id AS id, period_name AS label FROM grading_periods ORDER BY start_date DESC'],
     'assessment_categories' => ['SELECT category_id AS id, category_name AS label FROM assessment_categories ORDER BY category_name'],
     'assessments' => ['SELECT assessment_id AS id, assessment_title AS label FROM assessments ORDER BY assessment_date DESC'],
-    'fee_structures' => ["SELECT fs.fee_structure_id AS id, CONCAT(ft.fee_name, ' - ', FORMAT(fs.amount, 2)) AS label FROM fee_structures fs INNER JOIN fee_types ft ON ft.fee_type_id = fs.fee_type_id ORDER BY ft.fee_name"],
+    'fee_structures' => ["SELECT fs.fee_structure_id AS id, CONCAT(ft.fee_name, ' - ₱', FORMAT(fs.amount, 2)) AS label FROM fee_structures fs INNER JOIN fee_types ft ON ft.fee_type_id = fs.fee_type_id ORDER BY ft.fee_name"],
     'tuition_fees' => [
         "SELECT sf.student_fee_id AS id,
                 CONCAT(s.student_number, ' - ', s.first_name, ' ', s.last_name, ' / ',
                        ft.fee_name, ' (', ft.fee_category, ') / Enrollment ', e.enrollment_id, ' / Net ',
-                       FORMAT(GREATEST(sf.amount - COALESCE(sf.discount_amount, 0), 0), 2)) AS label
+                       '₱', FORMAT(GREATEST(sf.amount - COALESCE(sf.discount_amount, 0), 0), 2)) AS label
          FROM student_fees sf
          INNER JOIN enrollments e ON e.enrollment_id = sf.enrollment_id
          INNER JOIN students s ON s.student_id = e.student_id
@@ -387,7 +398,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($entity === null || $entity['section'] !== $sectionKey
             || ($sectionKey === 'academic-management' && ($entity['academicView'] ?? null) !== $academicView)
-            || ($sectionKey === 'attendance-scheduling' && ($entity['attendanceView'] ?? null) !== $attendanceView)) {
+            || ($sectionKey === 'attendance-scheduling' && ($entity['attendanceView'] ?? null) !== $attendanceView)
+            || ($sectionKey === 'finance-payments' && ($entity['financeView'] ?? null) !== $financeView)) {
             $errorMessage = 'Choose a supported action for this Admin section.';
         } elseif ($hasRecordId && $recordId === null) {
             $errorMessage = 'The selected record identifier is invalid. Reload the page and try again.';
@@ -788,7 +800,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             if ($termPaidCents + $paymentCents > $termBalanceCents) {
                                 $remainingCents = max(0, $termBalanceCents - $termPaidCents);
                                 $fieldErrors['total_amount'] = 'This term has '
-                                    . number_format($remainingCents / 100, 2)
+                                    . dashboardFormatCurrency($remainingCents / 100)
                                     . ' remaining. Enter no more than this amount.';
                                 throw new RuntimeException($fieldErrors['total_amount']);
                             }
@@ -847,8 +859,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'payment-status-' . $paymentId . '-' . $values['payment_status'],
                                 'Payment status',
                                 'Payment status updated',
-                                'Payment ' . $values['receipt_number'] . ' for ₱'
-                                    . number_format((float) $values['total_amount'], 2)
+                                'Payment ' . $values['receipt_number'] . ' for '
+                                    . dashboardFormatCurrency((float) $values['total_amount'])
                                     . ' is now ' . $values['payment_status']
                                     . ($values['payment_term'] !== null ? ' for ' . $values['payment_term'] . '.' : '.')
                             );
@@ -876,6 +888,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $redirectUrl .= '&attendance_view=' . rawurlencode($attendanceView);
                     } elseif ($sectionKey === 'assessment-grading') {
                         $redirectUrl .= '&assessment_view=' . rawurlencode($assessmentView);
+                    } elseif ($sectionKey === 'finance-payments') {
+                        $redirectUrl .= '&finance_view=' . rawurlencode($financeView);
                     }
                     header('Location: ' . $redirectUrl, true, 303);
                     exit;
@@ -975,8 +989,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                 'payment-status-' . $recordId . '-' . $deleteDefinition['value'],
                                 'Payment status',
                                 'Payment status updated',
-                                'Payment ' . $paymentBeingCancelled['receipt_number'] . ' for ₱'
-                                    . number_format((float) $paymentBeingCancelled['total_amount'], 2)
+                                'Payment ' . $paymentBeingCancelled['receipt_number'] . ' for '
+                                    . dashboardFormatCurrency((float) $paymentBeingCancelled['total_amount'])
                                     . ' is now ' . $deleteDefinition['value']
                                     . ($paymentBeingCancelled['payment_term'] !== null
                                         ? ' for ' . $paymentBeingCancelled['payment_term'] . '.'
@@ -1018,6 +1032,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $redirectUrl .= '&attendance_view=' . rawurlencode($attendanceView);
                 } elseif ($sectionKey === 'assessment-grading') {
                     $redirectUrl .= '&assessment_view=' . rawurlencode($assessmentView);
+                } elseif ($sectionKey === 'finance-payments') {
+                    $redirectUrl .= '&finance_view=' . rawurlencode($financeView);
                 }
                 header('Location: ' . $redirectUrl, true, 303);
                 exit;
@@ -1050,7 +1066,8 @@ $entityRows = [];
 foreach ($entityDefinitions as $entityKey => $entity) {
     if ($entity['section'] !== $sectionKey
         || ($sectionKey === 'academic-management' && ($entity['academicView'] ?? null) !== $academicView)
-        || ($sectionKey === 'attendance-scheduling' && ($entity['attendanceView'] ?? null) !== $attendanceView)) {
+        || ($sectionKey === 'attendance-scheduling' && ($entity['attendanceView'] ?? null) !== $attendanceView)
+        || ($sectionKey === 'finance-payments' && ($entity['financeView'] ?? null) !== $financeView)) {
         continue;
     }
     if ($sectionKey === 'academic-management' && $academicView === 'subjects' && $entityKey === 'subjects') {
@@ -1178,7 +1195,8 @@ if (is_string($editToken) && preg_match('/^([a-z_]+):([1-9][0-9]*)$/', $editToke
     $editingEntity = $entityDefinitions[$editMatch[1]] ?? null;
     if ($editingEntity !== null && $editingEntity['section'] === $sectionKey
         && ($sectionKey !== 'academic-management' || ($editingEntity['academicView'] ?? null) === $academicView)
-        && ($sectionKey !== 'attendance-scheduling' || ($editingEntity['attendanceView'] ?? null) === $attendanceView)) {
+        && ($sectionKey !== 'attendance-scheduling' || ($editingEntity['attendanceView'] ?? null) === $attendanceView)
+        && ($sectionKey !== 'finance-payments' || ($editingEntity['financeView'] ?? null) === $financeView)) {
         $editSql = "SELECT * FROM {$editingEntity['table']} WHERE {$editingEntity['primaryKey']} = :record_id";
         $editParams = ['record_id' => (int) $editMatch[2]];
         if ($editMatch[1] === 'curriculum' && $selectedCurriculumProgramId !== null) {
@@ -1675,7 +1693,9 @@ $dashboard = [
         ? $academicSubnav[$academicView]['label']
         : ($sectionKey === 'attendance-scheduling'
             ? $attendanceSubnav[$attendanceView]['label']
-            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['label'] : $sectionDefinition['title'])),
+            : ($sectionKey === 'assessment-grading'
+                ? $assessmentSubnav[$assessmentView]['label']
+                : ($sectionKey === 'finance-payments' ? $financeSubnav[$financeView]['label'] : $sectionDefinition['title']))),
     'eyebrow' => $sectionKey === 'academic-management'
         ? ($academicView === 'subjects' ? 'Academic catalog' : 'Academic structure')
         : ($sectionKey === 'attendance-scheduling' ? 'Attendance & scheduling' : $sectionDefinition['eyebrow']),
@@ -1683,12 +1703,16 @@ $dashboard = [
         ? $academicSubnav[$academicView]['label']
         : ($sectionKey === 'attendance-scheduling'
             ? $attendanceSubnav[$attendanceView]['label']
-            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['label'] : $sectionDefinition['title'])),
+            : ($sectionKey === 'assessment-grading'
+                ? $assessmentSubnav[$assessmentView]['label']
+                : ($sectionKey === 'finance-payments' ? $financeSubnav[$financeView]['label'] : $sectionDefinition['title']))),
     'description' => $sectionKey === 'academic-management'
         ? $academicSubnav[$academicView]['description']
         : ($sectionKey === 'attendance-scheduling'
             ? $attendanceSubnav[$attendanceView]['description']
-            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['description'] : $sectionDefinition['description'])),
+            : ($sectionKey === 'assessment-grading'
+                ? $assessmentSubnav[$assessmentView]['description']
+                : ($sectionKey === 'finance-payments' ? $financeSubnav[$financeView]['description'] : $sectionDefinition['description']))),
     'metricsHeading' => '',
     'navItems' => adminNavigationItems($adminNavigationActive),
     'academicSubnav' => $sectionKey === 'academic-management'
@@ -1728,6 +1752,18 @@ $dashboard = [
             ],
             array_keys($assessmentSubnav),
             array_values($assessmentSubnav)
+        )
+        : [],
+    'financeSubnav' => $sectionKey === 'finance-payments'
+        ? array_map(
+            static fn (string $key, array $item): array => [
+                'key' => $key,
+                'label' => $item['label'],
+                'href' => 'admin-section.php?section=finance-payments&finance_view=' . rawurlencode($key),
+                'current' => $key === $financeView,
+            ],
+            array_keys($financeSubnav),
+            array_values($financeSubnav)
         )
         : [],
     'teacherSubnav' => $sectionKey === 'teachers'

@@ -1,0 +1,16 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Admissions/Views/apply_page.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The demo verification link and return link are native anchors and keyboard reachable.",
+    "Tab order places the demo action before the return action, matching the page's reading order.",
+    "Both links have distinct, descriptive names: Verify email and continue and Return to application.",
+    "A skip link precedes the page navigation."
+  ],
+  "notes": [
+    "Source review only; visible focus styling and runtime behavior were not verified."
+  ]
+}

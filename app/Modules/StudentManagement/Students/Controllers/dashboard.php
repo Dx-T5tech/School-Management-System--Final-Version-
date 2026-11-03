@@ -340,13 +340,13 @@ $dashboard = [
         'cards' => [
             [
                 'label' => 'Tuition balance',
-                'value' => number_format($tuitionBalanceCents / 100, 2),
+                'value' => dashboardFormatCurrency($tuitionBalanceCents / 100),
                 'note' => 'Outstanding tuition after completed payments',
                 'href' => 'student-section.php?section=financial-report',
             ],
             [
                 'label' => 'Tuition paid',
-                'value' => number_format($tuitionPaidCents / 100, 2),
+                'value' => dashboardFormatCurrency($tuitionPaidCents / 100),
                 'note' => 'Completed payments this academic year',
                 'href' => 'student-section.php?section=payments',
             ],
@@ -447,7 +447,7 @@ $dashboard = [
                 'items' => array_map(
                     static fn (array $payment): array => [
                         'title' => date('M j, Y', strtotime((string) $payment['payment_date']))
-                            . ' · ' . number_format((float) $payment['total_amount'], 2),
+                            . ' · ' . dashboardFormatCurrency((float) $payment['total_amount']),
                         'detail' => $payment['payment_term'] ?: ($payment['receipt_number'] ?: 'Payment record'),
                         'status' => (string) $payment['payment_status'],
                     ],

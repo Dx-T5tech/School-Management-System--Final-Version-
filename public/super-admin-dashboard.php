@@ -132,7 +132,7 @@ $dashboard = [
         ['label' => 'Total teachers', 'value' => number_format($teacherCount), 'note' => 'Teacher records', 'tone' => 'blue'],
         ['label' => 'Total students', 'value' => number_format($studentCount), 'note' => 'Student records', 'tone' => 'gold'],
         ['label' => 'Total enrollments', 'value' => number_format($enrollmentCount), 'note' => 'All enrollment statuses', 'tone' => 'sage'],
-        ['label' => 'School-wide collections', 'value' => number_format($completedCollections, 2), 'note' => 'Completed payments; currency unspecified', 'tone' => 'blue'],
+        ['label' => 'School-wide collections', 'value' => dashboardFormatCurrency($completedCollections), 'note' => 'Completed payments · PHP', 'tone' => 'blue'],
     ],
     'summary' => [
         'heading' => 'Institution reports',
@@ -197,7 +197,7 @@ $dashboard = [
             ],
             [
                 'title' => 'Completed payment report',
-                'description' => 'Payment collections by month; amounts are shown without a currency symbol.',
+                'description' => 'Payment collections by month, shown in Philippine pesos (PHP).',
                 'format' => 'amount',
                 'labels' => $reportMonthLabels,
                 'series' => [
@@ -240,7 +240,7 @@ $dashboard = [
             'tone' => $recentAuditEvents > 0 ? 'good' : 'attention',
         ],
     ],
-    'reviewFootnote' => 'Collections include completed payments only; the school currency is not specified in system settings.',
+    'reviewFootnote' => 'Collections include completed payments only; amounts are shown in Philippine pesos (PHP).',
 ];
 
 $dashboardLayout = dirname(__DIR__) . '/app/Shared/dashboard_layout.php';

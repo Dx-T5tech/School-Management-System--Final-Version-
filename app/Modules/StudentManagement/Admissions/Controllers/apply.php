@@ -5,44 +5,11 @@ declare(strict_types=1);
 require_once dirname(__DIR__, 5) . '/app/Core/dashboard.php';
 require_once dirname(__DIR__, 2) . '/Students/Services/student.php';
 require_once dirname(__DIR__) . '/Services/application_mail.php';
+require_once dirname(__DIR__) . '/Services/access.php';
 
 startAppSession();
 $connection = getDatabaseConnection();
-
-if (isset($_SESSION['user_id'])) {
-    $sessionUserId = $_SESSION['user_id'];
-    if (
-        (!is_int($sessionUserId) && !is_string($sessionUserId))
-        || !ctype_digit((string) $sessionUserId)
-    ) {
-        header('Location: login.php', true, 303);
-        exit;
-    }
-
-    $signedInAccount = $connection->prepare(
-        "SELECT u.user_id, r.role_name
-         FROM users u
-         INNER JOIN roles r ON r.role_id = u.role_id
-         WHERE u.user_id = :user_id
-           AND u.account_status = 'Active'
-         LIMIT 1"
-    );
-    $signedInAccount->execute(['user_id' => (int) $sessionUserId]);
-    $account = $signedInAccount->fetch();
-    $destination = $account === false
-        ? null
-        : ($account['role_name'] === 'Student'
-            ? studentSignInDestination($connection, (int) $account['user_id'])
-            : appRoleDashboardPath($account['role_name']));
-
-    if ($destination !== null) {
-        header('Location: ' . $destination, true, 303);
-        exit;
-    }
-
-    header('Location: login.php', true, 303);
-    exit;
-}
+admissionsRedirectSignedInUser($connection);
 
 $availablePrograms = array_values(array_filter(
     studentAvailablePrograms($connection),
@@ -56,6 +23,7 @@ $documentTypes = [
 ];
 $errorMessage = '';
 $noticeMessage = '';
+$demoVerificationUrl = null;
 $fieldErrors = [];
 $formValues = [
     'first_name' => '',
@@ -340,6 +308,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                             $newApplicationId = (int) $connection->lastInsertId();
                         } else {
                             $newApplicationId = (int) $existing['application_id'];
+                            unset($parameters['email']);
+                            $parameters['application_id'] = $newApplicationId;
                             $saveApplication = $connection->prepare(
                                 "UPDATE student_applications
                                  SET desired_program_id = :program_id,
@@ -361,7 +331,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                                      application_status = 'PendingVerification'
                                  WHERE application_id = :application_id"
                             );
-                            $parameters['application_id'] = $newApplicationId;
                             $saveApplication->execute($parameters);
                             $connection->prepare(
                                 'DELETE FROM student_application_documents WHERE application_id = :application_id'
@@ -382,7 +351,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $baseUrl = getenv('APP_BASE_URL');
                         if ($baseUrl === false || trim($baseUrl) === '') {
                             $host = $_SERVER['HTTP_HOST'] ?? '';
-                            if (!is_string($host) || preg_match('/^[A-Za-z0-9.-]+(?::[0-9]{1,5})?$/', $host) !== 1) {
+                            if (
+                                !is_string($host)
+                                || preg_match('/^(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:]+\])(?::[0-9]{1,5})?$/', $host) !== 1
+                            ) {
                                 throw new RuntimeException('APP_BASE_URL is required when the request host is not valid.');
                             }
                             $scheme = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off' ? 'https' : 'http';
@@ -420,12 +392,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                         $verificationUrl = rtrim($baseUrl, '/') . '/apply.php?token=' . $rawToken;
                         try {
-                            admissionSendVerificationEmail(
+                            $emailSent = admissionSendVerificationEmail(
                                 $formValues['email'],
                                 $formValues['first_name'],
                                 $verificationUrl
                             );
-                            $noticeMessage = 'Check your email for a verification link. It expires in 24 hours.';
+                            if ($emailSent) {
+                                $noticeMessage = 'Check your email for a verification link. It expires in 24 hours.';
+                            } else {
+                                $demoVerificationUrl = $verificationUrl;
+                                $noticeMessage = 'SMTP demo mode is enabled. No email was sent; use the local verification link below. It expires in 24 hours.';
+                            }
                             $step = 'verify';
                         } catch (RuntimeException $mailError) {
                             error_log('Student application verification email failed: ' . $mailError->getMessage());

@@ -275,7 +275,7 @@ $dashboard = [
         'cards' => [
             [
                 'label' => 'Tuition collected',
-                'value' => $activeAcademicYearId === null ? '—' : number_format($totalCollectedCents / 100, 2),
+                'value' => $activeAcademicYearId === null ? '—' : dashboardFormatCurrency($totalCollectedCents / 100),
                 'note' => $activeAcademicYearId === null
                     ? 'Activate an academic year to view collections'
                     : 'Completed tuition payments',
@@ -283,7 +283,7 @@ $dashboard = [
             ],
             [
                 'label' => 'Student balance',
-                'value' => $activeAcademicYearId === null ? '—' : number_format($totalOutstandingCents / 100, 2),
+                'value' => $activeAcademicYearId === null ? '—' : dashboardFormatCurrency($totalOutstandingCents / 100),
                 'note' => $activeAcademicYearId === null
                     ? 'Activate an academic year to view balances'
                     : 'Outstanding tuition across enrolled students',

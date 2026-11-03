@@ -1,0 +1,19 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/dashboard_layout.php",
+    "app/Modules/StudentManagement/Students/Controllers/section.php",
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The skip link is first in the page’s focus order and targets the programmatically focusable main landmark.",
+    "Dashboard navigation, sign-out, the report action, and named table scroll regions follow the document’s natural focus order; the report tables use tabindex=\"0\" rather than positive tabindex values.",
+    "Dashboard chrome and the print action are hidden with display:none only in print media, so those controls remain available on screen and are not keyboard focus targets in the print layout.",
+    "The screen-hidden report heading contains static text, not controls; it is displayed for print without introducing hidden keyboard targets."
+  ],
+  "notes": [
+    "Source-only review; browser keyboard interaction and rendered print output were not tested."
+  ]
+}

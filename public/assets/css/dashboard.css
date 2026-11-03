@@ -1784,34 +1784,6 @@ h1 {
     display: none;
 }
 
-.student-report-page .page-intro,
-.student-report-page .sidebar,
-.student-report-page .topbar,
-.student-report-page .page-footer,
-.student-report-page .skip-link {
-    display: none !important;
-}
-
-.student-report-page .app-shell,
-.student-report-page .workspace,
-.student-report-page .main-content,
-.student-report-page .student-section {
-    display: block;
-    width: 100%;
-    max-width: none;
-    margin: 0;
-    padding: 0;
-    border: 0;
-    background: #fff;
-    box-shadow: none;
-}
-
-.student-report-page .student-panel {
-    break-inside: avoid;
-    border-color: #aaa;
-    box-shadow: none;
-}
-
 .student-panel {
     min-width: 0;
     padding: 22px 24px;
@@ -4099,6 +4071,14 @@ h1 {
         animation: none !important;
     }
 
+    .student-report-page .page-intro,
+    .student-report-page .sidebar,
+    .student-report-page .topbar,
+    .student-report-page .page-footer,
+    .student-report-page .skip-link {
+        display: none !important;
+    }
+
     .student-report-page {
         color: #000;
         background: #fff;
@@ -4113,9 +4093,26 @@ h1 {
         padding: 0;
     }
 
+    .student-report-page .app-shell,
+    .student-report-page .workspace,
+    .student-report-page .main-content,
+    .student-report-page .student-section {
+        display: block;
+        width: 100%;
+        max-width: none;
+        margin: 0;
+        padding: 0;
+        border: 0;
+        background: #fff;
+        box-shadow: none;
+    }
+
     .student-report-page .student-panel {
         margin: 0 0 14px;
         padding: 12px;
+        break-inside: avoid;
+        border-color: #aaa;
+        box-shadow: none;
     }
 
     .student-report-page .student-report-heading {

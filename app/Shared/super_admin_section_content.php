@@ -447,8 +447,8 @@ cmd /c "&quot;C:\xampp\mysql\bin\mysqldump.exe&quot; --host=127.0.0.1 --port=330
                 <div><dt>Teachers</dt><dd><?= dashboardEscape(number_format($sectionData['teacherCount'])) ?></dd></div>
                 <div><dt>Students</dt><dd><?= dashboardEscape(number_format($sectionData['studentCount'])) ?></dd></div>
                 <div><dt>Enrollment records</dt><dd><?= dashboardEscape(number_format($sectionData['enrollmentCount'])) ?></dd></div>
-                <div><dt>Completed-payment collections</dt><dd><?= dashboardEscape(number_format($sectionData['completedCollections'], 2)) ?></dd></div>
-                <div><dt>Outstanding student balances</dt><dd><?= dashboardEscape(number_format($sectionData['outstandingBalance'], 2)) ?></dd></div>
+                <div><dt>Completed-payment collections</dt><dd><?= dashboardEscape(dashboardFormatCurrency($sectionData['completedCollections'])) ?></dd></div>
+                <div><dt>Outstanding student balances</dt><dd><?= dashboardEscape(dashboardFormatCurrency($sectionData['outstandingBalance'])) ?></dd></div>
             </dl>
             <p class="admin-panel-description">Financial amounts have no currency label because the database does not currently define a school currency.</p>
         </div>

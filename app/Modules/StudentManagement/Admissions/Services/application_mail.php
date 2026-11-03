@@ -12,6 +12,52 @@ function admissionSmtpRequiredSetting(string $name): string
     return trim($value);
 }
 
+function admissionSmtpOptionalSetting(string $name, string $default): string
+{
+    $value = getenv($name);
+
+    return $value === false || trim($value) === '' ? $default : trim($value);
+}
+
+function admissionIsLoopbackHost(string $host): bool
+{
+    $host = strtolower(trim($host, '[]'));
+
+    return in_array($host, ['localhost', '127.0.0.1', '::1'], true);
+}
+
+function admissionSmtpDemoModeEnabled(?string $verificationUrl = null): bool
+{
+    $mode = strtolower(admissionSmtpOptionalSetting('SMTP_MODE', 'smtp'));
+    if (!in_array($mode, ['smtp', 'demo'], true)) {
+        throw new RuntimeException('SMTP_MODE must be smtp or demo.');
+    }
+    if ($mode !== 'demo') {
+        return false;
+    }
+
+    $remoteAddress = $_SERVER['REMOTE_ADDR'] ?? '';
+    $requestHost = $_SERVER['HTTP_HOST'] ?? '';
+    $requestHost = is_string($requestHost) ? parse_url('http://' . $requestHost, PHP_URL_HOST) : false;
+    if (
+        !is_string($remoteAddress)
+        || !in_array($remoteAddress, ['127.0.0.1', '::1'], true)
+        || !is_string($requestHost)
+        || !admissionIsLoopbackHost($requestHost)
+    ) {
+        throw new RuntimeException('SMTP demo mode is only available to local browser requests.');
+    }
+
+    if ($verificationUrl !== null) {
+        $verificationHost = parse_url($verificationUrl, PHP_URL_HOST);
+        if (!is_string($verificationHost) || !admissionIsLoopbackHost($verificationHost)) {
+            throw new RuntimeException('SMTP demo mode requires a local verification URL.');
+        }
+    }
+
+    return true;
+}
+
 function admissionSmtpReadResponse($socket, array $acceptedCodes): string
 {
     $response = '';
@@ -50,8 +96,12 @@ function admissionSmtpCommand($socket, string $command, array $acceptedCodes): s
     return admissionSmtpReadResponse($socket, $acceptedCodes);
 }
 
-function admissionSendVerificationEmail(string $recipient, string $firstName, string $verificationUrl): void
+function admissionSendVerificationEmail(string $recipient, string $firstName, string $verificationUrl): bool
 {
+    if (admissionSmtpDemoModeEnabled($verificationUrl)) {
+        return false;
+    }
+
     applicationSendPlainTextEmail(
         $recipient,
         'Verify your Fullbright College enrollment email',
@@ -65,17 +115,19 @@ function admissionSendVerificationEmail(string $recipient, string $firstName, st
             'If you did not start this application, you can ignore this message.',
         ])
     );
+
+    return true;
 }
 
 function applicationSendPlainTextEmail(string $recipient, string $subject, string $body): void
 {
-    $host = admissionSmtpRequiredSetting('SMTP_HOST');
-    $portText = admissionSmtpRequiredSetting('SMTP_PORT');
     $username = admissionSmtpRequiredSetting('SMTP_USERNAME');
     $password = admissionSmtpRequiredSetting('SMTP_PASSWORD');
-    $fromAddress = admissionSmtpRequiredSetting('SMTP_FROM_EMAIL');
-    $fromName = getenv('SMTP_FROM_NAME') ?: 'Fullbright College';
-    $encryption = strtolower(getenv('SMTP_ENCRYPTION') ?: 'tls');
+    $host = admissionSmtpOptionalSetting('SMTP_HOST', 'smtp.gmail.com');
+    $encryption = strtolower(admissionSmtpOptionalSetting('SMTP_ENCRYPTION', 'tls'));
+    $portText = admissionSmtpOptionalSetting('SMTP_PORT', $encryption === 'ssl' ? '465' : '587');
+    $fromAddress = admissionSmtpOptionalSetting('SMTP_FROM_EMAIL', $username);
+    $fromName = admissionSmtpOptionalSetting('SMTP_FROM_NAME', 'Fullbright College');
     $port = filter_var($portText, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1, 'max_range' => 65535]]);
 
     if ($port === false || !filter_var($fromAddress, FILTER_VALIDATE_EMAIL) || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {

@@ -279,8 +279,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $sectionKey === 'payment') {
                     : (int) $selectedFee['net_cents'];
                 if ($paidCents + $feeAmountCents > $termBalanceCents) {
                     $remainingCents = max(0, $termBalanceCents - $paidCents);
-                    $paymentFieldErrors['total_amount'] = 'This fee or term has ₱'
-                        . number_format($remainingCents / 100, 2)
+                    $paymentFieldErrors['total_amount'] = 'This fee or term has '
+                        . dashboardFormatCurrency($remainingCents / 100)
                         . ' remaining. Enter no more than this amount.';
                     throw new RuntimeException($paymentFieldErrors['total_amount']);
                 }

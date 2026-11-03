@@ -15,6 +15,7 @@ $entitiesForSection = array_filter(
             ($sectionKey !== 'academic-management' || ($entity['academicView'] ?? null) === $academicView)
             && ($sectionKey !== 'attendance-scheduling' || ($entity['attendanceView'] ?? null) === $attendanceView)
             && ($sectionKey !== 'assessment-grading' || ($entity['assessmentView'] ?? null) === $assessmentView)
+            && ($sectionKey !== 'finance-payments' || ($entity['financeView'] ?? null) === $financeView)
         ),
     ARRAY_FILTER_USE_BOTH
 );
@@ -992,7 +993,7 @@ foreach ($lookupOptions as $lookupName => $options) {
     <?php if ($sectionKey === 'reports'): ?>
         <div class="admin-panel">
             <h2>School overview</h2>
-            <p class="admin-panel-description">Live totals from the school database. Completed payments are shown without a currency symbol because no school currency is configured.</p>
+            <p class="admin-panel-description">Live totals from the school database. Amounts are shown in Philippine pesos (PHP).</p>
             <dl class="admin-status-list">
                 <div><dt>Student records</dt><dd><?= dashboardEscape(number_format((int) $reportData['students'])) ?></dd></div>
                 <div><dt>Teacher records</dt><dd><?= dashboardEscape(number_format((int) $reportData['teachers'])) ?></dd></div>
@@ -1000,7 +1001,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                 <div><dt>Attendance records</dt><dd><?= dashboardEscape(number_format((int) $reportData['attendance'])) ?></dd></div>
                 <div><dt>Assessments</dt><dd><?= dashboardEscape(number_format((int) $reportData['assessments'])) ?></dd></div>
                 <div><dt>Completed payments</dt><dd><?= dashboardEscape(number_format((int) $reportData['payments'])) ?></dd></div>
-                <div><dt>Completed-payment collections</dt><dd><?= dashboardEscape(number_format((float) $reportData['collections'], 2)) ?></dd></div>
+                <div><dt>Completed-payment collections</dt><dd><?= dashboardEscape(dashboardFormatCurrency((float) $reportData['collections'])) ?></dd></div>
             </dl>
         </div>
         <div class="admin-panel">
@@ -1028,7 +1029,7 @@ foreach ($lookupOptions as $lookupName => $options) {
             <p class="admin-panel-description">This page reports current database totals; it does not create downloadable report files.</p>
         </div>
     <?php else: ?>
-        <?php if ($sectionKey === 'finance-payments'): ?>
+        <?php if ($sectionKey === 'finance-payments' && $financeView === 'payment-records'): ?>
             <p class="admin-notice admin-notice--info">Payment records are retained for audit. The row action cancels a payment instead of deleting its financial history.</p>
         <?php elseif ($sectionKey === 'students' || $sectionKey === 'teachers'): ?>
             <p class="admin-notice admin-notice--info">Deactivate records instead of permanently deleting them, so linked enrollments, grades, attendance, and history remain intact.</p>
@@ -1080,6 +1081,8 @@ foreach ($lookupOptions as $lookupName => $options) {
                         <input type="hidden" name="attendance_view" value="<?= dashboardEscape($attendanceView) ?>">
                     <?php elseif ($sectionKey === 'assessment-grading'): ?>
                         <input type="hidden" name="assessment_view" value="<?= dashboardEscape($assessmentView) ?>">
+                    <?php elseif ($sectionKey === 'finance-payments'): ?>
+                        <input type="hidden" name="finance_view" value="<?= dashboardEscape($financeView) ?>">
                     <?php endif; ?>
                     <?php if ($isEditing): ?>
                         <input type="hidden" name="record_id" value="<?= dashboardEscape((int) $editingRecord[$entity['primaryKey']]) ?>">
@@ -1161,7 +1164,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                     <div class="admin-form-actions">
                         <button class="admin-button" type="submit"><?= $isEditing ? 'Save changes' : 'Add record' ?></button>
                         <?php if ($isEditing): ?>
-                            <a class="admin-button admin-button--secondary" href="admin-section.php?section=<?= dashboardEscape(rawurlencode($sectionKey)) ?><?= $sectionKey === 'academic-management' ? '&amp;academic_view=' . dashboardEscape(rawurlencode($academicView)) . ($entityKey === 'curriculum' && $returnProgramId !== null ? '&amp;program_id=' . $returnProgramId . '&amp;curriculum_program_id=' . $returnProgramId : '') : ($sectionKey === 'attendance-scheduling' ? '&amp;attendance_view=' . dashboardEscape(rawurlencode($attendanceView)) : ($sectionKey === 'assessment-grading' ? '&amp;assessment_view=' . dashboardEscape(rawurlencode($assessmentView)) : '')) ?>">Cancel editing</a>
+                            <a class="admin-button admin-button--secondary" href="admin-section.php?section=<?= dashboardEscape(rawurlencode($sectionKey)) ?><?= $sectionKey === 'academic-management' ? '&amp;academic_view=' . dashboardEscape(rawurlencode($academicView)) . ($entityKey === 'curriculum' && $returnProgramId !== null ? '&amp;program_id=' . $returnProgramId . '&amp;curriculum_program_id=' . $returnProgramId : '') : ($sectionKey === 'attendance-scheduling' ? '&amp;attendance_view=' . dashboardEscape(rawurlencode($attendanceView)) : ($sectionKey === 'assessment-grading' ? '&amp;assessment_view=' . dashboardEscape(rawurlencode($assessmentView)) : ($sectionKey === 'finance-payments' ? '&amp;finance_view=' . dashboardEscape(rawurlencode($financeView)) : ''))) ?>">Cancel editing</a>
                         <?php endif; ?>
                     </div>
                 </form>
@@ -1206,12 +1209,15 @@ foreach ($lookupOptions as $lookupName => $options) {
                                             if (is_string($definition['options']) && $cellValue !== '' && isset($lookupLabels[$definition['options']][(string) $cellValue])) {
                                                 $cellValue = $lookupLabels[$definition['options']][(string) $cellValue];
                                             }
+                                            if ($name === 'total_amount' && is_numeric($cellValue)) {
+                                                $cellValue = dashboardFormatCurrency((float) $cellValue);
+                                            }
                                             ?>
                                             <td><?= dashboardEscape(is_scalar($cellValue) ? (string) $cellValue : '') ?></td>
                                         <?php endforeach; ?>
                                         <td>
                                             <div class="admin-row-actions">
-                                                <a class="admin-button admin-button--secondary" href="admin-section.php?section=<?= dashboardEscape(rawurlencode($sectionKey)) ?><?= $sectionKey === 'academic-management' ? '&amp;academic_view=' . dashboardEscape(rawurlencode($academicView)) : ($sectionKey === 'attendance-scheduling' ? '&amp;attendance_view=' . dashboardEscape(rawurlencode($attendanceView)) : ($sectionKey === 'assessment-grading' ? '&amp;assessment_view=' . dashboardEscape(rawurlencode($assessmentView)) : '')) ?>&amp;edit=<?= dashboardEscape($entityKey . ':' . (int) $record[$entity['primaryKey']]) ?>">Edit</a>
+                                                <a class="admin-button admin-button--secondary" href="admin-section.php?section=<?= dashboardEscape(rawurlencode($sectionKey)) ?><?= $sectionKey === 'academic-management' ? '&amp;academic_view=' . dashboardEscape(rawurlencode($academicView)) : ($sectionKey === 'attendance-scheduling' ? '&amp;attendance_view=' . dashboardEscape(rawurlencode($attendanceView)) : ($sectionKey === 'assessment-grading' ? '&amp;assessment_view=' . dashboardEscape(rawurlencode($assessmentView)) : ($sectionKey === 'finance-payments' ? '&amp;finance_view=' . dashboardEscape(rawurlencode($financeView)) : ''))) ?>&amp;edit=<?= dashboardEscape($entityKey . ':' . (int) $record[$entity['primaryKey']]) ?>">Edit</a>
                                                 <form method="post" data-confirm-delete data-record-label="<?= dashboardEscape($recordLabel) ?>" data-delete-label="<?= dashboardEscape($entity['delete']['label']) ?>">
                                                     <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
                                                     <input type="hidden" name="action" value="delete">
@@ -1223,6 +1229,8 @@ foreach ($lookupOptions as $lookupName => $options) {
                                                         <input type="hidden" name="attendance_view" value="<?= dashboardEscape($attendanceView) ?>">
                                                     <?php elseif ($sectionKey === 'assessment-grading'): ?>
                                                         <input type="hidden" name="assessment_view" value="<?= dashboardEscape($assessmentView) ?>">
+                                                    <?php elseif ($sectionKey === 'finance-payments'): ?>
+                                                        <input type="hidden" name="finance_view" value="<?= dashboardEscape($financeView) ?>">
                                                     <?php endif; ?>
                                                     <button class="admin-button admin-button--danger" type="submit"><?= dashboardEscape($entity['delete']['label']) ?></button>
                                                 </form>

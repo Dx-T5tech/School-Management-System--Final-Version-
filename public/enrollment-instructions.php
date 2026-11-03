@@ -2,4 +2,4 @@
 
 declare(strict_types=1);
 
-require dirname(__DIR__) . '/app/Modules/StudentManagement/Admissions/Views/enrollment_instructions.php';
+require dirname(__DIR__) . '/app/Modules/StudentManagement/Admissions/Controllers/enrollment_instructions.php';
