@@ -1,0 +1,14 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Building and floor choices are native submit buttons; the search field has a label and native submit button.",
+    "DOM tab order matches the visual order of building, floor, and search controls at desktop and responsive layouts.",
+    "Selector buttons are at least 32 × 36 CSS pixels, and search controls are at least 38 pixels tall.",
+    "Visible focus styles apply to selector buttons, search input, and submit button."
+  ]
+}

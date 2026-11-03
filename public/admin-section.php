@@ -32,7 +32,7 @@ $academicSubnav = [
     'curriculum' => ['label' => 'Curriculum', 'description' => 'Browse and manage curriculum entries by program, academic year, year level, and semester.'],
     'subjects' => ['label' => 'Subjects', 'description' => 'Maintain the shared subject catalog used by curricula and class sections.'],
     'classes' => ['label' => 'Classes', 'description' => 'Manage class sections and their academic-year assignments.'],
-    'teacher-assignments' => ['label' => 'Teacher assignments', 'description' => 'Assign teachers and subjects to sections and semesters.'],
+    'teacher-assignments' => ['label' => 'Teacher assignments', 'description' => 'Assign active teachers to curriculum subjects offered in the selected section and semester.'],
     'academic-setup' => ['label' => 'Academic setup', 'description' => 'Manage academic years, departments, and programs.'],
 ];
 $academicView = 'curriculum';
@@ -200,7 +200,7 @@ $entityDefinitions = [
     'sections' => [
         'section' => 'academic-management', 'academicView' => 'classes', 'table' => 'sections', 'primaryKey' => 'section_id', 'label' => 'Class sections',
         'fields' => [
-            'program_id' => $field('Program', 'select', false, 'programs'),
+            'program_id' => $field('Program', 'select', true, 'programs', false),
             'academic_year_id' => $field('Academic year', 'select', true, 'academic_years', false),
             'section_name' => $field('Section name', 'text', true, null, false),
             'year_level' => $field('Year level', 'number', true, null, false),
@@ -224,10 +224,10 @@ $entityDefinitions = [
     'teaching_assignments' => [
         'section' => 'academic-management', 'academicView' => 'teacher-assignments', 'table' => 'teaching_assignments', 'primaryKey' => 'assignment_id', 'label' => 'Teaching assignments',
         'fields' => [
-            'teacher_id' => $field('Teacher', 'select', true, 'teachers', false),
-            'subject_id' => $field('Subject', 'select', true, 'subjects', false),
-            'section_id' => $field('Class section', 'select', true, 'sections', false),
-            'semester_id' => $field('Semester', 'select', true, 'semesters', false),
+            'teacher_id' => $field('Teacher', 'select', true, 'active_teachers', false),
+            'subject_id' => $field('Curriculum subject', 'select', true, 'assignment_subjects', false),
+            'section_id' => $field('Class section', 'select', true, 'assignment_sections', false),
+            'semester_id' => $field('Semester', 'select', true, 'assignment_semesters', false),
         ],
         'delete' => ['type' => 'delete'],
     ],
@@ -344,7 +344,7 @@ $lookupDefinitions = [
     'semesters' => ['SELECT semester_id AS id, semester_name AS label FROM semesters ORDER BY start_date DESC'],
     'enrollments' => ["SELECT e.enrollment_id AS id, CONCAT(s.student_number, ' - ', s.first_name, ' ', s.last_name, ' (', e.enrollment_status, ')') AS label FROM enrollments e INNER JOIN students s ON s.student_id = e.student_id ORDER BY s.last_name, s.first_name"],
     'assignments' => ["SELECT ta.assignment_id AS id, CONCAT(t.first_name, ' ', t.last_name, ' - ', su.subject_name, ' - ', se.section_name) AS label FROM teaching_assignments ta INNER JOIN teachers t ON t.teacher_id = ta.teacher_id INNER JOIN subjects su ON su.subject_id = ta.subject_id INNER JOIN sections se ON se.section_id = ta.section_id WHERE ta.assignment_status = 'Active' ORDER BY t.last_name, su.subject_name"],
-    'rooms' => ['SELECT room_id AS id, CONCAT(room_code, " - ", room_name) AS label FROM rooms ORDER BY room_code'],
+    'rooms' => ['SELECT room_id AS id, CONCAT(room_code, " - ", room_name) AS label FROM rooms WHERE room_type <> "Facility" ORDER BY room_code'],
     'grading_periods' => ['SELECT grading_period_id AS id, period_name AS label FROM grading_periods ORDER BY start_date DESC'],
     'assessment_categories' => ['SELECT category_id AS id, category_name AS label FROM assessment_categories ORDER BY category_name'],
     'assessments' => ['SELECT assessment_id AS id, assessment_title AS label FROM assessments ORDER BY assessment_date DESC'],
@@ -364,11 +364,82 @@ $lookupDefinitions = [
          ORDER BY s.last_name, s.first_name, e.enrollment_id, sf.student_fee_id"
     ],
     'scholarships' => ['SELECT scholarship_id AS id, scholarship_name AS label FROM scholarships ORDER BY scholarship_name'],
+    'active_teachers' => ["SELECT teacher_id AS id, CONCAT(employee_number, ' - ', first_name, ' ', last_name) AS label FROM teachers WHERE employment_status = 'Active' ORDER BY last_name, first_name"],
+    'assignment_sections' => ["SELECT sec.section_id AS id, sec.section_name AS label
+                               FROM sections sec
+                               INNER JOIN programs p ON p.program_id = sec.program_id AND p.status = 'Active'
+                               INNER JOIN academic_years ay ON ay.academic_year_id = sec.academic_year_id AND ay.status = 'Active'
+                               WHERE sec.status = 'Active'
+                               ORDER BY p.program_code, sec.year_level, sec.section_name"],
+    'assignment_semesters' => ["SELECT sem.semester_id AS id, CONCAT(ay.year_name, ' - ', sem.semester_name) AS label
+                               FROM semesters sem
+                               INNER JOIN academic_years ay ON ay.academic_year_id = sem.academic_year_id
+                               WHERE ay.status = 'Active'
+                                 AND sem.status IN ('Active', 'Upcoming')
+                               ORDER BY sem.start_date, sem.semester_id"],
+    'assignment_subjects' => ["SELECT DISTINCT su.subject_id AS id, CONCAT(su.subject_code, ' - ', su.subject_name) AS label
+                               FROM curriculum c
+                               INNER JOIN subjects su ON su.subject_id = c.subject_id AND su.status = 'Active'
+                               INNER JOIN programs p ON p.program_id = c.program_id AND p.status = 'Active'
+                               INNER JOIN academic_years ay ON ay.academic_year_id = c.academic_year_id AND ay.status = 'Active'
+                               ORDER BY su.subject_code, su.subject_name"],
 ];
 
 $lookupOptions = [];
 foreach ($lookupDefinitions as $lookupName => [$lookupQuery]) {
     $lookupOptions[$lookupName] = $connection->query($lookupQuery)->fetchAll();
+}
+
+$assignmentSectionMetadata = [];
+foreach ($connection->query(
+    "SELECT sec.section_id, sec.program_id, sec.academic_year_id, sec.year_level
+     FROM sections sec
+     INNER JOIN programs p ON p.program_id = sec.program_id AND p.status = 'Active'
+     INNER JOIN academic_years ay ON ay.academic_year_id = sec.academic_year_id AND ay.status = 'Active'
+     WHERE sec.status = 'Active'"
+)->fetchAll() as $assignmentSection) {
+    $assignmentSectionMetadata[(string) $assignmentSection['section_id']] = [
+        'programId' => (int) $assignmentSection['program_id'],
+        'academicYearId' => (int) $assignmentSection['academic_year_id'],
+        'yearLevel' => (int) $assignmentSection['year_level'],
+    ];
+}
+$assignmentSemesterMetadata = [];
+foreach ($connection->query(
+    "SELECT sem.semester_id, sem.academic_year_id,
+            CASE
+                WHEN LOWER(sem.semester_name) LIKE '1st%' OR LOWER(sem.semester_name) LIKE 'semester 1%' THEN 1
+                WHEN LOWER(sem.semester_name) LIKE '2nd%' OR LOWER(sem.semester_name) LIKE 'semester 2%' THEN 2
+                ELSE NULL
+            END AS semester_number
+     FROM semesters sem
+     INNER JOIN academic_years ay ON ay.academic_year_id = sem.academic_year_id
+     WHERE ay.status = 'Active'
+       AND sem.status IN ('Active', 'Upcoming')"
+)->fetchAll() as $assignmentSemester) {
+    $assignmentSemesterMetadata[(string) $assignmentSemester['semester_id']] = [
+        'academicYearId' => (int) $assignmentSemester['academic_year_id'],
+        'semesterNumber' => $assignmentSemester['semester_number'] === null
+            ? null
+            : (int) $assignmentSemester['semester_number'],
+    ];
+}
+$assignmentCurriculumCombinations = [];
+foreach ($connection->query(
+    "SELECT c.subject_id, c.program_id, c.academic_year_id, c.year_level, c.semester_number
+     FROM curriculum c
+     INNER JOIN subjects su ON su.subject_id = c.subject_id AND su.status = 'Active'
+     INNER JOIN programs p ON p.program_id = c.program_id AND p.status = 'Active'
+     INNER JOIN academic_years ay ON ay.academic_year_id = c.academic_year_id AND ay.status = 'Active'"
+)->fetchAll() as $curriculumCombination) {
+    $assignmentCurriculumCombinations[(string) $curriculumCombination['subject_id']][] = [
+        'programId' => (int) $curriculumCombination['program_id'],
+        'academicYearId' => (int) $curriculumCombination['academic_year_id'],
+        'yearLevel' => (int) $curriculumCombination['year_level'],
+        'semesterNumber' => $curriculumCombination['semester_number'] === null
+            ? null
+            : (int) $curriculumCombination['semester_number'],
+    ];
 }
 
 $validDate = static function (string $value): bool {
@@ -493,6 +564,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fieldErrors[$positiveField] = 'Enter a number greater than zero.';
                 }
             }
+            if ($entityKey === 'sections' && isset($values['year_level'])
+                && floor((float) $values['year_level']) !== (float) $values['year_level']) {
+                $fieldErrors['year_level'] = 'Enter a whole number.';
+            }
             if ($entityKey === 'curriculum') {
                 foreach (['year_level', 'semester_number'] as $wholeNumberField) {
                     if (
@@ -566,6 +641,101 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $fieldErrors['section_id'] = 'The selected section must belong to this academic year and program.';
                     }
                 }
+                if ($entityKey === 'sections') {
+                    $sectionContext = $connection->prepare(
+                        "SELECT COUNT(*)
+                         FROM programs p
+                         INNER JOIN academic_years ay ON ay.academic_year_id = :academic_year_id
+                         WHERE p.program_id = :program_id
+                           AND (
+                               :is_editing = 1
+                               OR (p.status = 'Active' AND ay.status IN ('Active', 'Upcoming'))
+                           )"
+                    );
+                    $sectionContext->execute([
+                        'academic_year_id' => $values['academic_year_id'],
+                        'program_id' => $values['program_id'],
+                        'is_editing' => $recordId === null ? 0 : 1,
+                    ]);
+                    if ((int) $sectionContext->fetchColumn() === 0) {
+                        $fieldErrors['program_id'] = 'Choose an available program and academic year.';
+                        $fieldErrors['academic_year_id'] = 'Choose an available academic year.';
+                    }
+                }
+                if ($entityKey === 'teaching_assignments') {
+                    $activeTeacher = $connection->prepare(
+                        "SELECT COUNT(*) FROM teachers
+                         WHERE teacher_id = :teacher_id AND employment_status = 'Active'"
+                    );
+                    $activeTeacher->execute(['teacher_id' => $values['teacher_id']]);
+                    if ((int) $activeTeacher->fetchColumn() === 0) {
+                        $fieldErrors['teacher_id'] = 'Choose an active teacher.';
+                    }
+
+                    $assignmentContext = $connection->prepare(
+                        "SELECT sec.section_id, sec.academic_year_id AS section_academic_year_id,
+                                sem.semester_id, semester_year.academic_year_id AS semester_academic_year_id
+                         FROM sections sec
+                         INNER JOIN programs p ON p.program_id = sec.program_id AND p.status = 'Active'
+                         INNER JOIN academic_years section_year
+                           ON section_year.academic_year_id = sec.academic_year_id
+                          AND section_year.status = 'Active'
+                         LEFT JOIN semesters sem
+                           ON sem.semester_id = :semester_id
+                          AND sem.status IN ('Active', 'Upcoming')
+                         LEFT JOIN academic_years semester_year
+                           ON semester_year.academic_year_id = sem.academic_year_id
+                          AND semester_year.status = 'Active'
+                         WHERE sec.section_id = :section_id
+                           AND sec.status = 'Active'"
+                    );
+                    $assignmentContext->execute([
+                        'semester_id' => $values['semester_id'],
+                        'section_id' => $values['section_id'],
+                    ]);
+                    $assignmentDetails = $assignmentContext->fetch();
+                    if ($assignmentDetails === false) {
+                        $fieldErrors['section_id'] = 'Choose an active class section in the active academic year.';
+                    } elseif ($assignmentDetails['semester_id'] === null
+                        || $assignmentDetails['semester_academic_year_id'] === null) {
+                        $fieldErrors['semester_id'] = 'Choose an active or upcoming semester in the active academic year.';
+                    } elseif ((int) $assignmentDetails['section_academic_year_id']
+                        !== (int) $assignmentDetails['semester_academic_year_id']) {
+                        $fieldErrors['semester_id'] = 'Choose a semester in the selected class section’s academic year.';
+                    }
+
+                    if (!isset($fieldErrors['section_id']) && !isset($fieldErrors['semester_id'])) {
+                        $curriculumMatch = $connection->prepare(
+                            "SELECT COUNT(*)
+                             FROM curriculum c
+                             INNER JOIN subjects su ON su.subject_id = c.subject_id AND su.status = 'Active'
+                             INNER JOIN sections sec ON sec.section_id = :section_id
+                             INNER JOIN semesters sem ON sem.semester_id = :semester_id
+                             WHERE c.subject_id = :subject_id
+                               AND c.program_id = sec.program_id
+                               AND c.academic_year_id = sec.academic_year_id
+                               AND c.year_level = sec.year_level
+                               AND (
+                                   c.semester_number IS NULL
+                                   OR c.semester_number = CASE
+                                       WHEN LOWER(sem.semester_name) LIKE '1st%'
+                                         OR LOWER(sem.semester_name) LIKE 'semester 1%' THEN 1
+                                       WHEN LOWER(sem.semester_name) LIKE '2nd%'
+                                         OR LOWER(sem.semester_name) LIKE 'semester 2%' THEN 2
+                                       ELSE NULL
+                                   END
+                               )"
+                        );
+                        $curriculumMatch->execute([
+                            'section_id' => $values['section_id'],
+                            'semester_id' => $values['semester_id'],
+                            'subject_id' => $values['subject_id'],
+                        ]);
+                        if ((int) $curriculumMatch->fetchColumn() === 0) {
+                            $fieldErrors['subject_id'] = 'Choose a subject listed in this class section’s curriculum for its year level and selected semester.';
+                        }
+                    }
+                }
                 if ($entityKey === 'curriculum') {
                     $duplicateSql = 'SELECT COUNT(*)
                                      FROM curriculum
@@ -592,28 +762,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 }
                 if ($entityKey === 'class_schedules') {
-                    $conflictSql = 'SELECT COUNT(*) FROM class_schedules
-                                    WHERE day_of_week = :day_of_week
-                                      AND schedule_status = :active_status
-                                      AND start_time < :end_time
-                                      AND end_time > :start_time
-                                      AND (room_id = :room_id OR assignment_id = :assignment_id)';
-                    $conflictParams = [
-                        'day_of_week' => $values['day_of_week'],
-                        'active_status' => 'Active',
-                        'end_time' => $values['end_time'],
-                        'start_time' => $values['start_time'],
-                        'room_id' => $values['room_id'],
-                        'assignment_id' => $values['assignment_id'],
-                    ];
-                    if ($recordId !== null) {
-                        $conflictSql .= ' AND schedule_id <> :record_id';
-                        $conflictParams['record_id'] = $recordId;
-                    }
-                    $conflicts = $connection->prepare($conflictSql);
-                    $conflicts->execute($conflictParams);
-                    if ((int) $conflicts->fetchColumn() > 0) {
-                        $fieldErrors['start_time'] = 'This room or teaching assignment already has an overlapping active schedule.';
+                    $roomTypeQuery = $connection->prepare('SELECT room_type FROM rooms WHERE room_id = :room_id LIMIT 1');
+                    $roomTypeQuery->execute(['room_id' => $values['room_id']]);
+                    $roomType = $roomTypeQuery->fetchColumn();
+                    if ($roomType === false || $roomType === 'Facility') {
+                        $fieldErrors['room_id'] = 'Choose a classroom or laboratory; facilities cannot be scheduled.';
+                    } else {
+                        $conflictSql = 'SELECT COUNT(*) FROM class_schedules
+                                        WHERE day_of_week = :day_of_week
+                                          AND schedule_status = :active_status
+                                          AND start_time < :end_time
+                                          AND end_time > :start_time
+                                          AND (room_id = :room_id OR assignment_id = :assignment_id)';
+                        $conflictParams = [
+                            'day_of_week' => $values['day_of_week'],
+                            'active_status' => 'Active',
+                            'end_time' => $values['end_time'],
+                            'start_time' => $values['start_time'],
+                            'room_id' => $values['room_id'],
+                            'assignment_id' => $values['assignment_id'],
+                        ];
+                        if ($recordId !== null) {
+                            $conflictSql .= ' AND schedule_id <> :record_id';
+                            $conflictParams['record_id'] = $recordId;
+                        }
+                        $conflicts = $connection->prepare($conflictSql);
+                        $conflicts->execute($conflictParams);
+                        if ((int) $conflicts->fetchColumn() > 0) {
+                            $fieldErrors['start_time'] = 'This room or teaching assignment already has an overlapping active schedule.';
+                        }
                     }
                 }
 
@@ -1226,14 +1403,15 @@ if ($sectionKey === 'academic-management') {
     }
 
     $curriculumProgramOptions = $connection->query(
-        'SELECT p.program_id, p.program_code, p.program_name, p.status,
+        "SELECT p.program_id, p.program_code, p.program_name, p.status,
                 COUNT(DISTINCT c.subject_id) AS subject_count,
                 COUNT(DISTINCT c.year_level) AS year_level_count,
                 COUNT(DISTINCT c.semester_number) AS semester_count
          FROM programs p
          LEFT JOIN curriculum c ON c.program_id = p.program_id
+         WHERE p.status = 'Active'
          GROUP BY p.program_id, p.program_code, p.program_name, p.status
-         ORDER BY p.program_name'
+         ORDER BY p.program_name"
     )->fetchAll();
     $curriculumPrograms = $curriculumProgramOptions;
     if ($selectedProgramId !== null) {
@@ -1555,25 +1733,20 @@ if ($sectionKey === 'attendance-scheduling') {
             static fn (array $room): string => (string) $room['building'],
             $roomOptions
         ))));
-        $roomFilterBuilding = $_GET['building'] ?? 'All buildings';
-        if (!is_string($roomFilterBuilding) || ($roomFilterBuilding !== 'All buildings' && !in_array(
-            $roomFilterBuilding,
-            $buildingOptions,
-            true
-        ))) {
-            $roomFilterBuilding = 'All buildings';
+        $roomFilterBuilding = $_GET['building'] ?? ($buildingOptions[0] ?? '');
+        if (!is_string($roomFilterBuilding) || !in_array($roomFilterBuilding, $buildingOptions, true)) {
+            $roomFilterBuilding = $buildingOptions[0] ?? '';
         }
         $roomFloorOptions = array_values(array_unique(array_filter(array_map(
-            static fn (array $room): string => (string) $room['floor_number'],
+            static fn (array $room): string => $room['building'] === $roomFilterBuilding
+                ? (string) $room['floor_number']
+                : '',
             $roomOptions
         ))));
-        $roomFilterFloor = $_GET['floor'] ?? 'All floors';
-        if (!is_string($roomFilterFloor) || ($roomFilterFloor !== 'All floors' && !in_array(
-            $roomFilterFloor,
-            $roomFloorOptions,
-            true
-        ))) {
-            $roomFilterFloor = 'All floors';
+        sort($roomFloorOptions, SORT_NUMERIC);
+        $roomFilterFloor = $_GET['floor'] ?? ($roomFloorOptions[0] ?? '');
+        if (!is_string($roomFilterFloor) || !in_array($roomFilterFloor, $roomFloorOptions, true)) {
+            $roomFilterFloor = $roomFloorOptions[0] ?? '';
         }
         $roomSearch = $_GET['q'] ?? '';
         $roomSearch = is_string($roomSearch) ? trim($roomSearch) : '';
@@ -1594,7 +1767,7 @@ if ($sectionKey === 'attendance-scheduling') {
             $layoutColumn = 1;
             while (isset($occupiedLayoutSlots[$floorKey][$layoutRow][$layoutColumn])) {
                 $layoutColumn += 2;
-                if ($layoutColumn > 5) {
+                if ($layoutColumn > 11) {
                     $layoutColumn = 1;
                     $layoutRow = $layoutRow === 1 ? 3 : $layoutRow + 1;
                 }
@@ -1608,17 +1781,29 @@ if ($sectionKey === 'attendance-scheduling') {
             "SELECT DATE_FORMAT(CURRENT_DATE(), '%W') AS current_day,
                     TIME_FORMAT(CURRENT_TIME(), '%H:%i:%s') AS clock_time,
                     DATE_FORMAT(CURRENT_TIMESTAMP(), '%Y-%m-%dT%H:%i:%s') AS updated_at,
-                    DATE_FORMAT(CURRENT_TIMESTAMP(), '%b %e, %Y, %l:%i %p') AS updated_label"
+                    DATE_FORMAT(CURRENT_TIMESTAMP(), '%b %e, %Y, %l:%i:%s %p') AS updated_label"
         )->fetch();
         $currentDay = (string) $roomClock['current_day'];
         $currentTime = (string) $roomClock['clock_time'];
         $currentOccupancy = [];
         $nextOccupancy = [];
+        $roomScheduleDetails = [];
         foreach ($scheduleRows as $schedule) {
             if ($schedule['day_of_week'] !== $currentDay) {
                 continue;
             }
             $roomId = (int) $schedule['room_id'];
+            if ((string) $schedule['end_time'] > $currentTime) {
+                $roomScheduleDetails[$roomId][] = [
+                    'time' => date('g:i A', strtotime((string) $schedule['start_time']))
+                        . ' - ' . date('g:i A', strtotime((string) $schedule['end_time'])),
+                    'subject' => $schedule['subject_code'] . ' - ' . $schedule['subject_name'],
+                    'section' => 'Section ' . $schedule['section_name'] . ' · '
+                        . $schedule['teacher_first_name'] . ' ' . $schedule['teacher_last_name'],
+                    'status' => (string) $schedule['start_time'] <= $currentTime ? 'In progress' : 'Upcoming',
+                    'statusKey' => (string) $schedule['start_time'] <= $currentTime ? 'current' : 'upcoming',
+                ];
+            }
             if ((string) $schedule['start_time'] <= $currentTime && (string) $schedule['end_time'] > $currentTime) {
                 $currentOccupancy[$roomId][] = $schedule;
             } elseif ((string) $schedule['start_time'] > $currentTime) {
@@ -1637,8 +1822,8 @@ if ($sectionKey === 'attendance-scheduling') {
                     || stripos((string) $room['room_code'], $roomSearch) !== false
                     || stripos((string) $room['room_name'], $roomSearch) !== false
                     || stripos((string) $room['room_type'], $roomSearch) !== false;
-                return ($roomFilterBuilding === 'All buildings' || $room['building'] === $roomFilterBuilding)
-                    && ($roomFilterFloor === 'All floors' || (string) $room['floor_number'] === $roomFilterFloor)
+                return $room['building'] === $roomFilterBuilding
+                    && (string) $room['floor_number'] === $roomFilterFloor
                     && $matchesSearch;
             }
         ));
@@ -1651,11 +1836,14 @@ if ($sectionKey === 'attendance-scheduling') {
             $roomId = (int) $room['room_id'];
             $currentSchedules = $currentOccupancy[$roomId] ?? [];
             $nextSchedules = $nextOccupancy[$roomId] ?? [];
+            $isFacility = $room['room_type'] === 'Facility';
             $isUnavailable = in_array($room['status'], ['Maintenance', 'Inactive'], true);
             $isManuallyOccupied = $room['status'] === 'Occupied' && $currentSchedules === [];
-            $roomStatus = $isUnavailable
+            $roomStatus = $isFacility
+                ? 'Facility'
+                : ($isUnavailable
                 ? (string) $room['status']
-                : ($currentSchedules !== [] || $isManuallyOccupied ? 'Occupied' : 'Available');
+                : ($currentSchedules !== [] || $isManuallyOccupied ? 'Occupied' : 'Available'));
             $timing = '';
             $details = '';
 
@@ -1703,6 +1891,7 @@ if ($sectionKey === 'attendance-scheduling') {
                     'Occupied' => 'occupied',
                     'Maintenance' => 'maintenance',
                     'Inactive' => 'inactive',
+                    'Facility' => 'facility',
                     default => 'available',
                 },
                 'timing' => $timing,
@@ -1712,8 +1901,24 @@ if ($sectionKey === 'attendance-scheduling') {
         $roomOverview = [
             'rooms' => $roomCards,
             'roomStates' => $roomStates,
+            'schedulesByRoom' => $roomScheduleDetails,
             'buildings' => $buildingOptions,
             'floors' => $roomFloorOptions,
+            'stairs' => match ($roomFilterBuilding . ':' . $roomFilterFloor) {
+                'A:2' => [['row' => 3, 'column' => 11, 'span' => 2]],
+                'C:1', 'C:2', 'C:3' => [['row' => 3, 'column' => 4, 'span' => 2]],
+                'D:1', 'D:2' => [
+                    ['row' => 3, 'column' => 1, 'span' => 1],
+                    ['row' => 3, 'column' => 11, 'span' => 2],
+                ],
+                'D:3' => [['row' => 3, 'column' => 4, 'span' => 2]],
+                default => [],
+            },
+            'verticalHallway' => match ($roomFilterBuilding . ':' . $roomFilterFloor) {
+                'A:1' => ['row' => 3, 'column' => 5, 'span' => 2],
+                'B:1' => ['row' => 3, 'column' => 5, 'span' => 2],
+                default => null,
+            },
             'building' => $roomFilterBuilding,
             'floor' => $roomFilterFloor,
             'search' => $roomSearch,
@@ -1787,7 +1992,7 @@ if (
     foreach ($roomOverview['roomStates'] as $roomState) {
         if ($roomState['status'] === 'Occupied') {
             $occupiedCount++;
-        } elseif ($roomState['status'] === 'Available') {
+        } elseif (in_array($roomState['status'], ['Available', 'Facility'], true)) {
             $availableCount++;
         }
     }

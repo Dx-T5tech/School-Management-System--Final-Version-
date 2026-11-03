@@ -1,0 +1,9 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\admin-section.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js"
+  ],
+  "findings": []
+}

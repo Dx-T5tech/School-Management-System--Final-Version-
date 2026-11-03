@@ -15,16 +15,14 @@ Start MySQL in the XAMPP Control Panel and create the `isms_database` database
 before connecting. The connection function throws a `PDOException` if the
 database is unavailable or the credentials are invalid.
 
-## Demo data
+## Demo data cleanup
 
-After applying the database migrations and creating the four active demo
-accounts, run `php database/seeds/demo_data.php` from the repository root to
-add fictional records for academic structure, classes, student and teacher
-profiles, enrollment, attendance, grading, fees, payments, announcements, and
-the school calendar. The script reuses the active Teacher and Student accounts,
-does not create login accounts or change existing records, and can be safely
-rerun. Use `php database/seeds/demo_data.php --dry-run` to validate the seed
-without keeping its inserts.
+Apply
+`database/migrations/202611040006_remove_demo_seed_data.sql` to remove fictional
+records created by the former demo seed. It preserves all login accounts and
+account-linked teacher/student profiles, the active academic year and four
+requested programs, current semesters, and the configured room inventory. The
+former demo seed script has been removed so it cannot repopulate the database.
 
 ## User roles
 
@@ -79,18 +77,24 @@ school-wide announcement store. Academic Management includes a live Curriculum
 view organized by program, academic year, year level, semester, and subject.
 Curriculum entries can be added, edited, and removed from the same page; subject
 and year-level totals are based on the saved curriculum records across academic
-years. Attendance & Scheduling includes Attendance Overview, Teacher Schedule,
-Student Schedule, Room Monitoring, and Conflict Review views. Schedule and room
+years. Class sections require a program, academic year, and whole-number year
+level. Teaching assignments are limited to active teachers and sections in the
+active academic year; their subject must be in that section's program curriculum
+for its year level and the selected semester. Attendance & Scheduling includes
+Attendance Overview, Teacher Schedule, Student Schedule, Room Monitoring, and
+Conflict Review views. Schedule and room
 availability views use the active class schedules saved in the school database;
-Room Monitoring displays an illustrative floor board with current scheduled
-occupancy times and the next class time, refreshing its schedule data every 30
-seconds while open. Occupancy is derived from the timetable and is not a
-physical sensor reading. Each room's position is stored in
-`room_monitor_layout` and stays fixed when refreshing or switching filters.
-Apply `database/migrations/202611040002_create_room_monitor_layout.sql` after the
-rooms table exists; seed additional room positions in this migration to add
-them to the fixed floor plan. Conflict review checks overlapping active
-schedules for shared teachers, rooms, or class sections.
+Room Monitoring displays the four screenshot-based building inventories and
+their fixed floor plans. Scheduled classroom occupancy and upcoming class times
+refresh every 30 seconds; facilities remain marked separately and are not
+schedulable rooms. Occupancy is derived from the timetable, not a physical
+sensor reading. Apply
+`database/migrations/202611040002_create_room_monitor_layout.sql` after the
+rooms table exists, then apply
+`database/migrations/202611040003_seed_reference_room_monitoring.sql` to seed
+the Building A-D rooms, facilities, and saved positions and remove the two
+demo-room records. Conflict review checks overlapping active schedules for
+shared teachers, rooms, or class sections.
 Create and edit forms across Super Admin account/configuration pages, Admin
 management modules, Teacher attendance/assessment/grade entry, and Student
 payment requests open in centered dialogs. Validation errors reopen the matching

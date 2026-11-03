@@ -1,0 +1,13 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:/xampp/htdocs/School Management System (Final Version)/public/admin-section.php",
+    "C:/xampp/htdocs/School Management System (Final Version)/app/Shared/admin_section_content.php",
+    "C:/xampp/htdocs/School Management System (Final Version)/public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Subject reset and availability changes are conveyed in a role=status message.",
+    "Dependent fields remain native select elements with keyboard-operable option selection."
+  ]
+}

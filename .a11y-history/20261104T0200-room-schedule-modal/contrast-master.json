@@ -1,0 +1,15 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Room dialog text and status-pill text meet WCAG AA text contrast.",
+    "Dialog backdrop provides sufficient contrast against the dialog surface.",
+    "Room-card triggers and the Close button retain visible focus indicators with sufficient contrast.",
+    "Suppressing the outline on the programmatically focused, non-interactive dialog heading avoids implying it is a control; it does not suppress the interactive controls' indicators."
+  ],
+  "notes": []
+}

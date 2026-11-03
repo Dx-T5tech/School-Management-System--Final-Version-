@@ -1437,22 +1437,120 @@ h1 {
     min-width: 760px;
 }
 
+.room-monitor-panel {
+    --room-monitor-line: #73808A;
+}
+
 .room-monitor-floor-map {
     padding: 12px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--room-monitor-line);
     border-radius: 12px;
     background: var(--soft);
 }
 
-.room-monitor-map-note {
-    margin: 0 0 10px;
+.room-monitor-controls {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: start;
+    gap: 12px 20px;
+}
+
+.room-monitor-building-form {
+    grid-column: 1;
+    grid-row: 1;
+}
+
+.room-monitor-floor-form {
+    grid-column: 2;
+    grid-row: 1;
+}
+
+.room-monitor-selector {
+    min-width: 0;
+    margin: 0;
+    padding: 0;
+    border: 0;
+}
+
+.room-monitor-selector legend,
+.room-monitor-search-form label {
+    margin-bottom: 6px;
     color: var(--muted);
     font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+.room-monitor-selector-options {
+    display: flex;
+    width: fit-content;
+    gap: 3px;
+    padding: 3px;
+    border: 1px solid var(--room-monitor-line);
+    border-radius: 9px;
+    background: var(--soft);
+}
+
+.room-monitor-selector-button {
+    min-width: 38px;
+    min-height: 36px;
+    padding: 7px 12px;
+    border: 0;
+    border-radius: 6px;
+    color: var(--ink-soft);
+    background: transparent;
+    font: inherit;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.room-monitor-selector-button[aria-pressed="true"] {
+    color: #fff;
+    background: var(--navy);
+}
+
+.room-monitor-selector-button:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
+}
+
+.room-monitor-search-form {
+    display: flex;
+    grid-column: 1 / -1;
+    grid-row: 2;
+    align-items: end;
+    gap: 8px;
+}
+
+.room-monitor-search-form label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+}
+
+.room-monitor-search-form input,
+.admin-panel.room-monitor-panel .room-monitor-search-form input {
+    width: min(100%, 340px);
+    min-height: 38px;
+    padding: 8px 12px;
+    border: 1px solid var(--room-monitor-line);
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--surface);
+}
+
+.dashboard-page .admin-panel.room-monitor-panel .room-monitor-search-form input:not([type="hidden"]):not([type="submit"]) {
+    border-color: var(--room-monitor-line);
 }
 
 .room-monitor-grid {
     display: grid;
-    grid-template-columns: repeat(6, minmax(0, 1fr));
+    grid-template-columns: repeat(12, minmax(0, 1fr));
     grid-auto-rows: minmax(112px, auto);
     gap: 10px;
     margin: 0;
@@ -1461,18 +1559,49 @@ h1 {
 }
 
 .room-monitor-hallway {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    grid-column: var(--hallway-column) / span var(--hallway-span);
+    grid-row: var(--hallway-row);
     display: grid;
     min-height: 84px;
     place-items: center;
-    border-block: 1px dashed var(--line);
+    border-block: 1px dashed var(--room-monitor-line);
     color: var(--muted);
     background: var(--surface);
     font-size: 11px;
     font-weight: 700;
     letter-spacing: 0.18em;
     text-transform: uppercase;
+}
+
+.room-monitor-vertical-hallway,
+.room-monitor-stairs {
+    display: grid;
+    grid-row: var(--room-row);
+    grid-column: var(--room-column) / span var(--room-column-span);
+    min-width: 0;
+    min-height: 112px;
+    place-items: center;
+    border: 1px dashed var(--room-monitor-line);
+    color: var(--muted);
+    background: var(--soft);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+}
+
+.room-monitor-vertical-hallway {
+    writing-mode: vertical-rl;
+}
+
+.room-monitor-stairs {
+    border: 1px solid var(--room-monitor-line);
+    border-radius: 6px;
+    writing-mode: vertical-rl;
+}
+
+.room-monitor-stairs span::before {
+    content: "↗ ";
 }
 
 .room-monitor-card {
@@ -1482,10 +1611,53 @@ h1 {
     min-width: 0;
     min-height: 112px;
     padding: 14px;
-    border: 1px solid var(--line);
+    border: 1px solid var(--room-monitor-line);
     border-top: 3px solid var(--good);
     border-radius: 8px;
     background: var(--surface);
+}
+
+.room-monitor-card-cell {
+    display: flex;
+    min-width: 0;
+    grid-row: var(--room-row);
+    grid-column: var(--room-column) / span var(--room-column-span);
+}
+
+.room-monitor-card-title {
+    display: block;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+}
+
+button.room-monitor-card {
+    display: flex;
+    width: 100%;
+    min-height: 100%;
+    grid-row: auto;
+    grid-column: auto;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    color: var(--ink);
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: box-shadow 140ms ease;
+}
+
+button.room-monitor-card:hover {
+    box-shadow: 0 8px 18px rgb(22 48 76 / 12%);
+}
+
+button.room-monitor-card:focus-visible {
+    position: relative;
+    z-index: 1;
+    outline: 3px solid var(--navy);
+    outline-offset: 3px;
 }
 
 .room-monitor-card--occupied {
@@ -1493,7 +1665,8 @@ h1 {
 }
 
 .room-monitor-card--maintenance,
-.room-monitor-card--inactive {
+.room-monitor-card--inactive,
+.room-monitor-card--facility {
     border-top-color: var(--muted);
     background: var(--soft);
 }
@@ -1502,6 +1675,7 @@ h1 {
     margin: 0 0 7px;
     color: var(--ink);
     font-size: 14px;
+    overflow-wrap: anywhere;
 }
 
 .room-monitor-card p {
@@ -1530,6 +1704,10 @@ h1 {
     color: var(--muted);
 }
 
+.room-monitor-card--facility .room-monitor-status {
+    color: var(--muted);
+}
+
 .room-monitor-status-dot {
     width: 7px;
     height: 7px;
@@ -1544,6 +1722,150 @@ h1 {
 
 .room-monitor-details:empty {
     display: none;
+}
+
+.room-schedule-dialog {
+    width: min(590px, calc(100vw - 32px));
+    max-width: none;
+    max-height: min(80vh, 560px);
+    margin: auto;
+    padding: 0;
+    overflow: auto;
+    border: 1px solid #D7E0E9;
+    border-radius: 14px;
+    color: var(--ink);
+    background: var(--surface);
+    box-shadow: 0 28px 80px rgb(12 33 58 / 30%);
+}
+
+.room-schedule-dialog::backdrop {
+    background: rgb(16 43 73 / 52%);
+    backdrop-filter: blur(2px);
+}
+
+.room-schedule-dialog-content {
+    padding: 25px 27px 23px;
+}
+
+.room-schedule-dialog h2 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 20px;
+    line-height: 1.3;
+}
+
+.room-schedule-dialog h2:focus {
+    outline: none;
+}
+
+.room-schedule-dialog-context {
+    margin: 2px 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+}
+
+.room-schedule-list {
+    display: grid;
+    gap: 9px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.room-schedule-item {
+    display: grid;
+    grid-template-columns: minmax(120px, 142px) minmax(0, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 11px 12px;
+    border: 1px solid #73808A;
+    border-radius: 9px;
+    background: var(--surface);
+}
+
+.room-schedule-time {
+    margin: 0;
+    color: var(--ink);
+    font-size: 13px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.room-schedule-details {
+    min-width: 0;
+}
+
+.room-schedule-details h3 {
+    margin: 0;
+    color: var(--ink);
+    font-size: 13px;
+    line-height: 1.35;
+    overflow-wrap: anywhere;
+}
+
+.room-schedule-details p {
+    margin: 3px 0 0;
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.room-schedule-status {
+    justify-self: end;
+    padding: 4px 9px;
+    border-radius: 999px;
+    color: var(--ink-soft);
+    background: var(--soft);
+    font-size: 10px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.room-schedule-status--current {
+    color: #075A43;
+    background: #E1F2EA;
+}
+
+.room-schedule-status--upcoming {
+    color: #294D78;
+    background: #EAF1F8;
+}
+
+.room-schedule-empty {
+    margin: 0;
+    padding: 15px;
+    border: 1px solid #73808A;
+    border-radius: 9px;
+    color: var(--muted);
+    background: var(--soft);
+}
+
+.room-schedule-dialog-actions {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 18px;
+}
+
+.room-schedule-dialog-close {
+    min-width: 76px;
+    min-height: 38px;
+    padding: 8px 15px;
+    border: 1px solid #73808A;
+    border-radius: 8px;
+    color: var(--ink);
+    background: var(--surface);
+    font: inherit;
+    font-size: 13px;
+    font-weight: 700;
+    cursor: pointer;
+}
+
+.room-schedule-dialog-close:hover {
+    background: var(--soft);
+}
+
+.room-schedule-dialog-close:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
 }
 
 .room-monitor-footer {
@@ -1598,6 +1920,10 @@ h1 {
     background: var(--muted);
 }
 
+.room-monitor-legend-item--facility::before {
+    background: var(--muted);
+}
+
 .schedule-updated {
     margin: 14px 0 0;
     color: var(--ink-soft);
@@ -1610,12 +1936,27 @@ h1 {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 
-    .room-monitor-card {
+    .room-monitor-card,
+    .room-monitor-card-cell {
         grid-row: auto;
         grid-column: span 1;
     }
 
-    .room-monitor-hallway {
+    .room-monitor-hallway,
+    .room-monitor-vertical-hallway,
+    .room-monitor-stairs {
+        grid-row: auto;
+        grid-column: 1 / -1;
+        writing-mode: horizontal-tb;
+    }
+
+    .room-monitor-controls {
+        grid-template-columns: 1fr;
+    }
+
+    .room-monitor-building-form,
+    .room-monitor-floor-form {
+        grid-column: 1;
         grid-row: auto;
     }
 }
@@ -1627,6 +1968,28 @@ h1 {
 
     .room-monitor-card {
         padding: 11px;
+    }
+
+    .room-schedule-dialog-content {
+        padding: 21px 18px 18px;
+    }
+
+    .room-schedule-item {
+        grid-template-columns: minmax(0, 1fr) auto;
+    }
+
+    .room-schedule-details {
+        grid-column: 1 / -1;
+        grid-row: 2;
+    }
+
+    .room-monitor-selector-options {
+        max-width: 100%;
+    }
+
+    .room-monitor-selector-button {
+        min-width: 32px;
+        padding-inline: 9px;
     }
 
     .room-monitor-footer {

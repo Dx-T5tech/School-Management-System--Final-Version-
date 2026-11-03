@@ -1,0 +1,16 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The timestamp remains visible outside the live region, avoiding redundant announcements at the 10-second polling cadence.",
+    "Outages are announced and logged once per outage; recovery is explicitly announced, including alongside room updates.",
+    "Occupancy changes and schedule-detail-only changes use distinct announcement wording."
+  ],
+  "notes": [
+    "As with snapshot polling generally, a transient room state that starts and ends between successful polls cannot be reported."
+  ]
+}

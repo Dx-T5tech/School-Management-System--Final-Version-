@@ -1,0 +1,16 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Room cards are native buttons, operable with Enter and Space, and have visible focus styles.",
+    "The Escape keydown handler prevents the default and closes the open room dialog; native modal focus containment remains provided by showModal().",
+    "Closing the dialog returns focus to its invoking room card.",
+    "No keyboard traps were found in the reviewed room-monitoring UI."
+  ],
+  "notes": []
+}

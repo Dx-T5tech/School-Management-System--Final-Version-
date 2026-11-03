@@ -18,6 +18,7 @@
         const occupiedCount = roomMonitoring.querySelector("[data-room-occupied-count]");
         const availableCount = roomMonitoring.querySelector("[data-room-available-count]");
         let roomRefreshInProgress = false;
+        let roomRefreshUnavailable = false;
         const previousRoomStates = new Map();
         roomMonitoring.querySelectorAll("[data-room-card]").forEach((card) => {
             previousRoomStates.set(card.dataset.roomId, {
@@ -26,6 +27,90 @@
                 details: card.querySelector("[data-room-details]")?.textContent?.trim() ?? "",
             });
         });
+
+        const roomDialog = roomMonitoring.querySelector("#room-schedule-dialog");
+        const roomDialogTitle = roomDialog?.querySelector("#room-dialog-title");
+        const roomDialogContext = roomDialog?.querySelector("#room-dialog-context");
+        const roomDialogSchedules = roomDialog?.querySelector("[data-room-dialog-schedules]");
+        const roomDialogEmpty = roomDialog?.querySelector("[data-room-dialog-empty]");
+        const roomDialogClose = roomDialog?.querySelector("[data-room-dialog-close]");
+        if (
+            roomDialog instanceof HTMLDialogElement
+            && roomDialogTitle instanceof HTMLElement
+            && roomDialogContext instanceof HTMLElement
+            && roomDialogSchedules instanceof HTMLElement
+            && roomDialogEmpty instanceof HTMLElement
+            && roomDialogClose instanceof HTMLButtonElement
+        ) {
+            const roomDialogName = roomDialogTitle.querySelector("[data-room-dialog-name]");
+            roomMonitoring.querySelectorAll("button[data-room-card]").forEach((card) => {
+                card.addEventListener("click", () => {
+                    const roomName = card.querySelector(".room-monitor-card-title")?.textContent?.trim()
+                        || "Room";
+                    if (roomDialogName instanceof HTMLElement) {
+                        roomDialogName.textContent = roomName;
+                    }
+                    roomDialogContext.textContent = card.dataset.roomContext || "";
+                    roomDialogSchedules.replaceChildren();
+                    roomDialogEmpty.textContent = "";
+                    roomDialogEmpty.hidden = true;
+
+                    const schedules = JSON.parse(card.dataset.roomSchedules || "[]");
+                    roomDialog.showModal();
+                    if (schedules.length === 0) {
+                        roomDialogEmpty.textContent = "No more classes are scheduled today.";
+                        roomDialogEmpty.hidden = false;
+                    } else {
+                        schedules.forEach((schedule) => {
+                            const item = document.createElement("li");
+                            item.className = "room-schedule-item";
+
+                            const time = document.createElement("p");
+                            time.className = "room-schedule-time";
+                            time.textContent = schedule.time;
+
+                            const details = document.createElement("div");
+                            details.className = "room-schedule-details";
+
+                            const subject = document.createElement("h3");
+                            subject.textContent = schedule.subject;
+
+                            const section = document.createElement("p");
+                            section.textContent = schedule.section;
+
+                            const status = document.createElement("span");
+                            status.className = `room-schedule-status room-schedule-status--${schedule.statusKey}`;
+                            status.textContent = schedule.status;
+
+                            details.append(subject, section);
+                            item.append(time, details, status);
+                            roomDialogSchedules.append(item);
+                        });
+                    }
+                });
+            });
+
+            roomDialogClose.addEventListener("click", () => roomDialog.close());
+            roomDialog.addEventListener("keydown", (event) => {
+                if (event.key === "Escape") {
+                    event.preventDefault();
+                    roomDialog.close();
+                }
+            });
+            roomDialog.addEventListener("click", (event) => {
+                if (event.target !== roomDialog) {
+                    return;
+                }
+                const bounds = roomDialog.getBoundingClientRect();
+                const clickedOutside = event.clientX < bounds.left
+                    || event.clientX > bounds.right
+                    || event.clientY < bounds.top
+                    || event.clientY > bounds.bottom;
+                if (clickedOutside) {
+                    roomDialog.close();
+                }
+            });
+        }
 
         const refreshRoomStatuses = async () => {
             if (roomRefreshInProgress || document.hidden) {
@@ -48,7 +133,7 @@
                     throw new Error("Room status refresh returned an invalid response.");
                 }
 
-                const statusClasses = ["available", "occupied", "maintenance", "inactive"];
+                const statusClasses = ["available", "occupied", "maintenance", "inactive", "facility"];
                 const changedRooms = [];
                 roomMonitoring.querySelectorAll("[data-room-card]").forEach((card) => {
                     const state = data.roomStates[card.dataset.roomId];
@@ -62,17 +147,17 @@
                         details: typeof state.details === "string" ? state.details : "",
                     };
                     const previousState = previousRoomStates.get(card.dataset.roomId);
-                    if (
+                    if (previousState && previousState.status !== currentState.status) {
+                        const roomName = card.querySelector("h3")?.textContent?.trim() || "A room";
+                        const statusChange = `${roomName} is ${currentState.status.toLowerCase()}. ${currentState.timing}`;
+                        changedRooms.push(currentState.details === "" ? statusChange : `${statusChange}. ${currentState.details}`);
+                    } else if (
                         previousState
-                        && (
-                            previousState.status !== currentState.status
-                            || previousState.timing !== currentState.timing
-                            || previousState.details !== currentState.details
-                        )
+                        && (previousState.timing !== currentState.timing || previousState.details !== currentState.details)
                     ) {
                         const roomName = card.querySelector("h3")?.textContent?.trim() || "A room";
-                        const roomChange = `${roomName} is ${currentState.status.toLowerCase()}. ${currentState.timing}`;
-                        changedRooms.push(currentState.details === "" ? roomChange : `${roomChange}. ${currentState.details}`);
+                        const scheduleUpdate = `${roomName} schedule details updated. ${currentState.timing}`;
+                        changedRooms.push(currentState.details === "" ? scheduleUpdate : `${scheduleUpdate}. ${currentState.details}`);
                     }
                     previousRoomStates.set(card.dataset.roomId, currentState);
 
@@ -105,20 +190,28 @@
                     updatedTime.textContent = data.updatedLabel;
                 }
                 if (liveStatus) {
-                    let updateMessage = "";
+                    const updateMessages = [];
+                    if (roomRefreshUnavailable) {
+                        updateMessages.push("Live room schedule updates have resumed.");
+                        roomRefreshUnavailable = false;
+                    }
                     if (changedRooms.length > 0) {
                         const visibleChanges = changedRooms.slice(0, 3);
-                        updateMessage = `Room occupancy changed: ${visibleChanges.join(" ")}${changedRooms.length > visibleChanges.length ? ` ${changedRooms.length - visibleChanges.length} more room(s) changed.` : ""}`;
-                    } else if (liveStatus.textContent.startsWith("Live refresh unavailable.")) {
-                        updateMessage = "Live room schedule updates have resumed.";
+                        updateMessages.push(
+                            `Room monitoring updates: ${visibleChanges.join(" ")}${changedRooms.length > visibleChanges.length ? ` ${changedRooms.length - visibleChanges.length} more room(s) changed.` : ""}`,
+                        );
                     }
+                    const updateMessage = updateMessages.join(" ");
                     if (updateMessage !== "" && liveStatus.textContent !== updateMessage) {
                         liveStatus.textContent = updateMessage;
                     }
                 }
             } catch (error) {
-                console.error("Unable to refresh room monitoring data.", error);
-                if (liveStatus) {
+                if (!roomRefreshUnavailable) {
+                    console.error("Unable to refresh room monitoring data.", error);
+                }
+                roomRefreshUnavailable = true;
+                if (liveStatus && !liveStatus.textContent.startsWith("Live refresh unavailable.")) {
                     liveStatus.textContent = "Live refresh unavailable. Showing the last successful update.";
                 }
             } finally {
@@ -126,7 +219,7 @@
             }
         };
 
-        window.setInterval(refreshRoomStatuses, 30_000);
+        window.setInterval(refreshRoomStatuses, 10_000);
         document.addEventListener("visibilitychange", () => {
             if (!document.hidden) {
                 refreshRoomStatuses();
@@ -513,6 +606,96 @@
         } else {
             dialog.showModal();
         }
+    }
+
+    const assignmentSectionSelect = document.querySelector("[data-assignment-section]");
+    const assignmentSubjectSelect = document.querySelector("[data-assignment-subject]");
+    const assignmentSemesterSelect = document.querySelector("[data-assignment-semester]");
+    const assignmentRelationshipStatus = document.getElementById("admin-teaching-assignments-relationship-status");
+    if (
+        assignmentSectionSelect instanceof HTMLSelectElement
+        && assignmentSubjectSelect instanceof HTMLSelectElement
+        && assignmentSemesterSelect instanceof HTMLSelectElement
+        && assignmentRelationshipStatus instanceof HTMLElement
+    ) {
+        const updateAssignmentSubjectOptions = () => {
+            const sectionOption = assignmentSectionSelect.selectedOptions[0];
+            const semesterOption = assignmentSemesterSelect.selectedOptions[0];
+            const sectionYearId = sectionOption?.dataset.academicYearId || "";
+            const semesterYearId = semesterOption?.dataset.academicYearId || "";
+            const semesterNumber = semesterOption?.dataset.semesterNumber || "";
+            const hasMatchingContext = Boolean(
+                sectionOption?.value
+                && semesterOption?.value
+                && sectionYearId === semesterYearId,
+            );
+
+            Array.from(assignmentSectionSelect.options).forEach((option) => {
+                option.disabled = Boolean(
+                    option.value
+                    && semesterOption?.value
+                    && option.dataset.academicYearId !== semesterYearId,
+                );
+            });
+            Array.from(assignmentSemesterSelect.options).forEach((option) => {
+                option.disabled = Boolean(
+                    option.value
+                    && sectionOption?.value
+                    && option.dataset.academicYearId !== sectionYearId,
+                );
+            });
+
+            Array.from(assignmentSubjectSelect.options).forEach((option) => {
+                if (!option.value) {
+                    option.disabled = false;
+                    return;
+                }
+
+                let combinations = [];
+                try {
+                    combinations = JSON.parse(option.dataset.curriculumCombinations || "[]");
+                } catch (error) {
+                    console.error("Unable to read curriculum options for a teaching assignment.", error);
+                }
+                option.disabled = !hasMatchingContext || !combinations.some((combination) => (
+                    String(combination.programId) === sectionOption.dataset.programId
+                    && String(combination.academicYearId) === sectionYearId
+                    && String(combination.yearLevel) === sectionOption.dataset.yearLevel
+                    && (
+                        combination.semesterNumber === null
+                        || String(combination.semesterNumber) === semesterNumber
+                    )
+                ));
+            });
+
+            const subjectWasCleared = Boolean(assignmentSubjectSelect.selectedOptions[0]?.disabled);
+            if (subjectWasCleared) {
+                assignmentSubjectSelect.value = "";
+            }
+
+            if (!sectionOption?.value || !semesterOption?.value) {
+                assignmentRelationshipStatus.textContent = "";
+                return;
+            }
+            if (sectionYearId !== semesterYearId) {
+                assignmentRelationshipStatus.textContent = "Choose a semester in this class section’s academic year.";
+                return;
+            }
+            if (subjectWasCleared) {
+                assignmentRelationshipStatus.textContent = "The selected subject is no longer available for this section and semester. Choose another subject.";
+                return;
+            }
+            const hasAvailableSubjects = Array.from(assignmentSubjectSelect.options).some(
+                (option) => option.value && !option.disabled,
+            );
+            assignmentRelationshipStatus.textContent = hasAvailableSubjects
+                ? ""
+                : "No curriculum subjects match this section and semester. Add the subject to the curriculum before assigning it.";
+        };
+
+        assignmentSectionSelect.addEventListener("change", updateAssignmentSubjectOptions);
+        assignmentSemesterSelect.addEventListener("change", updateAssignmentSubjectOptions);
+        updateAssignmentSubjectOptions();
     }
 
     document.querySelectorAll(".sidebar-nav-group").forEach((group) => {

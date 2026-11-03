@@ -1,0 +1,19 @@
+{
+  "skill": "modal-specialist",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\js\\dashboard.js",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The room schedule uses a native dialog opened with showModal(), with a valid heading label and no redundant dialog role or aria-modal.",
+    "Room cards are buttons that populate and open the dialog on click.",
+    "Focus starts at the dialog heading; native modal behavior contains focus and close() restores focus to the opener.",
+    "The explicit Escape keydown handler prevents the default and closes the dialog, including in the tested case where no cancel event fires.",
+    "The visible Close button and outside-backdrop click close the dialog."
+  ],
+  "notes": [
+    "Review confirms the Escape handler is compatible with native dialog behavior. Browser runtime testing beyond the Escape behavior described was not performed."
+  ]
+}

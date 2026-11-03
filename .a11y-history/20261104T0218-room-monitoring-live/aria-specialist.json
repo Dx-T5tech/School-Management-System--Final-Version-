@@ -1,0 +1,17 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "C:/xampp/htdocs/School Management System (Final Version)/app/Shared/admin_section_content.php",
+    "C:/xampp/htdocs/School Management System (Final Version)/public/assets/js/dashboard.js",
+    "C:/xampp/htdocs/School Management System (Final Version)/public/admin-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The live status region announces actual room or schedule changes, outage, and recovery without announcing routine timestamp changes.",
+    "The timestamp remains visible and is updated with both its datetime value and text; it does not need to be in a live region.",
+    "The refresh cadence is qualified for page visibility and delayed responses."
+  ],
+  "notes": [
+    "Keeping the timestamp outside the live region is appropriate: WCAG does not require announcing every routine timestamp update, and doing so every 10 seconds could be disruptive."
+  ]
+}

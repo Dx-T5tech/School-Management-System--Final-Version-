@@ -334,7 +334,7 @@ foreach ($lookupOptions as $lookupName => $options) {
             foreach ($roomOverview['roomStates'] as $roomState) {
                 if ($roomState['status'] === 'Occupied') {
                     $roomOccupiedCount++;
-                } elseif ($roomState['status'] === 'Available') {
+                } elseif (in_array($roomState['status'], ['Available', 'Facility'], true)) {
                     $roomAvailableCount++;
                 }
             }
@@ -350,36 +350,66 @@ foreach ($lookupOptions as $lookupName => $options) {
             <div class="admin-panel room-monitor-panel" data-room-monitor
                  data-room-refresh-url="<?= dashboardEscape($roomRefreshUrl) ?>">
                 <h2>Room monitoring</h2>
-                <p class="admin-panel-description">Live room availability from the active class schedule. This is schedule-based, not a physical sensor reading.</p>
-                <form class="admin-form schedule-filter-form" method="get" action="admin-section.php">
-                    <input type="hidden" name="section" value="attendance-scheduling">
-                    <input type="hidden" name="attendance_view" value="room-monitoring">
-                    <div class="admin-field">
-                        <label for="room-building-filter">Building</label>
-                        <select id="room-building-filter" name="building">
-                            <option value="All buildings"<?= $roomOverview['building'] === 'All buildings' ? ' selected' : '' ?>>All buildings</option>
-                            <?php foreach ($roomOverview['buildings'] as $building): ?>
-                                <option value="<?= dashboardEscape($building) ?>"<?= $roomOverview['building'] === $building ? ' selected' : '' ?>><?= dashboardEscape('Building ' . $building) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="admin-field">
-                        <label for="room-floor-filter">Floor</label>
-                        <select id="room-floor-filter" name="floor">
-                            <option value="All floors"<?= $roomOverview['floor'] === 'All floors' ? ' selected' : '' ?>>All floors</option>
-                            <?php foreach ($roomOverview['floors'] as $floor): ?>
-                                <option value="<?= dashboardEscape($floor) ?>"<?= $roomOverview['floor'] === $floor ? ' selected' : '' ?>><?= dashboardEscape('Floor ' . $floor) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
-                    <div class="admin-field">
+                <p class="admin-panel-description">Live, schedule-based occupancy. Refresh checks run every 10 seconds while this page is visible; slow responses may delay updates. This does not detect physical room presence.</p>
+                <div class="room-monitor-controls">
+                    <form class="room-monitor-building-form" method="get" action="admin-section.php">
+                        <input type="hidden" name="section" value="attendance-scheduling">
+                        <input type="hidden" name="attendance_view" value="room-monitoring">
+                        <input type="hidden" name="floor" value="<?= dashboardEscape($roomOverview['floors'][0] ?? '') ?>">
+                        <input type="hidden" name="q" value="<?= dashboardEscape($roomOverview['search']) ?>">
+                        <fieldset class="room-monitor-selector">
+                            <legend>Building</legend>
+                            <div class="room-monitor-selector-options">
+                                <?php foreach ($roomOverview['buildings'] as $building): ?>
+                                    <button
+                                        class="room-monitor-selector-button"
+                                        type="submit"
+                                        name="building"
+                                        value="<?= dashboardEscape($building) ?>"
+                                        aria-pressed="<?= $roomOverview['building'] === $building ? 'true' : 'false' ?>"
+                                    ><?= dashboardEscape($building) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+                    </form>
+                    <form class="room-monitor-floor-form" method="get" action="admin-section.php">
+                        <input type="hidden" name="section" value="attendance-scheduling">
+                        <input type="hidden" name="attendance_view" value="room-monitoring">
+                        <input type="hidden" name="building" value="<?= dashboardEscape($roomOverview['building']) ?>">
+                        <input type="hidden" name="q" value="<?= dashboardEscape($roomOverview['search']) ?>">
+                        <fieldset class="room-monitor-selector">
+                            <legend>Floor</legend>
+                            <div class="room-monitor-selector-options">
+                                <?php foreach ($roomOverview['floors'] as $floor): ?>
+                                    <?php $floorLabel = match ((int) $floor) {
+                                        1 => '1st',
+                                        2 => '2nd',
+                                        3 => '3rd',
+                                        default => (int) $floor . 'th',
+                                    }; ?>
+                                    <button
+                                        class="room-monitor-selector-button"
+                                        type="submit"
+                                        name="floor"
+                                        value="<?= dashboardEscape($floor) ?>"
+                                        aria-pressed="<?= $roomOverview['floor'] === $floor ? 'true' : 'false' ?>"
+                                    ><?= dashboardEscape($floorLabel) ?></button>
+                                <?php endforeach; ?>
+                            </div>
+                        </fieldset>
+                    </form>
+                    <form class="room-monitor-search-form" method="get" action="admin-section.php">
+                        <input type="hidden" name="section" value="attendance-scheduling">
+                        <input type="hidden" name="attendance_view" value="room-monitoring">
+                        <input type="hidden" name="building" value="<?= dashboardEscape($roomOverview['building']) ?>">
+                        <input type="hidden" name="floor" value="<?= dashboardEscape($roomOverview['floor']) ?>">
                         <label for="room-search">Search rooms</label>
-                        <input id="room-search" type="search" name="q" value="<?= dashboardEscape($roomOverview['search']) ?>" placeholder="Room name or code">
-                    </div>
-                    <button class="admin-button" type="submit">Filter rooms</button>
-                </form>
+                        <input id="room-search" type="search" name="q" value="<?= dashboardEscape($roomOverview['search']) ?>" placeholder="Search rooms...">
+                        <button class="admin-button" type="submit">Search</button>
+                    </form>
+                </div>
                 <p class="schedule-context" data-room-summary>
-                    Building <?= dashboardEscape($roomOverview['building']) ?> · <?= dashboardEscape($roomOverview['floor']) ?> ·
+                    Building <?= dashboardEscape($roomOverview['building']) ?> · <?= dashboardEscape($roomOverview['floor'] === '1' ? '1st' : ($roomOverview['floor'] === '2' ? '2nd' : '3rd')) ?> floor —
                     <span data-room-occupied-count><?= dashboardEscape($roomOccupiedCount) ?></span> occupied ·
                     <span data-room-available-count><?= dashboardEscape($roomAvailableCount) ?></span> available
                 </p>
@@ -387,35 +417,69 @@ foreach ($lookupOptions as $lookupName => $options) {
                     <p class="admin-empty">No rooms match these filters.</p>
                 <?php else: ?>
                     <section class="room-monitor-floor-map" aria-label="Floor room occupancy board">
-                        <p class="room-monitor-map-note">Illustrative floor layout · not to scale</p>
                         <ul class="room-monitor-grid">
-                            <?php $hallwayRendered = false; ?>
+                            <li
+                                class="room-monitor-hallway"
+                                style="--hallway-row: 2; --hallway-column: <?= $roomOverview['building'] === 'C' && $roomOverview['floor'] !== '1' ? '3' : '1' ?>; --hallway-span: <?= $roomOverview['building'] === 'C' && $roomOverview['floor'] !== '1' ? '10' : '12' ?>;"
+                                aria-hidden="true"
+                            >Hallway</li>
+                            <?php if ($roomOverview['verticalHallway'] !== null): ?>
+                                <li class="room-monitor-vertical-hallway" style="--room-row: <?= dashboardEscape($roomOverview['verticalHallway']['row']) ?>; --room-column: <?= dashboardEscape($roomOverview['verticalHallway']['column']) ?>; --room-column-span: <?= dashboardEscape($roomOverview['verticalHallway']['span']) ?>;" aria-hidden="true">Hallway</li>
+                            <?php endif; ?>
+                            <?php foreach ($roomOverview['stairs'] as $stairs): ?>
+                                <li class="room-monitor-stairs" style="--room-row: <?= dashboardEscape($stairs['row']) ?>; --room-column: <?= dashboardEscape($stairs['column']) ?>; --room-column-span: <?= dashboardEscape($stairs['span']) ?>;" aria-hidden="true"><span>Stairs</span></li>
+                            <?php endforeach; ?>
                             <?php foreach ($roomOverview['rooms'] as $room): ?>
-                                <?php if (!$hallwayRendered && (int) $room['layout_row'] > 2): ?>
-                                    <li class="room-monitor-hallway" aria-hidden="true">Hallway</li>
-                                    <?php $hallwayRendered = true; ?>
-                                <?php endif; ?>
                                 <?php
                                 $roomState = $roomOverview['roomStates'][(int) $room['room_id']];
                                 $roomStatus = $roomState['status'];
+                                $isFacility = $room['room_type'] === 'Facility';
+                                $roomFloorLabel = match ((int) $roomOverview['floor']) {
+                                    1 => '1st',
+                                    2 => '2nd',
+                                    3 => '3rd',
+                                    default => $roomOverview['floor'],
+                                };
+                                $roomCategory = $room['room_type'] === 'Laboratory'
+                                    || $room['room_type'] === 'Computer Laboratory'
+                                    ? 'Lab'
+                                    : 'Room';
                                 ?>
+                                <?php if ($isFacility): ?>
                                 <li class="room-monitor-card room-monitor-card--<?= dashboardEscape($roomState['statusKey']) ?>"
-                                    data-room-card data-room-id="<?= dashboardEscape($room['room_id']) ?>"
                                     style="--room-row: <?= dashboardEscape((int) $room['layout_row']) ?>; --room-column: <?= dashboardEscape((int) $room['layout_column']) ?>; --room-column-span: <?= dashboardEscape((int) $room['column_span']) ?>;">
                                     <h3><?= dashboardEscape($room['room_name']) ?></h3>
                                     <p class="room-monitor-status">
                                         <span class="room-monitor-status-dot" aria-hidden="true"></span>
-                                        <span data-room-status><?= dashboardEscape($roomStatus) ?></span>
+                                        <span data-room-status><?= dashboardEscape($isFacility ? 'Facility' : $roomStatus) ?></span>
                                     </p>
-                                    <p><?= dashboardEscape($room['room_type']) ?> · <?= dashboardEscape($room['room_code']) ?></p>
-                                    <p class="room-monitor-timing" data-room-timing><?= dashboardEscape($roomState['timing']) ?></p>
-                                    <p class="room-monitor-details" data-room-details><?= dashboardEscape($roomState['details']) ?></p>
-                                    <?php if ($room['capacity'] !== null): ?><p>Capacity: <?= dashboardEscape($room['capacity']) ?></p><?php endif; ?>
+                                    <p><?= dashboardEscape($roomFloorLabel) ?> floor</p>
                                 </li>
+                                <?php else: ?>
+                                    <li class="room-monitor-card-cell" style="--room-row: <?= dashboardEscape((int) $room['layout_row']) ?>; --room-column: <?= dashboardEscape((int) $room['layout_column']) ?>; --room-column-span: <?= dashboardEscape((int) $room['column_span']) ?>;">
+                                        <button
+                                            class="room-monitor-card room-monitor-card--<?= dashboardEscape($roomState['statusKey']) ?>"
+                                            type="button"
+                                            data-room-card
+                                            data-room-id="<?= dashboardEscape($room['room_id']) ?>"
+                                            data-room-schedules="<?= dashboardEscape(json_encode($roomOverview['schedulesByRoom'][(int) $room['room_id']] ?? [], JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_AMP | JSON_HEX_QUOT)) ?>"
+                                            data-room-context="Building <?= dashboardEscape($roomOverview['building']) ?> · <?= dashboardEscape($roomFloorLabel) ?> floor · <?= dashboardEscape($roomCategory) ?>"
+                                            aria-label="View schedule for <?= dashboardEscape($room['room_name']) ?>"
+                                            aria-haspopup="dialog"
+                                            aria-controls="room-schedule-dialog"
+                                        >
+                                            <span class="room-monitor-card-title"><?= dashboardEscape($room['room_name']) ?></span>
+                                            <span class="room-monitor-status">
+                                                <span class="room-monitor-status-dot" aria-hidden="true"></span>
+                                                <span data-room-status><?= dashboardEscape($roomStatus) ?></span>
+                                            </span>
+                                            <span class="room-monitor-card-meta"><?= dashboardEscape($roomCategory) ?> · <?= dashboardEscape($roomFloorLabel) ?> floor</span>
+                                            <span class="room-monitor-timing" data-room-timing><?= dashboardEscape($roomState['timing']) ?></span>
+                                            <span class="room-monitor-details" data-room-details><?= dashboardEscape($roomState['details']) ?></span>
+                                        </button>
+                                    </li>
+                                <?php endif; ?>
                             <?php endforeach; ?>
-                            <?php if (!$hallwayRendered): ?>
-                                <li class="room-monitor-hallway" aria-hidden="true">Hallway</li>
-                            <?php endif; ?>
                         </ul>
                     </section>
                 <?php endif; ?>
@@ -425,14 +489,25 @@ foreach ($lookupOptions as $lookupName => $options) {
                         <ul>
                             <li class="room-monitor-legend-item room-monitor-legend-item--available">Available</li>
                             <li class="room-monitor-legend-item room-monitor-legend-item--occupied">Occupied by schedule</li>
-                            <li class="room-monitor-legend-item room-monitor-legend-item--maintenance">Maintenance or inactive</li>
+                            <li class="room-monitor-legend-item room-monitor-legend-item--facility">Facility</li>
                         </ul>
                     </fieldset>
                     <p class="schedule-updated">
-                        <span data-room-live-status role="status">Automatic schedule refresh every 30 seconds.</span>
+                        <span data-room-live-status role="status">Automatic refresh checks every 10 seconds while this page is visible; slow responses may delay updates.</span>
                         <span>Updated <time data-room-updated datetime="<?= dashboardEscape($roomOverview['updatedAt']) ?>"><?= dashboardEscape($roomOverview['updatedLabel']) ?></time></span>
                     </p>
                 </div>
+                <dialog class="room-schedule-dialog" id="room-schedule-dialog" aria-labelledby="room-dialog-title" aria-describedby="room-dialog-context">
+                    <div class="room-schedule-dialog-content">
+                        <h2 id="room-dialog-title" tabindex="-1" autofocus><span data-room-dialog-name>Room</span><span class="sr-only"> schedule details</span></h2>
+                        <p id="room-dialog-context" class="room-schedule-dialog-context"></p>
+                        <ul class="room-schedule-list" data-room-dialog-schedules aria-label="Today’s schedule" aria-live="polite" aria-relevant="additions"></ul>
+                        <p class="room-schedule-empty" data-room-dialog-empty role="status" hidden></p>
+                        <div class="room-schedule-dialog-actions">
+                            <button class="room-schedule-dialog-close" type="button" data-room-dialog-close>Close</button>
+                        </div>
+                    </div>
+                </dialog>
             </div>
         <?php elseif ($attendanceView === 'conflict-review' && is_array($conflictOverview)): ?>
             <?php
@@ -1143,6 +1218,10 @@ foreach ($lookupOptions as $lookupName => $options) {
                             if ($entityKey === 'payments' && in_array($name, ['student_fee_id', 'payment_term'], true)) {
                                 $descriptionIds[] = 'admin-payments-tuition-hint';
                             }
+                            if ($entityKey === 'teaching_assignments') {
+                                $descriptionIds[] = 'admin-teaching-assignments-relationship-hint';
+                                $descriptionIds[] = 'admin-teaching-assignments-relationship-status';
+                            }
                             if ($error !== '') {
                                 $descriptionIds[] = $errorId;
                             }
@@ -1163,13 +1242,52 @@ foreach ($lookupOptions as $lookupName => $options) {
                                     $options = is_array($definition['options'])
                                         ? $definition['options']
                                         : ($lookupLabels[$definition['options']] ?? []);
+                                    $assignmentSelectAttribute = match ($entityKey . ':' . $name) {
+                                        'teaching_assignments:section_id' => ' data-assignment-section',
+                                        'teaching_assignments:subject_id' => ' data-assignment-subject',
+                                        'teaching_assignments:semester_id' => ' data-assignment-semester',
+                                        default => '',
+                                    };
                                     ?>
-                                    <select id="<?= dashboardEscape($inputId) ?>" name="<?= dashboardEscape($name) ?>"<?= $definition['required'] ? ' required' : '' ?><?= $invalidAttribute ?><?= $describedBy ?><?= $error !== '' ? ' autofocus' : '' ?>>
+                                    <select id="<?= dashboardEscape($inputId) ?>" name="<?= dashboardEscape($name) ?>"<?= $definition['required'] ? ' required' : '' ?><?= $assignmentSelectAttribute ?><?= $invalidAttribute ?><?= $describedBy ?><?= $error !== '' ? ' autofocus' : '' ?>>
                                         <option value="">Select <?= dashboardEscape(strtolower($definition['label'])) ?></option>
                                         <?php foreach ($options as $optionValue => $optionLabel): ?>
-                                            <option value="<?= dashboardEscape((string) $optionValue) ?>"<?= $value === (string) $optionValue ? ' selected' : '' ?>><?= dashboardEscape((string) $optionLabel) ?></option>
+                                            <?php
+                                            $optionAttributes = '';
+                                            if ($entityKey === 'teaching_assignments' && $name === 'section_id') {
+                                                $metadata = $assignmentSectionMetadata[(string) $optionValue] ?? null;
+                                                if ($metadata !== null) {
+                                                    $optionAttributes = ' data-program-id="' . $metadata['programId']
+                                                        . '" data-academic-year-id="' . $metadata['academicYearId']
+                                                        . '" data-year-level="' . $metadata['yearLevel'] . '"';
+                                                }
+                                            } elseif ($entityKey === 'teaching_assignments' && $name === 'semester_id') {
+                                                $metadata = $assignmentSemesterMetadata[(string) $optionValue] ?? null;
+                                                if ($metadata !== null) {
+                                                    $optionAttributes = ' data-academic-year-id="' . $metadata['academicYearId']
+                                                        . '" data-semester-number="'
+                                                        . ($metadata['semesterNumber'] === null ? '' : $metadata['semesterNumber']) . '"';
+                                                }
+                                            } elseif ($entityKey === 'teaching_assignments' && $name === 'subject_id') {
+                                                $combinations = $assignmentCurriculumCombinations[(string) $optionValue] ?? [];
+                                                $encodedCombinations = json_encode(
+                                                    $combinations,
+                                                    JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_TAG | JSON_HEX_AMP
+                                                );
+                                                if ($encodedCombinations === false) {
+                                                    throw new RuntimeException('Unable to encode curriculum options for a teaching assignment.');
+                                                }
+                                                $optionAttributes = ' data-curriculum-combinations="'
+                                                    . dashboardEscape($encodedCombinations) . '"';
+                                            }
+                                            ?>
+                                            <option value="<?= dashboardEscape((string) $optionValue) ?>"<?= $optionAttributes ?><?= $value === (string) $optionValue ? ' selected' : '' ?>><?= dashboardEscape((string) $optionLabel) ?></option>
                                         <?php endforeach; ?>
                                     </select>
+                                    <?php if ($entityKey === 'teaching_assignments' && $name === 'subject_id'): ?>
+                                        <p class="admin-field-hint" id="admin-teaching-assignments-relationship-hint">Choose a class section and semester first. Only subjects in that program’s curriculum for the class year level and semester can be assigned.</p>
+                                        <p class="admin-field-hint" id="admin-teaching-assignments-relationship-status" role="status" aria-atomic="true"></p>
+                                    <?php endif; ?>
                                 <?php else: ?>
                                     <input
                                         id="<?= dashboardEscape($inputId) ?>"
@@ -1221,6 +1339,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                                 </tr>
                             </thead>
                             <tbody>
+                                <?php $deleteLabel = is_string($entity['delete']['label'] ?? null) ? $entity['delete']['label'] : 'Delete'; ?>
                                 <?php foreach ($entityRows[$entityKey] as $record): ?>
                                     <?php
                                     $recordLabel = '';
@@ -1250,7 +1369,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                                         <td>
                                             <div class="admin-row-actions">
                                                 <a class="admin-button admin-button--secondary" href="admin-section.php?section=<?= dashboardEscape(rawurlencode($sectionKey)) ?><?= $sectionKey === 'academic-management' ? '&amp;academic_view=' . dashboardEscape(rawurlencode($academicView)) : ($sectionKey === 'attendance-scheduling' ? '&amp;attendance_view=' . dashboardEscape(rawurlencode($attendanceView)) : ($sectionKey === 'assessment-grading' ? '&amp;assessment_view=' . dashboardEscape(rawurlencode($assessmentView)) : ($sectionKey === 'finance-payments' ? '&amp;finance_view=' . dashboardEscape(rawurlencode($financeView)) : ''))) ?>&amp;edit=<?= dashboardEscape($entityKey . ':' . (int) $record[$entity['primaryKey']]) ?>">Edit</a>
-                                                <form method="post" data-confirm-delete data-record-label="<?= dashboardEscape($recordLabel) ?>" data-delete-label="<?= dashboardEscape($entity['delete']['label']) ?>">
+                                                <form method="post" data-confirm-delete data-record-label="<?= dashboardEscape($recordLabel) ?>" data-delete-label="<?= dashboardEscape($deleteLabel) ?>">
                                                     <input type="hidden" name="csrf_token" value="<?= dashboardEscape($csrfToken) ?>">
                                                     <input type="hidden" name="action" value="delete">
                                                     <input type="hidden" name="entity" value="<?= dashboardEscape($entityKey) ?>">
@@ -1264,7 +1383,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                                                     <?php elseif ($sectionKey === 'finance-payments'): ?>
                                                         <input type="hidden" name="finance_view" value="<?= dashboardEscape($financeView) ?>">
                                                     <?php endif; ?>
-                                                    <button class="admin-button admin-button--danger" type="submit"><?= dashboardEscape($entity['delete']['label']) ?></button>
+                                                    <button class="admin-button admin-button--danger" type="submit"><?= dashboardEscape($deleteLabel) ?></button>
                                                 </form>
                                             </div>
                                         </td>

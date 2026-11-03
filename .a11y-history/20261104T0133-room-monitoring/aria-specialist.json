@@ -1,0 +1,14 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/admin_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Building and floor selectors use native submit buttons, grouped by fieldsets with legends; aria-pressed reflects the selected value on render.",
+    "Room status labels are text, not color-only indicators, and decorative status dots are hidden from assistive technology.",
+    "Dynamic room changes and refresh errors are announced through a role=status live region."
+  ]
+}

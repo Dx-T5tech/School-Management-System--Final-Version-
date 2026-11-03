@@ -1,0 +1,11 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The selector and search borders compute to #73808A and meet WCAG 1.4.11 against #FFFFFF and #F5F7F6."
+  ]
+}
