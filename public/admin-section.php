@@ -1671,16 +1671,19 @@ $dashboard = [
     'metricsHeading' => '',
     'navItems' => adminNavigationItems($adminNavigationActive),
     'academicSubnav' => $sectionKey === 'academic-management'
-        ? array_map(
-            static fn (string $key, array $item): array => [
-                'key' => $key,
-                'label' => $item['label'],
-                'href' => 'admin-section.php?section=academic-management&academic_view=' . rawurlencode($key),
-                'current' => $key === $academicView,
-            ],
-            array_keys($academicSubnav),
-            array_values($academicSubnav)
-        )
+        ? array_values(array_filter(
+            array_map(
+                static fn (string $key, array $item): array => [
+                    'key' => $key,
+                    'label' => $item['label'],
+                    'href' => 'admin-section.php?section=academic-management&academic_view=' . rawurlencode($key),
+                    'current' => $key === $academicView,
+                ],
+                array_keys($academicSubnav),
+                array_values($academicSubnav)
+            ),
+            static fn (array $item): bool => $item['key'] !== 'academic-setup'
+        ))
         : [],
     'attendanceSubnav' => $sectionKey === 'attendance-scheduling'
         ? array_map(
