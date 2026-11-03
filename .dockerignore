@@ -1,0 +1,8 @@
+.git
+.env
+.vercel
+.railway
+vendor
+storage/cache/*
+storage/logs/*
+storage/uploads/*
