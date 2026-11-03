@@ -14,6 +14,4 @@ COPY . .
 RUN mkdir -p /var/www/html/storage/uploads \
     && chown -R www-data:www-data /var/www/html/storage
 
-EXPOSE 10000
-
-CMD ["sh", "-c", "port=\"${PORT:-10000}\"; case \"$port\" in ''|*[!0-9]*) echo 'PORT must be numeric.' >&2; exit 1 ;; esac; sed -ri \"s/^Listen [0-9]+$/Listen ${port}/\" /etc/apache2/ports.conf; sed -ri \"s/<VirtualHost \\*:[0-9]+>/<VirtualHost *:${port}>/\" /etc/apache2/sites-available/000-default.conf; exec apache2-foreground"]
+EXPOSE 80
