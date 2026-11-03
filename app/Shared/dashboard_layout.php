@@ -99,6 +99,12 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                         static fn (array $subitem): bool => !empty($subitem['current'])
                                     )) > 0
                                 ) || (
+                                    ($item['key'] ?? '') === 'assessment-grading'
+                                    && count(array_filter(
+                                        $dashboard['assessmentSubnav'] ?? [],
+                                        static fn (array $subitem): bool => !empty($subitem['current'])
+                                    )) > 0
+                                ) || (
                                     ($item['key'] ?? '') === 'teachers'
                                     && count(array_filter(
                                         $dashboard['teacherSubnav'] ?? [],
@@ -140,6 +146,18 @@ $configurationVersion = dashboardConfigurationVersion($connection);
                                     <?php elseif (($item['key'] ?? '') === 'attendance-scheduling' && !empty($dashboard['attendanceSubnav'])): ?>
                                         <ul class="sidebar-subnav" aria-label="Attendance and scheduling sections">
                                             <?php foreach ($dashboard['attendanceSubnav'] as $subitem): ?>
+                                                <li>
+                                                    <a
+                                                        class="sidebar-subnav-link<?= !empty($subitem['current']) ? ' is-current' : '' ?>"
+                                                        href="<?= dashboardEscape($subitem['href']) ?>"
+                                                        <?= !empty($subitem['current']) ? 'aria-current="page"' : '' ?>
+                                                    ><?= dashboardEscape($subitem['label']) ?></a>
+                                                </li>
+                                            <?php endforeach; ?>
+                                        </ul>
+                                    <?php elseif (($item['key'] ?? '') === 'assessment-grading' && !empty($dashboard['assessmentSubnav'])): ?>
+                                        <ul class="sidebar-subnav" aria-label="Assessment and grading sections">
+                                            <?php foreach ($dashboard['assessmentSubnav'] as $subitem): ?>
                                                 <li>
                                                     <a
                                                         class="sidebar-subnav-link<?= !empty($subitem['current']) ? ' is-current' : '' ?>"

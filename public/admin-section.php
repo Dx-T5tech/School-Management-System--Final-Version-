@@ -56,6 +56,17 @@ if ($sectionKey === 'attendance-scheduling') {
         $attendanceView = $requestedAttendanceView;
     }
 }
+$assessmentSubnav = [
+    'assessments' => ['label' => 'Assessments', 'description' => 'Manage assessments and review student assessment scores.'],
+    'grade-records' => ['label' => 'Grade records', 'description' => 'Review and manage final and preliminary grades by student enrollment.'],
+];
+$assessmentView = 'assessments';
+if ($sectionKey === 'assessment-grading') {
+    $requestedAssessmentView = $_GET['assessment_view'] ?? $_POST['assessment_view'] ?? 'assessments';
+    if (is_string($requestedAssessmentView) && isset($assessmentSubnav[$requestedAssessmentView])) {
+        $assessmentView = $requestedAssessmentView;
+    }
+}
 $errorMessage = '';
 $flashMessage = $_SESSION['admin_flash'] ?? null;
 unset($_SESSION['admin_flash']);
@@ -235,7 +246,7 @@ $entityDefinitions = [
         'delete' => ['type' => 'status', 'field' => 'schedule_status', 'value' => 'Cancelled', 'label' => 'Cancel'],
     ],
     'assessments' => [
-        'section' => 'assessment-grading', 'table' => 'assessments', 'primaryKey' => 'assessment_id', 'label' => 'Assessments',
+        'section' => 'assessment-grading', 'assessmentView' => 'assessments', 'table' => 'assessments', 'primaryKey' => 'assessment_id', 'label' => 'Assessments',
         'fields' => [
             'assignment_id' => $field('Teaching assignment', 'select', true, 'assignments', false),
             'grading_period_id' => $field('Grading period', 'select', true, 'grading_periods', false),
@@ -250,7 +261,7 @@ $entityDefinitions = [
         'delete' => ['type' => 'status', 'field' => 'status', 'value' => 'Cancelled', 'label' => 'Cancel'],
     ],
     'grade_records' => [
-        'section' => 'assessment-grading', 'table' => 'grade_records', 'primaryKey' => 'grade_id', 'label' => 'Grade records',
+        'section' => 'assessment-grading', 'assessmentView' => 'grade-records', 'table' => 'grade_records', 'primaryKey' => 'grade_id', 'label' => 'Grade records',
         'fields' => [
             'enrollment_id' => $field('Student enrollment', 'select', true, 'enrollments', false),
             'assignment_id' => $field('Teaching assignment', 'select', true, 'assignments', false),
@@ -262,7 +273,7 @@ $entityDefinitions = [
         'delete' => ['type' => 'delete'],
     ],
     'student_scores' => [
-        'section' => 'assessment-grading', 'table' => 'student_scores', 'primaryKey' => 'score_id', 'label' => 'Assessment scores',
+        'section' => 'assessment-grading', 'assessmentView' => 'assessments', 'table' => 'student_scores', 'primaryKey' => 'score_id', 'label' => 'Assessment scores',
         'fields' => [
             'assessment_id' => $field('Assessment', 'select', true, 'assessments', false),
             'student_id' => $field('Student', 'select', true, 'students', false),
@@ -863,6 +874,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         }
                     } elseif ($sectionKey === 'attendance-scheduling') {
                         $redirectUrl .= '&attendance_view=' . rawurlencode($attendanceView);
+                    } elseif ($sectionKey === 'assessment-grading') {
+                        $redirectUrl .= '&assessment_view=' . rawurlencode($assessmentView);
                     }
                     header('Location: ' . $redirectUrl, true, 303);
                     exit;
@@ -1003,6 +1016,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     }
                 } elseif ($sectionKey === 'attendance-scheduling') {
                     $redirectUrl .= '&attendance_view=' . rawurlencode($attendanceView);
+                } elseif ($sectionKey === 'assessment-grading') {
+                    $redirectUrl .= '&assessment_view=' . rawurlencode($assessmentView);
                 }
                 header('Location: ' . $redirectUrl, true, 303);
                 exit;
@@ -1658,16 +1673,22 @@ $dashboard = [
     'roleLabel' => 'Admin',
     'pageTitle' => $sectionKey === 'academic-management'
         ? $academicSubnav[$academicView]['label']
-        : ($sectionKey === 'attendance-scheduling' ? $attendanceSubnav[$attendanceView]['label'] : $sectionDefinition['title']),
+        : ($sectionKey === 'attendance-scheduling'
+            ? $attendanceSubnav[$attendanceView]['label']
+            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['label'] : $sectionDefinition['title'])),
     'eyebrow' => $sectionKey === 'academic-management'
         ? ($academicView === 'subjects' ? 'Academic catalog' : 'Academic structure')
         : ($sectionKey === 'attendance-scheduling' ? 'Attendance & scheduling' : $sectionDefinition['eyebrow']),
     'heading' => $sectionKey === 'academic-management'
         ? $academicSubnav[$academicView]['label']
-        : ($sectionKey === 'attendance-scheduling' ? $attendanceSubnav[$attendanceView]['label'] : $sectionDefinition['title']),
+        : ($sectionKey === 'attendance-scheduling'
+            ? $attendanceSubnav[$attendanceView]['label']
+            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['label'] : $sectionDefinition['title'])),
     'description' => $sectionKey === 'academic-management'
         ? $academicSubnav[$academicView]['description']
-        : ($sectionKey === 'attendance-scheduling' ? $attendanceSubnav[$attendanceView]['description'] : $sectionDefinition['description']),
+        : ($sectionKey === 'attendance-scheduling'
+            ? $attendanceSubnav[$attendanceView]['description']
+            : ($sectionKey === 'assessment-grading' ? $assessmentSubnav[$assessmentView]['description'] : $sectionDefinition['description'])),
     'metricsHeading' => '',
     'navItems' => adminNavigationItems($adminNavigationActive),
     'academicSubnav' => $sectionKey === 'academic-management'
@@ -1695,6 +1716,18 @@ $dashboard = [
             ],
             array_keys($attendanceSubnav),
             array_values($attendanceSubnav)
+        )
+        : [],
+    'assessmentSubnav' => $sectionKey === 'assessment-grading'
+        ? array_map(
+            static fn (string $key, array $item): array => [
+                'key' => $key,
+                'label' => $item['label'],
+                'href' => 'admin-section.php?section=assessment-grading&assessment_view=' . rawurlencode($key),
+                'current' => $key === $assessmentView,
+            ],
+            array_keys($assessmentSubnav),
+            array_values($assessmentSubnav)
         )
         : [],
     'teacherSubnav' => $sectionKey === 'teachers'
