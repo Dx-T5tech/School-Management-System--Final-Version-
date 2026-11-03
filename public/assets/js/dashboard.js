@@ -9,6 +9,42 @@
     document.documentElement.classList.add("dashboard-js");
     const statusSummary = document.querySelector("[data-status-summary]");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    if (!reducedMotion.matches) {
+        document.querySelectorAll(".metric-value").forEach((valueElement) => {
+            const originalValue = valueElement.textContent ?? "";
+            const numericValue = originalValue.match(/^(\s*[^\d]*)([\d,]+(?:\.\d+)?)(.*)$/);
+            if (!numericValue) {
+                return;
+            }
+
+            const [, prefix, numberText, suffix] = numericValue;
+            const target = Number(numberText.replaceAll(",", ""));
+            const fractionDigits = numberText.split(".")[1]?.length ?? 0;
+            if (!Number.isFinite(target)) {
+                return;
+            }
+
+            const formatter = new Intl.NumberFormat(undefined, {
+                minimumFractionDigits: fractionDigits,
+                maximumFractionDigits: fractionDigits,
+            });
+            const startTime = performance.now();
+            const updateCount = (time) => {
+                const progress = Math.min(1, (time - startTime) / 1000);
+                const easedProgress = 1 - (1 - progress) ** 3;
+                valueElement.textContent = progress === 1
+                    ? originalValue
+                    : `${prefix}${formatter.format(target * easedProgress)}${suffix}`;
+                if (progress < 1) {
+                    window.requestAnimationFrame(updateCount);
+                }
+            };
+
+            window.requestAnimationFrame(updateCount);
+        });
+    }
+
     const navigationGroupExpanders = new WeakMap();
     const navigationRole = ["super-admin", "admin", "teacher", "student"].find(
         (role) => sidebar?.classList.contains(`sidebar--${role}`),

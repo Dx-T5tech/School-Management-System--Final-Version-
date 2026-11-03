@@ -354,3 +354,138 @@
         transition: none;
     }
 }
+
+.auth-page {
+    color: var(--ink);
+    background: var(--bg);
+}
+
+.auth-shell {
+    width: min(100%, 1320px);
+    margin: 0 auto;
+    padding: 16px;
+    gap: 24px;
+    background: var(--bg);
+}
+
+.auth-story {
+    min-height: calc(100vh - 32px);
+    padding: 28px clamp(24px, 5vw, 64px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    color: var(--ink);
+    background: var(--surface);
+}
+
+.auth-story::after {
+    display: none;
+}
+
+.auth-brand {
+    color: var(--ink);
+}
+
+.auth-story .eyebrow {
+    color: var(--accent);
+}
+
+.auth-story h1 {
+    color: var(--ink);
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: clamp(32px, 4.5vw, 56px);
+    letter-spacing: -0.04em;
+}
+
+.auth-story-description,
+.auth-story-footer {
+    color: var(--muted);
+}
+
+.auth-form-panel {
+    min-height: calc(100vh - 32px);
+    padding: 36px clamp(20px, 4vw, 56px);
+    border: 1px solid var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+    box-shadow: var(--shadow);
+}
+
+.auth-form-wrap h2 {
+    color: var(--ink);
+    font-family: "Bricolage Grotesque", sans-serif;
+    font-size: 30px;
+    letter-spacing: -0.03em;
+}
+
+.auth-form-intro,
+.form-instructions,
+.field-guidance,
+.auth-help,
+.auth-security-note {
+    color: var(--muted);
+}
+
+.form-field label {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.form-field input,
+.password-toggle {
+    border-color: var(--line);
+    border-radius: 12px;
+    color: var(--ink);
+    background: var(--surface);
+}
+
+.form-field input:focus-visible,
+.password-toggle:focus-visible,
+.auth-submit:focus-visible,
+.sign-out-button:focus-visible {
+    outline: 2px solid var(--accent);
+}
+
+.auth-submit {
+    border-color: var(--accent);
+    border-radius: 12px;
+    color: var(--accent-ink);
+    background: var(--accent);
+}
+
+.auth-submit:hover {
+    transform: none;
+    background: var(--navy-soft);
+}
+
+.password-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.auth-success {
+    border-color: var(--good);
+    color: var(--good);
+    background: var(--good-soft);
+}
+
+@media (max-width: 640px) {
+    .auth-shell {
+        gap: 12px;
+        padding: 10px;
+    }
+
+    .auth-story,
+    .auth-form-panel {
+        min-height: auto;
+        border-radius: 16px;
+    }
+
+    .auth-story {
+        padding: 20px;
+    }
+
+    .auth-form-panel {
+        padding: 28px 20px;
+    }
+}
