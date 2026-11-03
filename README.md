@@ -15,6 +15,28 @@ Start MySQL in the XAMPP Control Panel and create the `isms_database` database
 before connecting. The connection function throws a `PDOException` if the
 database is unavailable or the credentials are invalid.
 
+## Run in GitHub Codespaces
+
+Open the repository in a GitHub Codespace. Codespaces uses
+`.devcontainer/devcontainer.json` to start the PHP 8.3/Apache app and a local
+MySQL 8 database; the forwarded port opens the app in a browser. The same
+services can be started locally with:
+
+```sh
+docker compose -f .devcontainer/docker-compose.yml up --build
+```
+
+When running locally, open `http://localhost:8080`.
+
+The included database migrations are incremental and the repository does not
+include the application's base database schema. The web server and database
+will start, but database-backed pages require a development database schema
+before they can be used. Import a local development schema into the Codespaces
+database; do not use production records or commit database credentials or
+private dumps. Apply the numbered migrations in order after the base schema is
+available. To provision a Super Admin, use the existing CLI provisioner and
+supply its required `SUPER_ADMIN_*` environment variables securely.
+
 ## User roles
 
 The `roles` table contains four default roles: Super Admin, Admin, Teacher, and

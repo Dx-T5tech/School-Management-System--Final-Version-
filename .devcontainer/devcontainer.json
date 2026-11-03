@@ -1,0 +1,14 @@
+{
+  "name": "School Management System",
+  "dockerComposeFile": "docker-compose.yml",
+  "service": "app",
+  "workspaceFolder": "/var/www/html",
+  "forwardPorts": [80],
+  "portsAttributes": {
+    "80": {
+      "label": "School Management System",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "shutdownAction": "stopCompose"
+}
