@@ -7,13 +7,43 @@ require_once dirname(__DIR__, 2) . '/Students/Services/student.php';
 require_once dirname(__DIR__) . '/Services/application_mail.php';
 
 startAppSession();
+$connection = getDatabaseConnection();
 
 if (isset($_SESSION['user_id'])) {
+    $sessionUserId = $_SESSION['user_id'];
+    if (
+        (!is_int($sessionUserId) && !is_string($sessionUserId))
+        || !ctype_digit((string) $sessionUserId)
+    ) {
+        header('Location: login.php', true, 303);
+        exit;
+    }
+
+    $signedInAccount = $connection->prepare(
+        "SELECT u.user_id, r.role_name
+         FROM users u
+         INNER JOIN roles r ON r.role_id = u.role_id
+         WHERE u.user_id = :user_id
+           AND u.account_status = 'Active'
+         LIMIT 1"
+    );
+    $signedInAccount->execute(['user_id' => (int) $sessionUserId]);
+    $account = $signedInAccount->fetch();
+    $destination = $account === false
+        ? null
+        : ($account['role_name'] === 'Student'
+            ? studentSignInDestination($connection, (int) $account['user_id'])
+            : appRoleDashboardPath($account['role_name']));
+
+    if ($destination !== null) {
+        header('Location: ' . $destination, true, 303);
+        exit;
+    }
+
     header('Location: login.php', true, 303);
     exit;
 }
 
-$connection = getDatabaseConnection();
 $availablePrograms = array_values(array_filter(
     studentAvailablePrograms($connection),
     static fn (array $program): bool => (int) $program['available_sections'] > 0

@@ -25,7 +25,7 @@ declare(strict_types=1);
         </a>
         <nav class="admissions-nav" aria-label="Enrollment">
             <a href="admissions.php">Admissions</a>
-            <a class="admissions-nav-apply" href="login.php">Student login</a>
+            <a class="admissions-nav-apply" href="login.php">Sign in</a>
         </nav>
     </header>
 

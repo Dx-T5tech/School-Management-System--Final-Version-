@@ -20,7 +20,7 @@
         </a>
         <nav class="admissions-nav" aria-label="Admissions">
             <a class="admissions-nav-apply" href="enrollment-instructions.php">Enroll now</a>
-            <a href="login.php">Student login</a>
+            <a href="login.php">Sign in</a>
         </nav>
     </header>
 
@@ -55,7 +55,7 @@
 
                 <div class="admissions-actions">
                     <a class="admissions-button admissions-button--primary" href="enrollment-instructions.php">New student - enroll now</a>
-                    <a class="admissions-button admissions-button--secondary" href="login.php">Already enrolled - student login</a>
+                    <a class="admissions-button admissions-button--secondary" href="login.php">Existing school account - sign in</a>
                 </div>
             </section>
 

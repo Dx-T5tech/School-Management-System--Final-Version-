@@ -1142,6 +1142,12 @@ main#main-content:focus {
     font-size: 13px;
 }
 
+.instructions-account-note {
+    margin: 12px 0 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+}
+
 .instructions-actions {
     display: flex;
     flex-wrap: wrap;

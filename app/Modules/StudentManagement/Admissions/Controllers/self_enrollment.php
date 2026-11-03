@@ -17,7 +17,17 @@ $admissionApplicationId = filter_var(
 );
 
 if (isset($_SESSION['user_id'])) {
-    $user = requireDashboardUser('Student');
+    $user = requireDashboardUser(['Student', 'Admin', 'Super Admin', 'Teacher']);
+    if ($user['role_name'] !== 'Student') {
+        $destination = appRoleDashboardPath($user['role_name']);
+        if ($destination === null) {
+            dashboardAccessDenied(403, 'You do not have permission to complete student enrollment.');
+        }
+
+        header('Location: ' . $destination, true, 303);
+        exit;
+    }
+
     $userId = (int) $user['user_id'];
 } elseif ($admissionApplicationId !== false) {
     $applicationStatement = $connection->prepare(

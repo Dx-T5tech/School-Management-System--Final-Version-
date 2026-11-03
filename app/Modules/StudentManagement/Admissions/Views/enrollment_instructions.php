@@ -20,7 +20,7 @@
         </a>
         <nav class="admissions-nav" aria-label="Enrollment">
             <a href="admissions.php">Home</a>
-            <a class="admissions-nav-apply" href="login.php">Student login</a>
+            <a class="admissions-nav-apply" href="login.php">Sign in</a>
         </nav>
     </header>
 
@@ -61,9 +61,12 @@
                 <p class="instructions-note">
                     Application documents are stored privately and can only be downloaded by authorized school staff. If the verification email does not arrive or no suitable section is available, please contact the school office.
                 </p>
+                <p class="instructions-account-note">
+                    <strong>Already have an active school account?</strong> Sign in instead of starting a new application. Students continue to their dashboard or remaining enrollment steps; Admin, Super Admin, and Teacher accounts go to their role dashboard.
+                </p>
                 <div class="instructions-actions">
                     <a class="admissions-button admissions-button--primary" href="apply.php">Continue to application</a>
-                    <a class="instructions-login-link" href="login.php">Already have an account? Student login</a>
+                    <a class="instructions-login-link" href="login.php">Already have a school account? Sign in</a>
                 </div>
             </section>
         </section>

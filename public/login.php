@@ -8,13 +8,9 @@ require_once dirname(__DIR__) . '/app/Modules/StudentManagement/Students/Service
 
 function signedInDestination(string $roleName, PDO $connection, int $userId): ?string
 {
-    $dashboardPath = match ($roleName) {
-        'Super Admin' => 'super-admin-dashboard.php',
-        'Admin' => 'admin-dashboard.php',
-        'Teacher' => 'teacher-dashboard.php',
-        'Student' => studentSignInDestination($connection, $userId),
-        default => null,
-    };
+    $dashboardPath = $roleName === 'Student'
+        ? studentSignInDestination($connection, $userId)
+        : appRoleDashboardPath($roleName);
 
     if ($dashboardPath !== null && !is_file(dirname(__DIR__) . '/app/Shared/dashboard_layout.php')) {
         return 'account.php';

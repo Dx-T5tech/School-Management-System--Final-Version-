@@ -37,6 +37,16 @@ function appCsrfTokenIsValid(mixed $submittedToken): bool
         && hash_equals($_SESSION['csrf_token'], $submittedToken);
 }
 
+function appRoleDashboardPath(string $roleName): ?string
+{
+    return match ($roleName) {
+        'Super Admin' => 'super-admin-dashboard.php',
+        'Admin' => 'admin-dashboard.php',
+        'Teacher' => 'teacher-dashboard.php',
+        default => null,
+    };
+}
+
 function appPasswordMaxBytes(): int
 {
     return defined('PASSWORD_ARGON2ID') ? 255 : 72;
