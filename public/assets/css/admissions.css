@@ -1555,3 +1555,77 @@ main#main-content:focus {
         transition: none !important;
     }
 }
+
+.admissions-page {
+    font-family: "Schibsted Grotesk", sans-serif;
+}
+
+.admissions-button,
+.application-password-toggle,
+.admissions-nav a {
+    transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.admissions-button:focus-visible,
+.application-password-toggle:focus-visible,
+.application-field input:focus-visible,
+.application-field select:focus-visible,
+.application-field textarea:focus-visible,
+.application-document-form input:focus-visible,
+.application-question input:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.admissions-page #main-content:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+.admissions-nav .admissions-nav-apply,
+.admissions-button--secondary,
+.application-field input,
+.application-field select,
+.application-field textarea,
+.application-document-form input,
+.application-question input,
+.application-password-toggle {
+    border-color: var(--control-line);
+}
+
+.application-field input::placeholder,
+.application-field textarea::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+
+.application-question input,
+.application-question button,
+.application-question select,
+.application-question textarea {
+    scroll-margin-top: 84px;
+}
+
+.application-exam-timer {
+    scroll-margin-top: 84px;
+}
+
+.application-exam-timer,
+.application-question {
+    scroll-margin-block: 84px;
+}
+
+.application-alert {
+    border-color: var(--crit);
+    color: var(--crit);
+    background: #FCE9E7;
+}
+
+.application-notice,
+.application-stage-panel {
+    border-color: var(--good);
+    color: var(--good);
+    background: var(--good-soft);
+}

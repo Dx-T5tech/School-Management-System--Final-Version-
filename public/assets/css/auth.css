@@ -489,3 +489,99 @@
         padding: 28px 20px;
     }
 }
+
+.auth-page {
+    color: var(--ink);
+    background: var(--bg);
+    font-family: "Schibsted Grotesk", sans-serif;
+}
+
+.auth-story,
+.auth-form-panel {
+    border-color: var(--line);
+    border-radius: 16px;
+    background: var(--surface);
+}
+
+.auth-story h1,
+.auth-form-wrap h2 {
+    font-family: "Bricolage Grotesque", sans-serif;
+}
+
+.auth-story .eyebrow,
+.auth-help a {
+    color: var(--accent);
+}
+
+.form-field input,
+.password-toggle {
+    border-color: var(--control-line);
+    border-radius: 12px;
+}
+
+.password-toggle {
+    color: var(--accent);
+    background: var(--surface);
+    transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.password-toggle:hover {
+    border-color: var(--accent);
+    color: var(--accent);
+    background: var(--accent-soft);
+}
+
+.auth-submit,
+.auth-submit:hover {
+    border-color: var(--accent);
+    border-radius: 12px;
+    color: var(--accent-ink);
+    background: var(--accent);
+    transition: color .2s ease, background-color .2s ease, border-color .2s ease;
+}
+
+.auth-submit:hover {
+    background: var(--navy-soft);
+}
+
+.auth-page #main-content:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        animation: none !important;
+        transition: none !important;
+        scroll-behavior: auto !important;
+    }
+}
+
+.form-field input::placeholder {
+    color: var(--muted);
+    opacity: 1;
+}
+
+.auth-alert {
+    border-color: var(--crit);
+    color: var(--crit);
+    background: #FCE9E7;
+}
+
+.auth-success {
+    border-color: var(--good);
+    color: var(--good);
+    background: var(--good-soft);
+}
+
+.form-field input:focus-visible,
+.password-toggle:focus-visible,
+.auth-submit:focus-visible,
+.sign-out-button:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    box-shadow: none;
+}
