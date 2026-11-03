@@ -1,0 +1,11 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Views\\admissions.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The page has one H1, followed by the Programs H2 and program-name H3 headings without skipped levels.",
+    "The flat program list uses semantic ul/li markup, preserving a meaningful list structure without department grouping."
+  ]
+}

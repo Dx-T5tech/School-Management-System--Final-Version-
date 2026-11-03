@@ -4,18 +4,18 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#172b3b">
-    <title>Admissions - Fullbright College</title>
+    <title>Admissions - <?= dashboardEscape($schoolName) ?></title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/admissions.css">
 </head>
 <body class="admissions-page">
     <a class="admissions-skip-link" href="#main-content">Skip to main content</a>
     <header class="admissions-header">
-        <a class="admissions-brand" href="admissions.php" aria-label="Fullbright College admissions home">
-            <span class="admissions-brand-mark" aria-hidden="true">F</span>
+        <a class="admissions-brand" href="admissions.php" aria-label="<?= dashboardEscape($schoolName) ?> admissions home">
+            <span class="admissions-brand-mark" aria-hidden="true"><?= dashboardEscape(substr($schoolName, 0, 1)) ?></span>
             <span class="admissions-brand-copy">
-                <span class="admissions-brand-name">Fullbright College</span>
-                <span class="admissions-brand-caption">Student Management System</span>
+                <span class="admissions-brand-name"><?= dashboardEscape($schoolName) ?></span>
+                <span class="admissions-brand-caption">Integrated Management System</span>
             </span>
         </a>
         <nav class="admissions-nav" aria-label="Admissions">
@@ -27,7 +27,7 @@
     <main class="admissions-main" id="main-content" tabindex="-1">
         <div class="admissions-card">
             <section class="admissions-intro" aria-labelledby="admissions-heading">
-                <h1 id="admissions-heading">Welcome to Fullbright College.</h1>
+                <h1 id="admissions-heading">Welcome to <?= dashboardEscape($schoolName) ?>.</h1>
                 <p class="admissions-lead">
                     Complete your application, choose an available class section, and create your Student account at the end of enrollment.
                 </p>
@@ -61,49 +61,38 @@
 
             <section class="admissions-programs" aria-labelledby="programs-heading">
                 <div class="admissions-programs-heading">
-                    <h2 id="programs-heading">Programs &amp; departments</h2>
+                    <h2 id="programs-heading">Programs</h2>
                     <p>Current choices from the school catalog</p>
                 </div>
 
-                <?php if ($programGroups === []): ?>
+                <?php if ($programs === []): ?>
                     <p class="admissions-catalog-empty">
                         No active programs are listed yet. Please check back or contact the school office.
                     </p>
                 <?php else: ?>
-                    <div class="admissions-program-groups">
-                        <?php $departmentIndex = 0; ?>
-                        <?php foreach ($programGroups as $departmentName => $departmentPrograms): ?>
-                            <section class="admissions-program-group" aria-labelledby="department-<?= $departmentIndex ?>">
-                                <h3 id="department-<?= $departmentIndex ?>">
-                                    <?= dashboardEscape($departmentName) ?>
-                                </h3>
-                                <ul>
-                                    <?php foreach ($departmentPrograms as $program): ?>
-                                        <?php $hasOpenSections = (int) $program['available_sections'] > 0; ?>
-                                        <li class="admissions-program">
-                                            <h4><?= dashboardEscape($program['program_name']) ?></h4>
-                                            <?php if (is_string($program['description']) && trim($program['description']) !== ''): ?>
-                                                <p><?= dashboardEscape($program['description']) ?></p>
-                                            <?php elseif (is_string($program['program_code']) && $program['program_code'] !== ''): ?>
-                                                <p><?= dashboardEscape($program['program_code']) ?></p>
-                                            <?php endif; ?>
-                                            <span class="admissions-program-status<?= $hasOpenSections ? ' is-open' : '' ?>">
-                                                <?= $hasOpenSections ? 'Sections available' : 'No sections open right now' ?>
-                                            </span>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </section>
-                            <?php $departmentIndex++; ?>
+                    <ul class="admissions-program-groups">
+                        <?php foreach ($programs as $program): ?>
+                            <?php $hasOpenSections = (int) $program['available_sections'] > 0; ?>
+                            <li class="admissions-program">
+                                <h3><?= dashboardEscape($program['program_name']) ?></h3>
+                                <?php if (is_string($program['description']) && trim($program['description']) !== ''): ?>
+                                    <p><?= dashboardEscape($program['description']) ?></p>
+                                <?php elseif (is_string($program['program_code']) && $program['program_code'] !== ''): ?>
+                                    <p><?= dashboardEscape($program['program_code']) ?></p>
+                                <?php endif; ?>
+                                <span class="admissions-program-status<?= $hasOpenSections ? ' is-open' : '' ?>">
+                                    <?= $hasOpenSections ? 'Programs available' : 'No sections open right now' ?>
+                                </span>
+                            </li>
                         <?php endforeach; ?>
-                    </div>
+                    </ul>
                 <?php endif; ?>
             </section>
         </div>
     </main>
 
     <footer class="admissions-footer">
-        <p>© <?= dashboardEscape(date('Y')) ?> Fullbright College · Student Management System</p>
+        <p>© <?= dashboardEscape(date('Y')) ?> <?= dashboardEscape($schoolName) ?> · Student Management System</p>
     </footer>
 </body>
 </html>

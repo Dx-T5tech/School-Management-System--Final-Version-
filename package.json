@@ -4,6 +4,7 @@
     "build:qr": "node scripts/build-qr-library.js"
   },
   "dependencies": {
+    "@fortawesome/fontawesome-free": "^7.3.1",
     "qrcode-generator": "2.0.4"
   }
 }

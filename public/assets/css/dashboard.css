@@ -2133,6 +2133,11 @@ button.room-monitor-card:focus-visible {
     gap: 16px;
 }
 
+.teacher-section--grade-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    align-items: start;
+}
+
 .student-section {
     display: grid;
     gap: 16px;
@@ -4670,6 +4675,10 @@ button.room-monitor-card:focus-visible {
 
     .teacher-panel {
         padding: 18px 16px;
+    }
+
+    .teacher-section--grade-actions {
+        grid-template-columns: minmax(0, 1fr);
     }
 
     .student-panel {

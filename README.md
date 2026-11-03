@@ -260,7 +260,12 @@ attendance, assessments, grade management, and student performance. Teacher
 records are scoped to the signed-in teacher's assignments. Teachers can record
 attendance, create assessments, save assessment scores, and record term grades;
 these changes require a valid session CSRF token and are written to the audit
-log.
+log. Apply
+`database/migrations/202611040015_seed_assessment_periods_and_categories.sql`
+to seed Prelim, Midterm, and Final grading periods across active and upcoming
+academic years, split evenly over each year's dates, and add the default
+Written Work, Performance Task, and Major Exam categories. Category weights are
+left unset for administrators to configure.
 
 The Student sidebar links to the dashboard, student profile, enrollment history,
 active class schedule, attendance, published assessment scores and term grades,

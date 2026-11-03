@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Form trigger source order is score, then term grade (teacher_section_content.php:14, 40).",
+    "The two-column grade layout preserves row-major order; it collapses to one column at the responsive breakpoint (dashboard.css:2136-2139, 4680-4682).",
+    "The shared button focus-visible rule gives keyboard-focused triggers a visible outline (dashboard.css:60-65).",
+    "Result panels follow the form panels in source order (teacher_section_content.php:134-141)."
+  ],
+  "notes": [
+    "Static source review only; runtime-generated trigger behavior was not exercised."
+  ]
+}

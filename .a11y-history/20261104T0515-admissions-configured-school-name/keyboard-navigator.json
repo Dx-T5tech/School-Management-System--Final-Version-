@@ -1,0 +1,16 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Controllers\\admissions.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Views\\admissions.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Dynamic school name has a non-empty fallback and is escaped when used in the brand link's accessible name.",
+    "Skip link is the first focusable element and targets the main landmark, which has tabindex=\"-1\".",
+    "Interactive links follow DOM order without positive tabindex values; the dynamic brand name does not alter focus order."
+  ],
+  "notes": [
+    "Skip-link visual hiding/reveal on focus and runtime behavior were not verified; the referenced stylesheets are outside the requested scope."
+  ]
+}

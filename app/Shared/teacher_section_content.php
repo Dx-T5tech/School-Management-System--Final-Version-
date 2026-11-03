@@ -22,7 +22,7 @@ $formsForSection = match ($sectionKey) {
     <p class="teacher-notice teacher-notice--error" role="alert" tabindex="-1" data-error-summary><?= dashboardEscape($errorMessage) ?></p>
 <?php endif; ?>
 
-<div class="teacher-section">
+<div class="teacher-section<?= $sectionKey === 'grades' ? ' teacher-section--grade-actions' : '' ?>">
     <?php if ($teacherId === null && $errorMessage === ''): ?>
         <p class="teacher-notice teacher-notice--error" role="alert">A teacher profile is not linked to your account. Contact the school administrator.</p>
     <?php endif; ?>

@@ -37,6 +37,14 @@ $configuredSchoolName = trim((string) $connection->query(
 )->fetchColumn());
 $schoolName = $configuredSchoolName !== '' ? $configuredSchoolName : 'Fullbright College';
 $configurationVersion = dashboardConfigurationVersion($connection);
+$brandRoleIcon = match ($dashboard['navigationStyle'] ?? '') {
+    'super-admin' => 'fa-user-shield',
+    'admin' => 'fa-user-gear',
+    'teacher' => 'fa-chalkboard-user',
+    'student' => 'fa-user-graduate',
+    default => null,
+};
+$fontAwesomeCssPath = dirname(__DIR__, 2) . '/public/assets/vendor/fontawesome/css/all.min.css';
 ?>
 <!doctype html>
 <html lang="en">
@@ -45,6 +53,7 @@ $configurationVersion = dashboardConfigurationVersion($connection);
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#172b3b">
     <title><?= dashboardEscape($dashboard['pageTitle']) ?> - ISMS</title>
+    <link rel="stylesheet" href="assets/vendor/fontawesome/css/all.min.css?v=<?= dashboardEscape((string) filemtime($fontAwesomeCssPath)) ?>">
     <link rel="stylesheet" href="assets/css/dashboard.css?v=<?= dashboardEscape((string) filemtime(dirname(__DIR__, 2) . '/public/assets/css/dashboard.css')) ?>">
     <script src="assets/js/dashboard.js?v=<?= dashboardEscape((string) filemtime(dirname(__DIR__, 2) . '/public/assets/js/dashboard.js')) ?>" defer></script>
     <script src="assets/js/auth.js" defer></script>
@@ -55,10 +64,8 @@ $configurationVersion = dashboardConfigurationVersion($connection);
     <div class="app-shell">
         <aside class="sidebar<?= in_array(($dashboard['navigationStyle'] ?? ''), ['super-admin', 'admin', 'teacher', 'student'], true) ? ' sidebar--' . dashboardEscape($dashboard['navigationStyle']) : '' ?>" id="dashboard-sidebar" aria-label="Dashboard sidebar">
             <a class="brand" href="<?= dashboardEscape($dashboard['homeHref'] ?? '#overview') ?>">
-                <?php if (($dashboard['navigationStyle'] ?? '') === 'admin'): ?>
-                    <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path d="M15.5 19.5v-1.2a3.3 3.3 0 0 0-3.3-3.3H6.3A3.3 3.3 0 0 0 3 18.3v1.2M9.2 11.4a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7Zm8.2-5.8.7.3.8-.5 1.1 1.1-.5.8.3.7.9.3v1.6l-.9.3-.3.7.5.8-1.1 1.1-.8-.5-.7.3-.3.9h-1.6l-.3-.9-.7-.3-.8.5-1.1-1.1.5-.8-.3-.7-.9-.3V8.3l.9-.3.3-.7-.5-.8 1.1-1.1.8.5.7-.3.3-.9h1.6l.3.9Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.6"></path>
-                    </svg>
+                <?php if ($brandRoleIcon !== null): ?>
+                    <span class="brand-mark" aria-hidden="true"><i class="fa-solid <?= dashboardEscape($brandRoleIcon) ?>"></i></span>
                 <?php else: ?>
                     <span class="brand-mark" aria-hidden="true">F</span>
                 <?php endif; ?>

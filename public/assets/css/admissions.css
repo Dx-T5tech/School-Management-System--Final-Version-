@@ -661,21 +661,9 @@ main#main-content:focus {
 .admissions-program-groups {
     display: grid;
     gap: 20px;
-    padding-top: 20px;
-}
-
-.admissions-program-group h3 {
-    margin: 0 0 9px;
-    color: var(--navy);
-    font-size: 15px;
-    letter-spacing: -0.01em;
-}
-
-.admissions-program-group ul {
-    display: grid;
-    gap: 10px;
     margin: 0;
-    padding: 0;
+    padding-top: 20px;
+    padding-left: 0;
     list-style: none;
 }
 
@@ -687,7 +675,7 @@ main#main-content:focus {
     background: #fffefa;
 }
 
-.admissions-program h4 {
+.admissions-program h3 {
     margin: 0;
     color: var(--ink);
     font-size: 14px;
@@ -1517,8 +1505,7 @@ main#main-content:focus {
 }
 
 .admissions-programs-heading h2,
-.admissions-program-group h3,
-.admissions-program h4 {
+.admissions-program h3 {
     color: var(--ink);
     font-family: "Bricolage Grotesque", sans-serif;
 }
