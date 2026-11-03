@@ -9,7 +9,7 @@ services:
       DB_USER: root
       DB_PASS: ""
     ports:
-      - "8080:80"
+      - "80"
     volumes:
       - ..:/var/www/html:cached
       - uploads:/var/www/html/storage/uploads
