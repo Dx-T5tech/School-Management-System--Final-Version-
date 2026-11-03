@@ -761,7 +761,15 @@ foreach ($lookupOptions as $lookupName => $options) {
             return $number . $suffix;
         };
         ?>
-        <section class="subject-catalog" aria-label="Browse subjects">
+        <section class="subject-catalog" aria-labelledby="subject-catalog-title">
+            <header class="admin-panel subject-catalog-heading">
+                <div>
+                    <h2 id="subject-catalog-title">Browse subjects</h2>
+                    <p class="admin-panel-description">Explore the catalog by program, year level, and semester.</p>
+                </div>
+                <a class="admin-button" href="#admin-form-subjects">Add subject</a>
+            </header>
+
             <div class="admin-panel subject-catalog-filters">
                 <form class="admin-form" method="get" action="admin-section.php" data-auto-submit-on-change>
                     <input type="hidden" name="section" value="academic-management">
