@@ -29,6 +29,14 @@ $publishedAnnouncements = $connection->query(
      ORDER BY created_at DESC
      LIMIT 5"
 )->fetchAll();
+$configuredSchoolName = trim((string) $connection->query(
+    'SELECT school_name
+     FROM school_settings
+     ORDER BY setting_id
+     LIMIT 1'
+)->fetchColumn());
+$schoolName = $configuredSchoolName !== '' ? $configuredSchoolName : 'Fullbright College';
+$configurationVersion = dashboardConfigurationVersion($connection);
 ?>
 <!doctype html>
 <html lang="en">
@@ -41,8 +49,9 @@ $publishedAnnouncements = $connection->query(
     <script src="assets/js/dashboard.js?v=<?= dashboardEscape((string) filemtime(dirname(__DIR__, 2) . '/public/assets/js/dashboard.js')) ?>" defer></script>
     <script src="assets/js/auth.js" defer></script>
 </head>
-<body class="dashboard-page dashboard-page--<?= dashboardEscape($dashboard['theme']) ?><?= !empty($dashboard['bodyClass']) ? ' ' . dashboardEscape($dashboard['bodyClass']) : '' ?>">
+<body class="dashboard-page dashboard-page--<?= dashboardEscape($dashboard['theme']) ?><?= !empty($dashboard['bodyClass']) ? ' ' . dashboardEscape($dashboard['bodyClass']) : '' ?>" data-configuration-version="<?= dashboardEscape($configurationVersion) ?>">
     <a class="skip-link" href="#main-content">Skip to main content</a>
+    <p class="sr-only" role="status" aria-atomic="true" data-configuration-update-status></p>
     <div class="app-shell">
         <aside class="sidebar<?= in_array(($dashboard['navigationStyle'] ?? ''), ['super-admin', 'admin', 'teacher', 'student'], true) ? ' sidebar--' . dashboardEscape($dashboard['navigationStyle']) : '' ?>" id="dashboard-sidebar" aria-label="Dashboard sidebar">
             <a class="brand" href="<?= dashboardEscape($dashboard['homeHref'] ?? '#overview') ?>">
@@ -181,7 +190,7 @@ $publishedAnnouncements = $connection->query(
                     <span>Menu</span>
                 </button>
                 <div class="topbar-context">
-                    <span class="topbar-kicker">Fullbright College</span>
+                    <span class="topbar-kicker"><?= dashboardEscape($schoolName) ?></span>
                     <span class="topbar-separator" aria-hidden="true">/</span>
                     <span><?= dashboardEscape($dashboard['roleLabel']) ?> workspace</span>
                 </div>
@@ -196,6 +205,14 @@ $publishedAnnouncements = $connection->query(
                     </form>
                 </div>
             </header>
+
+            <div class="admin-notice admin-notice--info configuration-update-notice" hidden data-configuration-update-notice>
+                <p data-configuration-update-message>System settings changed. This page will refresh automatically.</p>
+                <div class="configuration-update-actions">
+                    <button class="admin-button" type="button" data-configuration-refresh>Refresh now</button>
+                    <button class="admin-button admin-button--secondary" type="button" data-configuration-postpone>Keep working for 1 minute</button>
+                </div>
+            </div>
 
             <main class="main-content" id="main-content" tabindex="-1">
                 <section class="page-intro" id="overview" aria-labelledby="page-title" tabindex="-1">

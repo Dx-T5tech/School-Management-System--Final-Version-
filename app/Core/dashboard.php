@@ -39,6 +39,15 @@ function requireDashboardUser(string|array $requiredRole): array
     return $user;
 }
 
+function dashboardConfigurationVersion(PDO $connection): int
+{
+    return (int) $connection->query(
+        "SELECT COALESCE(MAX(log_id), 0)
+         FROM audit_logs
+         WHERE module_name IN ('School Configuration', 'Roles & Permissions')"
+    )->fetchColumn();
+}
+
 function dashboardAccessDenied(int $statusCode, string $message): never
 {
     http_response_code($statusCode);

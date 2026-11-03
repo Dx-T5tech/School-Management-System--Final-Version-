@@ -4902,6 +4902,17 @@ textarea:focus-visible,
     background: var(--accent-soft);
 }
 
+.configuration-update-notice p {
+    margin: 0;
+}
+
+.configuration-update-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 10px;
+}
+
 .student-status--attention {
     color: var(--warn);
     background: var(--warn-soft);

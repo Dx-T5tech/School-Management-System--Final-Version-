@@ -10,6 +10,228 @@
     const statusSummary = document.querySelector("[data-status-summary]");
     const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
+    const configurationVersion = document.body.dataset.configurationVersion;
+    if (configurationVersion) {
+        let currentConfigurationVersion = configurationVersion;
+        let refreshPending = false;
+        let updateCheckInProgress = false;
+        let refreshTimer = null;
+        const updateNotice = document.querySelector("[data-configuration-update-status]");
+        const updateNoticeBanner = document.querySelector("[data-configuration-update-notice]");
+        const updateNoticeMessage = document.querySelector("[data-configuration-update-message]");
+        const refreshNowButton = document.querySelector("[data-configuration-refresh]");
+        const postponeRefreshButton = document.querySelector("[data-configuration-postpone]");
+        const focusStorageKey = "isms.configuration-update-focus";
+        const formSnapshots = new WeakMap();
+        const editableSnapshots = new WeakMap();
+        const formValue = (control) => {
+            if (control instanceof HTMLInputElement && (control.type === "checkbox" || control.type === "radio")) {
+                return String(control.checked);
+            }
+            if (control instanceof HTMLSelectElement && control.multiple) {
+                return Array.from(control.options)
+                    .map((option, index) => option.selected ? String(index) : "")
+                    .filter(Boolean)
+                    .join(",");
+            }
+            return control.value;
+        };
+        document.querySelectorAll("form input, form select, form textarea").forEach((control) => {
+            if (
+                control.disabled
+                || control instanceof HTMLInputElement && [
+                    "hidden", "button", "submit", "reset", "image",
+                ].includes(control.type)
+            ) {
+                return;
+            }
+            formSnapshots.set(control, formValue(control));
+        });
+        document.querySelectorAll('[contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"]').forEach((element) => {
+            editableSnapshots.set(element, element.innerHTML);
+        });
+        const announceUpdateStatus = (message) => {
+            if (updateNotice instanceof HTMLElement) {
+                updateNotice.textContent = message;
+            }
+            if (updateNoticeMessage instanceof HTMLElement) {
+                updateNoticeMessage.textContent = message;
+            }
+        };
+
+        const hasUnsavedFormChanges = () => Array.from(document.forms).some((form) => (
+            Array.from(form.elements).some((control) => {
+                const initialValue = formSnapshots.get(control);
+                return initialValue !== undefined && formValue(control) !== initialValue;
+            })
+        )) || Array.from(document.querySelectorAll('[contenteditable="true"], [contenteditable=""], [contenteditable="plaintext-only"]')).some((element) => (
+            editableSnapshots.get(element) !== element.innerHTML
+        ));
+
+        const hasActiveEditing = () => {
+            const activeElement = document.activeElement;
+            return (
+                activeElement instanceof HTMLElement
+                && (activeElement.closest("form") !== null || activeElement.isContentEditable)
+            ) || document.querySelector("dialog[open]") !== null;
+        };
+
+        const scheduleRefresh = () => {
+            if (!refreshPending || refreshTimer !== null) {
+                return;
+            }
+            refreshTimer = window.setTimeout(() => {
+                refreshTimer = null;
+                refreshWhenSafe();
+            }, 5000);
+        };
+
+        refreshNowButton?.addEventListener("click", () => {
+            if (hasUnsavedFormChanges() || hasActiveEditing()) {
+                announceUpdateStatus("Save or finish your current edits before refreshing.");
+                return;
+            }
+            if (refreshTimer !== null) {
+                window.clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
+            refreshWhenSafe();
+        });
+
+        postponeRefreshButton?.addEventListener("click", () => {
+            if (refreshTimer !== null) {
+                window.clearTimeout(refreshTimer);
+                refreshTimer = null;
+            }
+            refreshTimer = window.setTimeout(() => {
+                refreshTimer = null;
+                refreshWhenSafe();
+            }, 60000);
+            announceUpdateStatus("The refresh is postponed for one minute. System settings will still update automatically.");
+        });
+
+        const saveFocusForRefresh = () => {
+            const activeElement = document.activeElement;
+            if (!(activeElement instanceof HTMLElement)) {
+                return;
+            }
+            const focusState = {
+                id: activeElement.id,
+                name: activeElement.getAttribute("name"),
+                tagName: activeElement.tagName,
+                ariaLabel: activeElement.getAttribute("aria-label"),
+                role: activeElement.getAttribute("role"),
+                ariaControls: activeElement.getAttribute("aria-controls"),
+                href: activeElement instanceof HTMLAnchorElement ? activeElement.getAttribute("href") : null,
+            };
+            try {
+                window.sessionStorage.setItem(focusStorageKey, JSON.stringify(focusState));
+            } catch (error) {
+                console.warn("Unable to preserve keyboard focus across the configuration refresh.", error);
+            }
+        };
+
+        const refreshWhenSafe = () => {
+            if (!refreshPending || document.visibilityState === "hidden") {
+                return;
+            }
+            if (hasUnsavedFormChanges() || hasActiveEditing()) {
+                return;
+            }
+            saveFocusForRefresh();
+            window.location.reload();
+        };
+
+        try {
+            const savedFocus = window.sessionStorage.getItem(focusStorageKey);
+            if (savedFocus !== null) {
+                window.sessionStorage.removeItem(focusStorageKey);
+                const focusState = JSON.parse(savedFocus);
+                window.requestAnimationFrame(() => {
+                    if (
+                        document.activeElement instanceof HTMLElement
+                        && document.activeElement !== document.body
+                        && document.activeElement !== document.documentElement
+                    ) {
+                        return;
+                    }
+                    let focusTarget = focusState.id ? document.getElementById(focusState.id) : null;
+                    if (!focusTarget && focusState.name) {
+                        const nameMatches = document.getElementsByName(focusState.name);
+                        focusTarget = nameMatches.length === 1 ? nameMatches[0] : null;
+                    }
+                    if (!focusTarget && focusState.ariaControls) {
+                        const controlsMatches = Array.from(document.querySelectorAll("[aria-controls]")).filter((element) => (
+                            element.getAttribute("aria-controls") === focusState.ariaControls
+                        ));
+                        focusTarget = controlsMatches.length === 1 ? controlsMatches[0] : null;
+                    }
+                    if (!focusTarget && focusState.href) {
+                        const linkMatches = Array.from(document.querySelectorAll("a[href]")).filter((element) => (
+                            element.getAttribute("href") === focusState.href
+                        ));
+                        focusTarget = linkMatches.length === 1 ? linkMatches[0] : null;
+                    }
+                    if (!focusTarget && focusState.ariaLabel) {
+                        const labelMatches = Array.from(document.querySelectorAll("[aria-label]")).filter((element) => (
+                            element.tagName === focusState.tagName
+                            && element.getAttribute("aria-label") === focusState.ariaLabel
+                            && element.getAttribute("role") === focusState.role
+                        ));
+                        focusTarget = labelMatches.length === 1 ? labelMatches[0] : null;
+                    }
+                    if (focusTarget instanceof HTMLElement && focusTarget.getClientRects().length > 0) {
+                        focusTarget.focus({ preventScroll: true });
+                    } else {
+                        document.getElementById("main-content")?.focus();
+                    }
+                });
+            }
+        } catch (error) {
+            console.warn("Unable to restore keyboard focus after the configuration refresh.", error);
+        }
+
+        const checkConfigurationVersion = async () => {
+            if (updateCheckInProgress || document.visibilityState === "hidden") {
+                return;
+            }
+            updateCheckInProgress = true;
+            try {
+                const response = await fetch("configuration-version.php", {
+                    cache: "no-store",
+                    credentials: "same-origin",
+                    headers: { Accept: "application/json" },
+                });
+                if (!response.ok) {
+                    throw new Error(`Configuration update check returned HTTP ${response.status}.`);
+                }
+                const result = await response.json();
+                if (typeof result.version !== "string" || !/^\d+$/.test(result.version)) {
+                    throw new Error("Configuration update check returned an invalid version.");
+                }
+                if (result.version !== currentConfigurationVersion) {
+                    currentConfigurationVersion = result.version;
+                    refreshPending = true;
+                    if (updateNoticeBanner instanceof HTMLElement) {
+                        updateNoticeBanner.hidden = false;
+                    }
+                    announceUpdateStatus("System settings changed. This page will refresh automatically; use the update notice to refresh now or postpone.");
+                }
+                scheduleRefresh();
+            } catch (error) {
+                console.error("Unable to check for system configuration updates.", error);
+            } finally {
+                updateCheckInProgress = false;
+            }
+        };
+
+        window.setInterval(checkConfigurationVersion, 5000);
+        document.addEventListener("visibilitychange", checkConfigurationVersion);
+        document.addEventListener("focusout", () => window.setTimeout(scheduleRefresh, 0));
+        document.addEventListener("close", () => window.setTimeout(scheduleRefresh, 0), true);
+        document.addEventListener("reset", () => window.setTimeout(scheduleRefresh, 0), true);
+    }
+
     if (!reducedMotion.matches) {
         document.querySelectorAll(".metric-value").forEach((valueElement) => {
             const originalValue = valueElement.textContent ?? "";
