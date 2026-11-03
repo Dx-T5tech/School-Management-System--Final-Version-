@@ -1,0 +1,25 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/teacher-section.php",
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "FORMS-REDUNDANT-ENTRY",
+      "wcag": "3.3.7 AA",
+      "severity": "moderate",
+      "location": "public/teacher-section.php:683; app/Shared/teacher_section_content.php:301-307",
+      "summary": "After a missing assessment score blocks grade submission, saving that score redirects without retaining the attempted term-grade values, requiring users to re-enter them.",
+      "fix": "Preserve the term-grade draft across the assessment-score submission and restore its class, student, period, attendance, recitation, and result values; clear the draft after the grade is saved.",
+      "evidence": "Score save redirects to the grades page; grade inputs are restored only when oldInputAction is term-grade."
+    }
+  ],
+  "passed": [
+    "Term-grade controls have explicit labels; attendance and recitation are visibly marked Required and use native required attributes.",
+    "Assessment-derived grade fields are labeled readonly controls; inline server errors use aria-invalid and aria-describedby associations.",
+    "The term-grade error state opens the form and focuses the page error notice; corrected calculated components have their error state cleared."
+  ]
+}

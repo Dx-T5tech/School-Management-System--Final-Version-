@@ -1,0 +1,12 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The existing polite status now summarizes automatic Exam/Quiz percentages with calculated-grade or missing-score information.",
+    "Browser verification confirmed the status announces Exam 80.0%, Quizzes 60.0%, and a calculated Prelim of 77.0%."
+  ]
+}

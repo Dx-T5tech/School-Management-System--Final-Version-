@@ -21,6 +21,13 @@ function signedInDestination(string $roleName, PDO $connection, int $userId): ?s
 
 startAppSession();
 $connection = getDatabaseConnection();
+$configuredSchoolName = trim((string) $connection->query(
+    'SELECT school_name
+     FROM school_settings
+     ORDER BY setting_id
+     LIMIT 1'
+)->fetchColumn());
+$schoolName = $configuredSchoolName !== '' ? $configuredSchoolName : 'Fullbright College';
 $identifier = '';
 $errorMessage = '';
 $credentialsRejected = false;
@@ -139,7 +146,7 @@ $escape = static fn (string $value): string => htmlspecialchars(
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#172b3b">
-    <title>Sign in - Fullbright College ISMS</title>
+    <title>Sign in - <?= $escape($schoolName) ?> ISMS</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/auth.css">
 </head>
@@ -150,7 +157,7 @@ $escape = static fn (string $value): string => htmlspecialchars(
             <a class="brand auth-brand" href="login.php">
                 <span class="brand-mark" aria-hidden="true">F</span>
                 <span class="brand-copy">
-                    <span class="brand-name">Fullbright</span>
+                    <span class="brand-name"><?= $escape($schoolName) ?></span>
                     <span class="brand-caption">Integrated School Management</span>
                 </span>
             </a>
@@ -159,13 +166,13 @@ $escape = static fn (string $value): string => htmlspecialchars(
                     <span class="eyebrow-line" aria-hidden="true"></span>
                     One school, working together
                 </p>
-                <h1 id="welcome-heading">Sign in to Fullbright College ISMS.</h1>
+                <h1 id="welcome-heading">Sign in to <?= $escape($schoolName) ?>.</h1>
                 <p class="auth-story-description">
                     A connected workspace for the people who teach, learn, and keep
-                    Fullbright College moving forward.
+                    <?= $escape($schoolName) ?> moving forward.
                 </p>
             </div>
-            <p class="auth-story-footer">Fullbright College · Integrated School Management System</p>
+            <p class="auth-story-footer"><?= $escape($schoolName) ?> · Integrated School Management System</p>
         </section>
 
         <section class="auth-form-panel" aria-labelledby="signin-heading">
@@ -228,7 +235,7 @@ $escape = static fn (string $value): string => htmlspecialchars(
                 </form>
 
                 <p class="auth-help">
-                    New to Fullbright College? <a href="enrollment-instructions.php">Review enrollment steps and apply</a>.
+                    New to <?= $escape($schoolName) ?>? <a href="enrollment-instructions.php">Review enrollment steps and apply</a>.
                     Need account help? Contact your school administrator.
                 </p>
                 <p class="auth-security-note">

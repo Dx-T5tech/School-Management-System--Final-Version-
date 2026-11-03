@@ -1,0 +1,17 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/assets/js/dashboard.js",
+    "app/Shared/teacher_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Attendance controls stay hidden and disabled until a class is selected.",
+    "Selecting a class loads its next scheduled date and the matching enrolled-student roster.",
+    "A class with no enrolled students displays recovery guidance and cannot be submitted."
+  ],
+  "notes": [
+    "Automated axe, keyboard, and viewport MCP scans could not run because Playwright is not installed in the accessibility-agents environment."
+  ]
+}

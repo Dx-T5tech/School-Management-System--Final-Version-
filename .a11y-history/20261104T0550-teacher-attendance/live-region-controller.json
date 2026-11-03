@@ -1,0 +1,13 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Class/date changes update one concise polite schedule status.",
+    "The selected student count stays visually current without repetitive live announcements.",
+    "Student checkboxes provide their native checked state while bulk selection avoids simultaneous count announcements."
+  ]
+}

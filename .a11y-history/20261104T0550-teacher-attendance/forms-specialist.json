@@ -1,0 +1,13 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/teacher-section.php",
+    "app/Shared/teacher_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Class, date, and status controls are labeled, required, and associated with validation errors.",
+    "Each class roster legend explains the student group and required selection.",
+    "Server-side validation restores submitted class/date/status and selected student values; an invalid empty selection reopens the modal with an error."
+  ]
+}

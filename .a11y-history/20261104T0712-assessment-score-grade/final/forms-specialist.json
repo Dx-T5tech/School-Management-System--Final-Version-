@@ -1,0 +1,18 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/teacher-section.php",
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Term-grade controls have explicit labels; Attendance and Recitation remain required native inputs.",
+    "Exam and Quiz are labeled readonly calculated inputs; missing score errors are associated with the relevant fields.",
+    "Browser validation confirmed missing Exam/Quiz scores are rejected without creating a grade row."
+  ],
+  "notes": [
+    "A real assessment-score save was not performed because no eligible local Exam/Quiz scores existed; the complete score-save-to-draft-resume path was code-reviewed."
+  ]
+}

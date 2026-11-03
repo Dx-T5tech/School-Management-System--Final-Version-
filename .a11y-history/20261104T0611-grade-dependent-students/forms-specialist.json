@@ -1,0 +1,15 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/teacher-section.php",
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The assessment-score student select is disabled until an assessment is selected, then contains only students in that assessment's class.",
+    "The term-grade student select is disabled until a class assignment is selected, then contains only students in that assignment's class.",
+    "Changing the controlling assessment or class assignment clears a stale student choice and refreshes the available student count.",
+    "Empty dependent rosters disable the student select and explain how to recover."
+  ]
+}

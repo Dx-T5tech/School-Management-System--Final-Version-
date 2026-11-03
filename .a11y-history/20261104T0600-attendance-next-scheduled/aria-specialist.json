@@ -1,0 +1,17 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "public/assets/js/dashboard.js",
+    "app/Shared/teacher_section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The native class select remains keyboard-operable.",
+    "The polite atomic status announces the selected class, roster count, and scheduled date and time.",
+    "Only the selected class roster is rendered visibly and enabled; other rosters are hidden and disabled."
+  ],
+  "notes": [
+    "Automated axe, keyboard, and viewport MCP scans could not run because Playwright is not installed in the accessibility-agents environment."
+  ]
+}

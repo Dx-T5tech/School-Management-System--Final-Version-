@@ -1,0 +1,17 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/teacher-section.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Component inputs have labels, required state, 0-100 constraints, shared help, and associated server errors.",
+    "Correcting a server-invalid percentage clears aria-invalid and its error description while retaining shared help; verified in the browser.",
+    "The calculator preserves validation input and blocks later-period calculation when a prerequisite grade is missing."
+  ],
+  "notes": [
+    "The initial review identified stale component errors after correction; the issue was fixed and directly verified."
+  ]
+}

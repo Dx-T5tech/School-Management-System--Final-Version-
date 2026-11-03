@@ -1,0 +1,14 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/teacher-section.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Attendance page and section heading hierarchy is logical.",
+    "The generated dialog is associated with its heading.",
+    "The page has labeled controls and meaningful landmarks with an Attendance-specific page title."
+  ]
+}

@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Native controls retain natural tab order and become enabled when their selections are complete.",
+    "The existing native dialog closes with Escape and returns focus to the Record term grade trigger; verified in the browser.",
+    "Calculator input focus styling is visible."
+  ],
+  "notes": [
+    "The specialist performed source review; the dialog Escape and focus-return behavior was additionally checked in the browser."
+  ]
+}

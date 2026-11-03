@@ -1,0 +1,15 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/teacher_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Attendance schedule summary and roster boundaries use #7D8A8C against white at 3.57:1, meeting WCAG 1.4.11.",
+    "Attendance text, selected checkboxes, and focus indicators meet their applicable contrast requirements."
+  ],
+  "notes": [
+    "Unchecked checkbox borders retain browser-native rendering."
+  ]
+}

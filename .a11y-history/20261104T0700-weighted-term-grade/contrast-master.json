@@ -1,0 +1,16 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Shared/teacher_section_content.php",
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Calculator body text, helper/status text, labels, result, input borders, and notification link meet their reviewed contrast targets.",
+    "The calculator fieldset border uses --control-line against --soft, providing 3.23:1 non-text contrast."
+  ],
+  "notes": [
+    "The initial review identified a low-contrast fieldset boundary; it was changed to --control-line."
+  ]
+}

@@ -1,0 +1,12 @@
+{
+  "skill": "alt-text-headings",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "The dashboard retains its main landmark, page H1, and logical section headings.",
+    "The calculator's fieldset/legend and the descriptive View My Grades link use appropriate semantics."
+  ]
+}

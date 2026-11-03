@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Each dependent student select references its dedicated polite atomic status region.",
+    "The status region announces the selected assessment or class assignment and the matching student count.",
+    "The existing native select controls remain keyboard-operable."
+  ]
+}

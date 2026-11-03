@@ -2226,6 +2226,50 @@ button.room-monitor-card:focus-visible {
     margin-top: 6px;
 }
 
+.student-annual-fee-summary {
+    display: grid;
+    gap: 12px;
+    margin-top: 4px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+}
+
+.student-annual-fee-summary dl {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0;
+}
+
+.student-annual-fee-summary dl div {
+    min-width: 0;
+}
+
+.student-annual-fee-summary dt {
+    color: var(--ink-soft);
+    font-size: 12px;
+}
+
+.student-annual-fee-summary dd {
+    margin: 4px 0 0;
+    color: var(--ink);
+    font-size: 16px;
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.student-annual-fee-summary p {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+.student-annual-fee-summary a {
+    font-weight: 700;
+    text-underline-offset: 2px;
+}
+
 .student-table tbody th {
     color: var(--ink);
     font-weight: 700;
@@ -2332,6 +2376,17 @@ button.room-monitor-card:focus-visible {
     margin: 5px 0;
     color: var(--ink-soft);
     font-size: 13px;
+}
+
+.student-notification-link {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+    color: var(--navy);
+    font-size: 13px;
+    font-weight: 700;
+    text-decoration: underline;
+    text-underline-offset: 3px;
 }
 
 .student-notification time {
@@ -2697,26 +2752,82 @@ button.room-monitor-card:focus-visible {
     gap: 16px;
 }
 
-.teacher-grade-group {
-    display: grid;
-    grid-column: 1 / -1;
-    gap: 12px;
-    min-width: 0;
-    margin: 0;
-    padding: 14px;
-    border: 1px solid var(--line);
-    border-radius: 5px;
+.teacher-form-grid[data-attendance-details][hidden],
+.teacher-attendance-roster[hidden] {
+    display: none;
 }
 
-.teacher-grade-group legend {
+.teacher-grade-calculator {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 14px;
+    min-width: 0;
+    margin: 0;
+    padding: 16px;
+    border: 1px solid var(--control-line);
+    border-radius: 8px;
+    background: var(--soft);
+}
+
+.teacher-grade-calculator legend {
     padding: 0 6px;
     color: var(--ink);
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 700;
 }
 
-.teacher-grade-group .teacher-field-note,
-.teacher-grade-group .teacher-field-error {
+.teacher-grade-help,
+.teacher-grade-calculation {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.55;
+}
+
+.teacher-grade-components {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px 16px;
+}
+
+.teacher-grade-components input[readonly][data-grade-auto-component] {
+    color: var(--ink);
+    background: var(--soft);
+    font-variant-numeric: tabular-nums;
+    font-weight: 700;
+}
+
+.teacher-grade-components .teacher-field-note {
+    margin: 0;
+}
+
+.teacher-grade-weight {
+    color: var(--ink-soft);
+    font-size: 12px;
+    font-weight: 600;
+}
+
+.teacher-grade-result {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin: 0;
+    padding-top: 12px;
+    border-top: 1px solid var(--line);
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.teacher-grade-result-value {
+    color: var(--navy);
+    font-variant-numeric: tabular-nums;
+    font-size: 20px;
+    font-weight: 700;
+}
+
+.teacher-grade-calculator .teacher-field-error {
     margin: 0;
 }
 
@@ -2728,6 +2839,107 @@ button.room-monitor-card:focus-visible {
 
 .teacher-field--wide {
     grid-column: 1 / -1;
+}
+
+.teacher-field-label {
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.teacher-attendance-schedule {
+    grid-column: 1 / -1;
+    margin: 0;
+    padding: 10px 12px;
+    border: 1px solid #7d8a8c;
+    border-radius: 5px;
+    color: var(--ink);
+    background: var(--paper);
+    font-size: 13px;
+}
+
+.teacher-attendance-roster {
+    display: grid;
+    grid-column: 1 / -1;
+    gap: 10px;
+    min-width: 0;
+    margin: 0;
+    padding: 14px;
+    border: 1px solid #7d8a8c;
+    border-radius: 5px;
+}
+
+.teacher-attendance-roster legend {
+    max-width: 100%;
+    padding: 0 6px;
+    color: var(--ink);
+    font-size: 12px;
+    font-weight: 700;
+}
+
+.teacher-attendance-selection-count,
+.teacher-attendance-empty {
+    margin: 0;
+    color: var(--ink-soft);
+    font-size: 12px;
+}
+
+.teacher-attendance-select-all,
+.teacher-attendance-student {
+    display: flex;
+    min-height: 40px;
+    align-items: center;
+    gap: 10px;
+    color: var(--ink);
+    font-size: 12px;
+}
+
+.teacher-attendance-select-all {
+    width: fit-content;
+    font-weight: 700;
+}
+
+.teacher-attendance-student-list {
+    display: grid;
+    max-height: 280px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    overflow-y: auto;
+    border-top: 1px solid var(--line);
+}
+
+.teacher-attendance-student {
+    min-width: 0;
+    padding: 7px 8px;
+    border-bottom: 1px solid var(--line);
+    cursor: pointer;
+}
+
+.teacher-attendance-student > span {
+    display: grid;
+    min-width: 0;
+    gap: 2px;
+}
+
+.teacher-attendance-student strong,
+.teacher-attendance-student > span > span {
+    overflow-wrap: anywhere;
+}
+
+.teacher-attendance-student > span > span {
+    color: var(--ink-soft);
+    font-size: 11px;
+}
+
+.teacher-attendance-roster input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    flex: 0 0 auto;
+    accent-color: var(--navy);
+}
+
+.teacher-attendance-roster input[type="checkbox"]:focus-visible {
+    outline: 3px solid var(--navy);
+    outline-offset: 2px;
 }
 
 .teacher-field label {
@@ -4673,6 +4885,18 @@ button.room-monitor-card:focus-visible {
         grid-template-columns: 1fr;
     }
 
+    .teacher-grade-components {
+        grid-template-columns: 1fr;
+    }
+
+    .teacher-grade-calculator {
+        padding: 14px;
+    }
+
+    .teacher-attendance-student-list {
+        grid-template-columns: 1fr;
+    }
+
     .teacher-panel {
         padding: 18px 16px;
     }
@@ -4695,6 +4919,11 @@ button.room-monitor-card:focus-visible {
 
     .student-term-grid {
         grid-template-columns: 1fr;
+    }
+
+    .student-annual-fee-summary dl {
+        grid-template-columns: 1fr;
+        gap: 8px;
     }
 
     .student-payment-fields {

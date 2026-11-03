@@ -1,0 +1,16 @@
+{
+  "skill": "live-region-controller",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Grade output updates immediately while polite status announcements are debounced and concise.",
+    "Unchanged status messages are not re-announced.",
+    "Browser verification confirmed the final grade is announced after input pauses and prerequisite messages appear immediately on period changes."
+  ],
+  "notes": [
+    "The initial review identified repetitive announcements; debouncing and concise status copy were added and verified."
+  ]
+}

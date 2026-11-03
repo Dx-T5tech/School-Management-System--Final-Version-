@@ -1,0 +1,16 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "The calculator uses a fieldset and legend, labeled fields, and a single polite status region.",
+    "Selector changes remove stale component error IDs from aria-describedby.",
+    "The visual result is hidden from assistive technology to avoid duplicating the live status announcement."
+  ],
+  "notes": [
+    "The initial review found stale error relationships; correction behavior was fixed and confirmed with a browser DOM check."
+  ]
+}

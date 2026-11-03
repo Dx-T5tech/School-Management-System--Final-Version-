@@ -68,19 +68,34 @@ $sectionDefinition = $sectionDefinitions[$sectionKey];
 $errorMessage = '';
 $fieldErrors = [];
 $oldInput = [];
+$oldAttendanceEnrollmentIds = [];
 $oldInputAction = '';
 $flashMessage = $_SESSION['teacher_flash'] ?? null;
 unset($_SESSION['teacher_flash']);
+$restoreGradeDraft = false;
+if (
+    $_SERVER['REQUEST_METHOD'] === 'GET'
+    && $sectionKey === 'grades'
+    && is_array($_SESSION['teacher_grade_draft_resume'] ?? null)
+) {
+    $gradeDraft = $_SESSION['teacher_grade_draft_resume'];
+    unset($_SESSION['teacher_grade_draft_resume']);
+    if (
+        (int) ($gradeDraft['user_id'] ?? 0) === (int) $user['user_id']
+        && is_array($gradeDraft['input'] ?? null)
+        && (int) ($gradeDraft['created_at'] ?? 0) >= time() - 1800
+    ) {
+        $oldInput = $gradeDraft['input'];
+        $oldInputAction = 'term-grade';
+        $restoreGradeDraft = true;
+    }
+}
 $csrfToken = appCsrfToken();
 
 $enum = static fn (string ...$values): array => array_combine($values, $values);
 $isValidDate = static function (string $value): bool {
     $date = DateTimeImmutable::createFromFormat('!Y-m-d', $value);
     return $date !== false && $date->format('Y-m-d') === $value;
-};
-$isValidTime = static function (string $value): bool {
-    $time = DateTimeImmutable::createFromFormat('!H:i', $value);
-    return $time !== false && $time->format('H:i') === $value;
 };
 $field = static fn (
     string $label,
@@ -98,15 +113,12 @@ $formDefinitions = [
     'attendance' => [
         'title' => 'Record student attendance',
         'fields' => [
-            'assignment_id' => $field('Class assignment', 'select', true, 'assignments'),
-            'enrollment_id' => $field('Student', 'select', true, 'enrollments'),
+            'assignment_id' => $field('Class', 'select', true, 'attendance_assignments'),
             'attendance_date' => $field('Attendance date', 'date', true),
-            'attendance_status' => $field('Status', 'select', true, $enum('Present', 'Absent', 'Late', 'Excused')),
-            'time_in' => $field('Time in', 'time'),
-            'time_out' => $field('Time out', 'time'),
+            'attendance_status' => $field('Status', 'select', true, $enum('Present', 'Absent', 'Excused')),
             'remarks' => $field('Remarks', 'textarea'),
         ],
-        'submitLabel' => 'Save attendance',
+        'submitLabel' => 'Save attendance for selected students',
     ],
     'assessment' => [
         'title' => 'Create an assessment',
@@ -140,13 +152,202 @@ $formDefinitions = [
             'assignment_id' => $field('Class assignment', 'select', true, 'assignments'),
             'enrollment_id' => $field('Student', 'select', true, 'enrollments'),
             'grading_period_id' => $field('Grading period', 'select', true, 'grading_periods'),
-            'preliminary_grade' => $field('Preliminary grade', 'number'),
-            'final_grade' => $field('Final grade', 'number'),
             'remarks' => $field('Result', 'select', true, $enum('Passed', 'Failed', 'Incomplete', 'Dropped', 'Pending')),
         ],
         'submitLabel' => 'Save term grade',
     ],
 ];
+
+$getAssessmentComponentScores = static function (
+    PDO $connection,
+    int $assignmentId,
+    int $enrollmentId,
+    int $periodId
+): array {
+    $statement = $connection->prepare(
+        "SELECT a.assessment_type, COUNT(*) AS assessment_count,
+                SUM(ss.score) AS points_earned, SUM(a.total_points) AS points_possible
+         FROM student_scores ss
+         INNER JOIN assessments a ON a.assessment_id = ss.assessment_id
+         INNER JOIN teaching_assignments ta ON ta.assignment_id = a.assignment_id
+         INNER JOIN sections sec ON sec.section_id = ta.section_id
+         INNER JOIN enrollments e ON e.enrollment_id = :enrollment_id
+           AND e.student_id = ss.student_id
+           AND e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = 'Enrolled'
+         WHERE ta.assignment_id = :assignment_id
+           AND a.grading_period_id = :period_id
+           AND a.assessment_type IN ('Exam', 'Quiz')
+           AND a.status IN ('Published', 'Completed')
+         GROUP BY a.assessment_type"
+    );
+    $statement->execute([
+        'enrollment_id' => $enrollmentId,
+        'assignment_id' => $assignmentId,
+        'period_id' => $periodId,
+    ]);
+
+    $components = [
+        'component_exam' => null,
+        'component_quizzes' => null,
+        'exam_count' => 0,
+        'quiz_count' => 0,
+        'exam_points_earned' => 0.0,
+        'exam_points_possible' => 0.0,
+        'quiz_points_earned' => 0.0,
+        'quiz_points_possible' => 0.0,
+    ];
+    foreach ($statement->fetchAll() as $row) {
+        $type = $row['assessment_type'] === 'Exam' ? 'exam' : 'quiz';
+        $pointsPossible = (float) $row['points_possible'];
+        if ($pointsPossible <= 0) {
+            continue;
+        }
+        $componentKey = $type === 'exam' ? 'component_exam' : 'component_quizzes';
+        $components[$componentKey] = round((float) $row['points_earned'] / $pointsPossible * 100, 1);
+        $components["{$type}_count"] = (int) $row['assessment_count'];
+        $components["{$type}_points_earned"] = (float) $row['points_earned'];
+        $components["{$type}_points_possible"] = $pointsPossible;
+    }
+
+    return $components;
+};
+
+$recalculateSavedGrades = static function (
+    PDO $connection,
+    int $enrollmentId,
+    int $assignmentId,
+    ?int $preserveRemarksPeriodId = null
+) use ($getAssessmentComponentScores): array {
+    $statement = $connection->prepare(
+        'SELECT gr.grade_id, gr.grading_period_id, gp.period_name,
+                gr.preliminary_grade, gr.midterm_grade, gr.final_grade,
+                gr.component_exam, gr.component_quizzes,
+                gr.component_attendance, gr.component_recitation,
+                gp.academic_year_id, gp.semester_id
+         FROM grade_records gr
+         INNER JOIN teaching_assignments ta ON ta.assignment_id = gr.assignment_id
+         INNER JOIN sections sec ON sec.section_id = ta.section_id
+         INNER JOIN enrollments e ON e.enrollment_id = gr.enrollment_id
+           AND e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = \'Enrolled\'
+         INNER JOIN grading_periods gp ON gp.grading_period_id = gr.grading_period_id
+           AND gp.academic_year_id = sec.academic_year_id
+           AND (gp.semester_id IS NULL OR gp.semester_id = ta.semester_id)
+         WHERE gr.enrollment_id = :enrollment_id
+           AND gr.assignment_id = :assignment_id
+         ORDER BY gp.start_date, gp.grading_period_id, gr.grade_id'
+    );
+    $statement->execute([
+        'enrollment_id' => $enrollmentId,
+        'assignment_id' => $assignmentId,
+    ]);
+    $rows = $statement->fetchAll();
+    $rollingGrade = null;
+    $rollingStage = null;
+    $finalGradeChanged = false;
+    $updatedCount = 0;
+    $invalidatedCount = 0;
+    $numberIsUnchanged = static function (mixed $before, ?float $after): bool {
+        if ($before === null || $after === null) {
+            return $before === null && $after === null;
+        }
+        return abs((float) $before - $after) < 0.005;
+    };
+
+    foreach ($rows as $row) {
+        $stage = match (strtolower(trim((string) $row['period_name']))) {
+            'prelim', 'preliminary' => 'prelim',
+            'midterm' => 'midterm',
+            'final' => 'final',
+            default => null,
+        };
+        if ($stage === null) {
+            continue;
+        }
+        $assessmentComponents = $getAssessmentComponentScores(
+            $connection,
+            $assignmentId,
+            $enrollmentId,
+            (int) $row['grading_period_id']
+        );
+        $components = [
+            $assessmentComponents['component_exam'],
+            $assessmentComponents['component_quizzes'],
+            $row['component_attendance'] === null ? null : (float) $row['component_attendance'],
+            $row['component_recitation'] === null ? null : (float) $row['component_recitation'],
+        ];
+        $calculatedGrade = null;
+        $hasAllComponents = !in_array(null, $components, true);
+        if (
+            $hasAllComponents
+            && (
+                $stage === 'prelim'
+                || ($stage === 'midterm' && $rollingStage === 'prelim' && $rollingGrade !== null)
+                || ($stage === 'final' && $rollingStage === 'midterm' && $rollingGrade !== null)
+            )
+        ) {
+            $weightedComponents = round(
+                (float) $components[0] * 0.50
+                + (float) $components[1] * 0.25
+                + (float) $components[2] * 0.10
+                + (float) $components[3] * 0.15,
+                1
+            );
+            $calculatedGrade = $stage === 'prelim'
+                ? $weightedComponents
+                : round($rollingGrade * 0.25 + $weightedComponents * 0.75, 1);
+        }
+        $gradeColumn = match ($stage) {
+            'prelim' => 'preliminary_grade',
+            'midterm' => 'midterm_grade',
+            'final' => 'final_grade',
+        };
+        $hasChanged = !$numberIsUnchanged($row[$gradeColumn], $calculatedGrade)
+            || !$numberIsUnchanged($row['component_exam'], $components[0])
+            || !$numberIsUnchanged($row['component_quizzes'], $components[1]);
+        $resetResultStatus = $hasChanged
+            && ($preserveRemarksPeriodId === null || (int) $row['grading_period_id'] !== $preserveRemarksPeriodId);
+        $update = $connection->prepare(
+            "UPDATE grade_records
+             SET {$gradeColumn} = :grade,
+                 component_exam = :component_exam,
+                 component_quizzes = :component_quizzes,
+                 remarks = CASE WHEN :reset_status = 1 THEN 'Pending' ELSE remarks END
+             WHERE grade_id = :grade_id"
+        );
+        $update->execute([
+            'grade' => $calculatedGrade,
+            'component_exam' => $components[0],
+            'component_quizzes' => $components[1],
+            'reset_status' => $resetResultStatus ? 1 : 0,
+            'grade_id' => (int) $row['grade_id'],
+        ]);
+        if ($hasChanged) {
+            $updatedCount++;
+        }
+        if ($calculatedGrade === null && $row[$gradeColumn] !== null) {
+            $invalidatedCount++;
+        }
+        if ($stage === 'final') {
+            $finalGradeChanged = $hasChanged;
+        }
+        $rollingGrade = $calculatedGrade;
+        $rollingStage = $stage;
+    }
+
+    return [
+        'final_grade_changed' => $finalGradeChanged,
+        'has_final_grade_row' => in_array('final', array_map(
+            static fn (array $row): string => strtolower(trim((string) $row['period_name'])),
+            $rows
+        ), true),
+        'updated_count' => $updatedCount,
+        'invalidated_count' => $invalidatedCount,
+    ];
+};
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!appCsrfTokenIsValid($_POST['csrf_token'] ?? null)) {
@@ -165,50 +366,109 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($action === 'attendance') {
             $assignmentId = teacherPostInt('assignment_id');
-            $enrollmentId = teacherPostInt('enrollment_id');
             $attendanceDate = teacherPostString('attendance_date');
             $attendanceStatus = teacherPostString('attendance_status');
-            $timeIn = teacherPostString('time_in');
-            $timeOut = teacherPostString('time_out');
             $remarks = teacherPostString('remarks');
+            $postedEnrollmentIds = $_POST['enrollment_ids'] ?? null;
+            $invalidEnrollmentInput = false;
+            if (is_array($postedEnrollmentIds)) {
+                foreach ($postedEnrollmentIds as $postedEnrollmentId) {
+                    $validatedEnrollmentId = filter_var(
+                        $postedEnrollmentId,
+                        FILTER_VALIDATE_INT,
+                        ['options' => ['min_range' => 1]]
+                    );
+                    if ($validatedEnrollmentId !== false) {
+                        $oldAttendanceEnrollmentIds[] = (int) $validatedEnrollmentId;
+                    } else {
+                        $invalidEnrollmentInput = true;
+                    }
+                }
+                $oldAttendanceEnrollmentIds = array_values(array_unique($oldAttendanceEnrollmentIds));
+            } elseif (array_key_exists('enrollment_ids', $_POST)) {
+                $invalidEnrollmentInput = true;
+            }
 
             if ($assignmentId === null) {
-                $fieldErrors['assignment_id'] = 'Choose a class assignment.';
+                $fieldErrors['assignment_id'] = 'Choose a class.';
             }
-            if ($enrollmentId === null) {
-                $fieldErrors['enrollment_id'] = 'Choose a student.';
+            if ($invalidEnrollmentInput) {
+                $fieldErrors['enrollment_ids'] = 'Select valid students from this class.';
+            } elseif ($oldAttendanceEnrollmentIds === []) {
+                $fieldErrors['enrollment_ids'] = 'Select at least one student from this class.';
             }
             if (!$isValidDate($attendanceDate)) {
                 $fieldErrors['attendance_date'] = 'Enter a valid attendance date.';
             }
-            if (!in_array($attendanceStatus, ['Present', 'Absent', 'Late', 'Excused'], true)) {
+            if (!in_array($attendanceStatus, ['Present', 'Absent', 'Excused'], true)) {
                 $fieldErrors['attendance_status'] = 'Choose an available attendance status.';
             }
-            foreach (['time_in' => $timeIn, 'time_out' => $timeOut] as $name => $timeValue) {
-                if ($timeValue !== '' && !$isValidTime($timeValue)) {
-                    $fieldErrors[$name] = 'Enter a valid time.';
+
+            $scheduleDate = $isValidDate($attendanceDate)
+                ? DateTimeImmutable::createFromFormat('!Y-m-d', $attendanceDate)
+                : false;
+            $attendanceSchedule = false;
+            $assignmentContext = false;
+            if ($fieldErrors === [] && $scheduleDate !== false && $assignmentId !== null) {
+                $assignmentStatement = $connection->prepare(
+                    'SELECT ta.assignment_id, sec.section_id, sec.academic_year_id
+                     FROM teaching_assignments ta
+                     INNER JOIN sections sec ON sec.section_id = ta.section_id
+                     WHERE ta.assignment_id = :assignment_id
+                       AND ta.teacher_id = :teacher_id
+                     LIMIT 1'
+                );
+                $assignmentStatement->execute([
+                    'assignment_id' => $assignmentId,
+                    'teacher_id' => $teacherId,
+                ]);
+                $assignmentContext = $assignmentStatement->fetch();
+                if ($assignmentContext === false) {
+                    $fieldErrors['assignment_id'] = 'Choose one of your assigned classes.';
+                } else {
+                    $scheduleStatement = $connection->prepare(
+                        "SELECT MIN(start_time) AS time_in, MAX(end_time) AS time_out
+                         FROM class_schedules
+                         WHERE assignment_id = :assignment_id
+                           AND day_of_week = :day_of_week
+                           AND schedule_status = 'Active'"
+                    );
+                    $scheduleStatement->execute([
+                        'assignment_id' => $assignmentId,
+                        'day_of_week' => $scheduleDate->format('l'),
+                    ]);
+                    $attendanceSchedule = $scheduleStatement->fetch();
+                    if (
+                        $attendanceSchedule === false
+                        || $attendanceSchedule['time_in'] === null
+                        || $attendanceSchedule['time_out'] === null
+                    ) {
+                        $fieldErrors['attendance_date'] = 'This class has no scheduled time on the selected date.';
+                    }
                 }
             }
 
             if ($fieldErrors === []) {
+                $enrollmentPlaceholders = implode(
+                    ', ',
+                    array_fill(0, count($oldAttendanceEnrollmentIds), '?')
+                );
                 $rosterStatement = $connection->prepare(
-                    "SELECT e.student_id
+                    "SELECT e.enrollment_id, e.student_id
                      FROM enrollments e
-                     INNER JOIN teaching_assignments ta ON ta.section_id = e.section_id
-                     WHERE e.enrollment_id = :enrollment_id
-                       AND e.enrollment_status = 'Enrolled'
-                       AND ta.assignment_id = :assignment_id
-                       AND ta.teacher_id = :teacher_id
-                     LIMIT 1"
+                     WHERE e.enrollment_id IN ({$enrollmentPlaceholders})
+                       AND e.section_id = ?
+                       AND e.academic_year_id = ?
+                       AND e.enrollment_status = 'Enrolled'"
                 );
                 $rosterStatement->execute([
-                    'enrollment_id' => $enrollmentId,
-                    'assignment_id' => $assignmentId,
-                    'teacher_id' => $teacherId,
+                    ...$oldAttendanceEnrollmentIds,
+                    (int) $assignmentContext['section_id'],
+                    (int) $assignmentContext['academic_year_id'],
                 ]);
-                $studentId = $rosterStatement->fetchColumn();
-                if ($studentId === false) {
-                    $fieldErrors['enrollment_id'] = 'Choose a student enrolled in one of your assigned classes.';
+                $authorizedEnrollments = $rosterStatement->fetchAll();
+                if (count($authorizedEnrollments) !== count($oldAttendanceEnrollmentIds)) {
+                    $fieldErrors['enrollment_ids'] = 'Select only students enrolled in the chosen class.';
                 }
             }
 
@@ -227,24 +487,33 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         remarks = VALUES(remarks),
                         recorded_by = VALUES(recorded_by)'
                 );
-                $saveAttendance->execute([
-                    'student_id' => (int) $studentId,
-                    'enrollment_id' => $enrollmentId,
-                    'assignment_id' => $assignmentId,
-                    'attendance_date' => $attendanceDate,
-                    'time_in' => $timeIn === '' ? null : $timeIn,
-                    'time_out' => $timeOut === '' ? null : $timeOut,
-                    'attendance_status' => $attendanceStatus,
-                    'remarks' => $remarks === '' ? null : $remarks,
-                    'recorded_by' => (int) $user['user_id'],
-                ]);
-                teacherRecordAudit($connection, (int) $user['user_id'], 'Record attendance', 'Teacher attendance', "Recorded {$attendanceStatus} attendance for student {$studentId} in assignment {$assignmentId} on {$attendanceDate}.");
+                foreach ($authorizedEnrollments as $enrollment) {
+                    $saveAttendance->execute([
+                        'student_id' => (int) $enrollment['student_id'],
+                        'enrollment_id' => (int) $enrollment['enrollment_id'],
+                        'assignment_id' => $assignmentId,
+                        'attendance_date' => $attendanceDate,
+                        'time_in' => $attendanceSchedule['time_in'],
+                        'time_out' => $attendanceSchedule['time_out'],
+                        'attendance_status' => $attendanceStatus,
+                        'remarks' => $remarks === '' ? null : $remarks,
+                        'recorded_by' => (int) $user['user_id'],
+                    ]);
+                }
+                $studentCount = count($authorizedEnrollments);
+                teacherRecordAudit(
+                    $connection,
+                    (int) $user['user_id'],
+                    'Record attendance',
+                    'Teacher attendance',
+                    "Recorded {$attendanceStatus} attendance for {$studentCount} students in assignment {$assignmentId} on {$attendanceDate}."
+                );
                 $connection->commit();
-                $_SESSION['teacher_flash'] = 'Student attendance saved.';
+                $_SESSION['teacher_flash'] = "Attendance saved for {$studentCount} students.";
                 header('Location: teacher-section.php?section=attendance', true, 303);
                 exit;
             }
-            $errorMessage = 'Please correct the highlighted attendance fields.';
+            $errorMessage = 'Please correct the highlighted attendance details.';
         } elseif ($action === 'assessment') {
             $assignmentId = teacherPostInt('assignment_id');
             $periodId = teacherPostInt('grading_period_id');
@@ -356,15 +625,21 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             if ($fieldErrors === []) {
                 $scoreScope = $connection->prepare(
-                    "SELECT a.total_points, a.assignment_id
+                    "SELECT a.total_points, a.assignment_id, a.grading_period_id, a.assessment_type,
+                          e.enrollment_id, s.user_id, gp.academic_year_id, gp.semester_id
                      FROM assessments a
                      INNER JOIN teaching_assignments ta ON ta.assignment_id = a.assignment_id
                      INNER JOIN sections sec ON sec.section_id = ta.section_id
                      INNER JOIN enrollments e ON e.section_id = sec.section_id
+                       AND e.academic_year_id = sec.academic_year_id
+                       AND e.enrollment_status = 'Enrolled'
+                     INNER JOIN students s ON s.student_id = e.student_id
+                     INNER JOIN grading_periods gp ON gp.grading_period_id = a.grading_period_id
+                       AND gp.academic_year_id = sec.academic_year_id
+                       AND (gp.semester_id IS NULL OR gp.semester_id = ta.semester_id)
                      WHERE a.assessment_id = :assessment_id
                        AND ta.teacher_id = :teacher_id
                        AND e.student_id = :student_id
-                       AND e.enrollment_status = 'Enrolled'
                        AND a.status IN ('Published', 'Completed')
                      LIMIT 1"
                 );
@@ -399,9 +674,52 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'remarks' => $remarks === '' ? null : $remarks,
                     'recorded_by' => (int) $user['user_id'],
                 ]);
+                $gradeDraft = $_SESSION['teacher_grade_draft'] ?? null;
+                if (
+                    is_array($gradeDraft)
+                    && is_array($gradeDraft['input'] ?? null)
+                    && (int) ($gradeDraft['user_id'] ?? 0) === (int) $user['user_id']
+                    && (int) ($gradeDraft['created_at'] ?? 0) >= time() - 1800
+                    && (int) ($gradeDraft['input']['assignment_id'] ?? 0) === (int) $scoreContext['assignment_id']
+                    && (int) ($gradeDraft['input']['enrollment_id'] ?? 0) === (int) $scoreContext['enrollment_id']
+                    && (int) ($gradeDraft['input']['grading_period_id'] ?? 0) === (int) $scoreContext['grading_period_id']
+                    && in_array($scoreContext['assessment_type'], ['Exam', 'Quiz'], true)
+                ) {
+                    $_SESSION['teacher_grade_draft_resume'] = $gradeDraft;
+                    unset($_SESSION['teacher_grade_draft']);
+                }
+                $scoreSync = null;
+                if (in_array($scoreContext['assessment_type'], ['Exam', 'Quiz'], true)) {
+                    $scoreSync = $recalculateSavedGrades(
+                        $connection,
+                        (int) $scoreContext['enrollment_id'],
+                        (int) $scoreContext['assignment_id']
+                    );
+                    if ($scoreSync['has_final_grade_row'] && $scoreSync['final_grade_changed']) {
+                        $linkedStudentUserId = $scoreContext['user_id'] === null
+                            ? null
+                            : (int) $scoreContext['user_id'];
+                        if ($linkedStudentUserId !== null && $linkedStudentUserId > 0) {
+                            $gradeNotificationKey = 'grade-final-' . $scoreContext['enrollment_id'] . '-'
+                                . $scoreContext['assignment_id'] . '-' . $scoreContext['academic_year_id']
+                                . '-' . ($scoreContext['semester_id'] ?? 'annual');
+                            $deactivateGradeNotification = $connection->prepare(
+                                'UPDATE student_notifications
+                                 SET is_active = 0
+                                 WHERE user_id = :user_id AND notification_key = :notification_key'
+                            );
+                            $deactivateGradeNotification->execute([
+                                'user_id' => $linkedStudentUserId,
+                                'notification_key' => $gradeNotificationKey,
+                            ]);
+                        }
+                    }
+                }
                 teacherRecordAudit($connection, (int) $user['user_id'], 'Save assessment score', 'Teacher grades', "Saved a score for student {$studentId} on assessment {$assessmentId}.");
                 $connection->commit();
-                $_SESSION['teacher_flash'] = 'Assessment score saved.';
+                $_SESSION['teacher_flash'] = $scoreSync !== null && $scoreSync['updated_count'] > 0
+                    ? 'Assessment score saved; affected term grades were recalculated and set to Pending for review.'
+                    : 'Assessment score saved.';
                 header('Location: teacher-section.php?section=grades', true, 303);
                 exit;
             }
@@ -410,8 +728,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $assignmentId = teacherPostInt('assignment_id');
             $enrollmentId = teacherPostInt('enrollment_id');
             $periodId = teacherPostInt('grading_period_id');
-            $preliminaryGrade = teacherPostString('preliminary_grade');
-            $finalGrade = teacherPostString('final_grade');
+            $componentValues = [
+                'component_attendance' => teacherPostString('component_attendance'),
+                'component_recitation' => teacherPostString('component_recitation'),
+            ];
+            $assessmentComponents = [
+                'component_exam' => null,
+                'component_quizzes' => null,
+            ];
             $remarks = teacherPostString('remarks');
 
             foreach ([
@@ -423,29 +747,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $fieldErrors[$name] = 'Choose an available option.';
                 }
             }
-            foreach ([
-                'preliminary_grade' => $preliminaryGrade,
-                'final_grade' => $finalGrade,
-            ] as $name => $gradeValue) {
-                if ($gradeValue !== '' && (!is_numeric($gradeValue) || (float) $gradeValue < 0 || (float) $gradeValue > 100)) {
-                    $fieldErrors[$name] = 'Enter a grade from 0 to 100, or leave it blank.';
+            foreach ($componentValues as $name => $componentValue) {
+                if ($componentValue === '' || !is_numeric($componentValue) || (float) $componentValue < 0 || (float) $componentValue > 100) {
+                    $fieldErrors[$name] = 'Enter a percentage from 0 to 100.';
                 }
-            }
-            if ($preliminaryGrade === '' && $finalGrade === '') {
-                $fieldErrors['grade_values'] = 'Enter a preliminary grade, a final grade, or both.';
             }
             if (!in_array($remarks, ['Passed', 'Failed', 'Incomplete', 'Dropped', 'Pending'], true)) {
                 $fieldErrors['remarks'] = 'Choose an available grade result.';
             }
 
+            $gradeStudent = false;
+            $gradeStage = null;
+            $previousStageGrade = null;
+            $calculatedGrade = null;
             if ($fieldErrors === []) {
                 $gradeScope = $connection->prepare(
-                    "SELECT e.student_id
+                    "SELECT e.student_id, s.user_id, su.subject_code, gp.period_name,
+                            gp.academic_year_id, gp.semester_id, gp.start_date
                      FROM teaching_assignments ta
                      INNER JOIN sections sec ON sec.section_id = ta.section_id
                      INNER JOIN enrollments e ON e.enrollment_id = :enrollment_id
                        AND e.section_id = sec.section_id
+                       AND e.academic_year_id = sec.academic_year_id
                        AND e.enrollment_status = 'Enrolled'
+                     INNER JOIN students s ON s.student_id = e.student_id
+                     INNER JOIN subjects su ON su.subject_id = ta.subject_id
                      INNER JOIN grading_periods gp ON gp.grading_period_id = :period_id
                        AND gp.academic_year_id = sec.academic_year_id
                        AND (gp.semester_id IS NULL OR gp.semester_id = ta.semester_id)
@@ -459,9 +785,98 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'assignment_id' => $assignmentId,
                     'teacher_id' => $teacherId,
                 ]);
-                $gradeStudentId = $gradeScope->fetchColumn();
-                if ($gradeStudentId === false) {
+                $gradeStudent = $gradeScope->fetch();
+                if ($gradeStudent === false) {
                     $fieldErrors['enrollment_id'] = 'Choose a student and grading period for one of your assigned classes.';
+                } else {
+                    $assessmentComponents = $getAssessmentComponentScores(
+                        $connection,
+                        (int) $assignmentId,
+                        (int) $enrollmentId,
+                        (int) $periodId
+                    );
+                    foreach ([
+                        'component_exam' => 'Exam',
+                        'component_quizzes' => 'Quiz',
+                    ] as $componentKey => $assessmentLabel) {
+                        if ($assessmentComponents[$componentKey] === null) {
+                            $fieldErrors[$componentKey] = "Record at least one scored {$assessmentLabel} assessment for this grading period.";
+                        }
+                    }
+                    $gradeStage = match (strtolower(trim((string) $gradeStudent['period_name']))) {
+                        'prelim', 'preliminary' => 'prelim',
+                        'midterm' => 'midterm',
+                        'final' => 'final',
+                        default => null,
+                    };
+                    if ($gradeStage === null) {
+                        $fieldErrors['grading_period_id'] = 'Choose a Prelim, Midterm, or Final grading period.';
+                    } elseif ($gradeStage !== 'prelim') {
+                        $previousPeriodName = $gradeStage === 'midterm' ? 'Prelim' : 'Midterm';
+                        $previousGradeColumn = $gradeStage === 'midterm' ? 'preliminary_grade' : 'midterm_grade';
+                        $alternatePreviousPeriodName = $gradeStage === 'midterm' ? 'preliminary' : strtolower($previousPeriodName);
+                        $previousGradeStatement = $connection->prepare(
+                            "SELECT previous_grade.{$previousGradeColumn}
+                             FROM grade_records previous_grade
+                             INNER JOIN grading_periods previous_period
+                               ON previous_period.grading_period_id = previous_grade.grading_period_id
+                             WHERE previous_grade.enrollment_id = :enrollment_id
+                               AND previous_grade.assignment_id = :assignment_id
+                               AND previous_period.academic_year_id = :academic_year_id
+                               AND previous_period.semester_id <=> :semester_id
+                               AND LOWER(previous_period.period_name) IN (:period_name, :alternate_period_name)
+                             ORDER BY previous_period.start_date DESC, previous_grade.grade_id DESC
+                             LIMIT 1"
+                        );
+                        $previousGradeStatement->execute([
+                            'enrollment_id' => $enrollmentId,
+                            'assignment_id' => $assignmentId,
+                            'academic_year_id' => (int) $gradeStudent['academic_year_id'],
+                            'semester_id' => $gradeStudent['semester_id'] === null
+                                ? null
+                                : (int) $gradeStudent['semester_id'],
+                            'period_name' => strtolower($previousPeriodName),
+                            'alternate_period_name' => $alternatePreviousPeriodName,
+                        ]);
+                        $previousGradeValue = $previousGradeStatement->fetchColumn();
+                        if ($previousGradeValue === false || $previousGradeValue === null) {
+                            $fieldErrors['grading_period_id'] = "Save the {$previousPeriodName} grade before recording the {$gradeStudent['period_name']} grade.";
+                        } else {
+                            $previousStageGrade = (float) $previousGradeValue;
+                        }
+                    }
+
+                    if ($fieldErrors === []) {
+                        $tentativeGrade = round(
+                            (float) $assessmentComponents['component_exam'] * 0.50
+                            + (float) $assessmentComponents['component_quizzes'] * 0.25
+                            + (float) $componentValues['component_attendance'] * 0.10
+                            + (float) $componentValues['component_recitation'] * 0.15,
+                            1
+                        );
+                        $calculatedGrade = match ($gradeStage) {
+                            'prelim' => $tentativeGrade,
+                            'midterm', 'final' => round($previousStageGrade * 0.25 + $tentativeGrade * 0.75, 1),
+                            default => null,
+                        };
+                    }
+                }
+                if (
+                    $gradeStudent !== false
+                    && (isset($fieldErrors['component_exam']) || isset($fieldErrors['component_quizzes']))
+                ) {
+                    $_SESSION['teacher_grade_draft'] = [
+                        'user_id' => (int) $user['user_id'],
+                        'created_at' => time(),
+                        'input' => [
+                            'assignment_id' => (string) $assignmentId,
+                            'enrollment_id' => (string) $enrollmentId,
+                            'grading_period_id' => (string) $periodId,
+                            'component_attendance' => $componentValues['component_attendance'],
+                            'component_recitation' => $componentValues['component_recitation'],
+                            'remarks' => $remarks,
+                        ],
+                    ];
                 }
             }
 
@@ -469,12 +884,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $connection->beginTransaction();
                 $saveGrade = $connection->prepare(
                     'INSERT INTO grade_records
-                        (enrollment_id, assignment_id, grading_period_id, preliminary_grade, final_grade, remarks, encoded_by)
+                        (enrollment_id, assignment_id, grading_period_id, preliminary_grade, midterm_grade, final_grade,
+                         component_exam, component_quizzes, component_attendance, component_recitation, remarks, encoded_by)
                      VALUES
-                        (:enrollment_id, :assignment_id, :grading_period_id, :preliminary_grade, :final_grade, :remarks, :encoded_by)
+                        (:enrollment_id, :assignment_id, :grading_period_id, :preliminary_grade, :midterm_grade, :final_grade,
+                         :component_exam, :component_quizzes, :component_attendance, :component_recitation, :remarks, :encoded_by)
                      ON DUPLICATE KEY UPDATE
                         preliminary_grade = VALUES(preliminary_grade),
+                        midterm_grade = VALUES(midterm_grade),
                         final_grade = VALUES(final_grade),
+                        component_exam = VALUES(component_exam),
+                        component_quizzes = VALUES(component_quizzes),
+                        component_attendance = VALUES(component_attendance),
+                        component_recitation = VALUES(component_recitation),
                         remarks = VALUES(remarks),
                         encoded_by = VALUES(encoded_by),
                         date_encoded = CURRENT_TIMESTAMP'
@@ -483,14 +905,85 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     'enrollment_id' => $enrollmentId,
                     'assignment_id' => $assignmentId,
                     'grading_period_id' => $periodId,
-                    'preliminary_grade' => $preliminaryGrade === '' ? null : (float) $preliminaryGrade,
-                    'final_grade' => $finalGrade === '' ? null : (float) $finalGrade,
+                    'preliminary_grade' => $gradeStage === 'prelim' ? $calculatedGrade : null,
+                    'midterm_grade' => $gradeStage === 'midterm' ? $calculatedGrade : null,
+                    'final_grade' => $gradeStage === 'final' ? $calculatedGrade : null,
+                    'component_exam' => (float) $assessmentComponents['component_exam'],
+                    'component_quizzes' => (float) $assessmentComponents['component_quizzes'],
+                    'component_attendance' => (float) $componentValues['component_attendance'],
+                    'component_recitation' => (float) $componentValues['component_recitation'],
                     'remarks' => $remarks,
                     'encoded_by' => (int) $user['user_id'],
                 ]);
-                teacherRecordAudit($connection, (int) $user['user_id'], 'Save term grade', 'Teacher grades', "Saved a term grade for student {$gradeStudentId} in assignment {$assignmentId}.");
+                unset($_SESSION['teacher_grade_draft'], $_SESSION['teacher_grade_draft_resume']);
+                $gradeSync = $recalculateSavedGrades($connection, $enrollmentId, $assignmentId, $periodId);
+                $downstreamPeriodsUpdated = $gradeSync['updated_count'];
+                $downstreamPeriodsInvalidated = $gradeSync['invalidated_count'];
+                teacherRecordAudit(
+                    $connection,
+                    (int) $user['user_id'],
+                    'Save term grade',
+                    'Teacher grades',
+                    "Saved the {$gradeStudent['period_name']} grade for student {$gradeStudent['student_id']} in assignment {$assignmentId}."
+                );
+
+                $notificationSent = false;
+                $linkedStudentUserId = $gradeStudent['user_id'] === null
+                    ? null
+                    : (int) $gradeStudent['user_id'];
+                $gradeNotificationKey = 'grade-final-' . $enrollmentId . '-' . $assignmentId . '-'
+                    . $gradeStudent['academic_year_id'] . '-' . ($gradeStudent['semester_id'] ?? 'annual');
+                if ($gradeStage === 'final' && $linkedStudentUserId !== null && $linkedStudentUserId > 0) {
+                    $gradeNotification = $connection->prepare(
+                        'INSERT INTO student_notifications
+                            (user_id, notification_key, notification_type, title, message)
+                         VALUES
+                            (:user_id, :notification_key, \'Grade posted\', :title, :message)
+                         ON DUPLICATE KEY UPDATE
+                            notification_type = VALUES(notification_type),
+                            title = VALUES(title),
+                            message = VALUES(message),
+                            is_read = 0,
+                            is_active = 1,
+                            created_at = CURRENT_TIMESTAMP,
+                            read_at = NULL'
+                    );
+                    $gradeNotification->execute([
+                        'user_id' => $linkedStudentUserId,
+                        'notification_key' => $gradeNotificationKey,
+                        'title' => 'Overall grade posted',
+                        'message' => "{$gradeStudent['subject_code']} Final grade: " . number_format((float) $calculatedGrade, 1) . '%. View your grades in My Grades.',
+                    ]);
+                    $notificationSent = true;
+                } elseif (
+                    $linkedStudentUserId !== null
+                    && $linkedStudentUserId > 0
+                    && $gradeSync['has_final_grade_row']
+                    && $gradeSync['final_grade_changed']
+                ) {
+                    $deactivateGradeNotification = $connection->prepare(
+                        'UPDATE student_notifications
+                         SET is_active = 0
+                         WHERE user_id = :user_id AND notification_key = :notification_key'
+                    );
+                    $deactivateGradeNotification->execute([
+                        'user_id' => $linkedStudentUserId,
+                        'notification_key' => $gradeNotificationKey,
+                    ]);
+                }
+
                 $connection->commit();
-                $_SESSION['teacher_flash'] = 'Term grade saved.';
+                $_SESSION['teacher_flash'] = $gradeStage === 'final'
+                    ? ($notificationSent
+                        ? 'Overall Final grade saved and a student portal notification was sent.'
+                        : 'Overall Final grade saved. No student portal account is linked, so a notification could not be sent.')
+                    : "{$gradeStudent['period_name']} grade calculated and saved."
+                        . ($downstreamPeriodsUpdated > 0
+                            ? " {$downstreamPeriodsUpdated} saved grade(s) were recalculated; review their result statuses."
+                            : '')
+                        . ($downstreamPeriodsInvalidated > 0
+                            ? " {$downstreamPeriodsInvalidated} grade(s) were invalidated because their components or a required earlier period are incomplete."
+                            : '');
                 header('Location: teacher-section.php?section=grades', true, 303);
                 exit;
             }
@@ -504,7 +997,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $assignments = [];
 $enrollmentOptions = [];
 $studentOptions = [];
+$attendanceAssignments = [];
+$attendanceRosters = [];
+$attendanceSchedules = [];
 $gradingPeriods = [];
+$gradeRows = [];
+$gradeHistory = [];
+$gradeAssessmentScores = [];
 $assessmentOptions = [];
 $categories = [];
 $tableDefinitions = [];
@@ -523,12 +1022,71 @@ if ($teacherId !== null) {
     $assignmentStatement->execute(['teacher_id' => $teacherId]);
     $assignments = $assignmentStatement->fetchAll();
 
+    if ($sectionKey === 'attendance') {
+        $attendanceAssignmentStatement = $connection->prepare(
+            "SELECT DISTINCT ta.assignment_id AS id,
+                    CONCAT(su.subject_code, ' - ', su.subject_name, ' / ', sec.section_name) AS label
+             FROM teaching_assignments ta
+             INNER JOIN subjects su ON su.subject_id = ta.subject_id
+             INNER JOIN sections sec ON sec.section_id = ta.section_id
+             INNER JOIN class_schedules cs ON cs.assignment_id = ta.assignment_id
+               AND cs.schedule_status = 'Active'
+             WHERE ta.teacher_id = :teacher_id
+             ORDER BY sec.section_name, su.subject_name"
+        );
+        $attendanceAssignmentStatement->execute(['teacher_id' => $teacherId]);
+        $attendanceAssignments = $attendanceAssignmentStatement->fetchAll();
+
+        $attendanceRosterStatement = $connection->prepare(
+            "SELECT ta.assignment_id,
+                    e.enrollment_id,
+                    s.student_number,
+                    CONCAT(s.first_name, ' ', s.last_name) AS student_name
+             FROM teaching_assignments ta
+             INNER JOIN sections sec ON sec.section_id = ta.section_id
+             INNER JOIN enrollments e ON e.section_id = sec.section_id
+               AND e.academic_year_id = sec.academic_year_id
+               AND e.enrollment_status = 'Enrolled'
+             INNER JOIN students s ON s.student_id = e.student_id
+             INNER JOIN class_schedules cs ON cs.assignment_id = ta.assignment_id
+               AND cs.schedule_status = 'Active'
+             WHERE ta.teacher_id = :teacher_id
+             GROUP BY ta.assignment_id, e.enrollment_id, s.student_number, s.first_name, s.last_name
+             ORDER BY sec.section_name, s.last_name, s.first_name, s.student_number"
+        );
+        $attendanceRosterStatement->execute(['teacher_id' => $teacherId]);
+        foreach ($attendanceRosterStatement->fetchAll() as $attendanceRoster) {
+            $attendanceRosters[(int) $attendanceRoster['assignment_id']][] = $attendanceRoster;
+        }
+
+        $attendanceScheduleStatement = $connection->prepare(
+            "SELECT cs.assignment_id,
+                    cs.day_of_week,
+                    MIN(cs.start_time) AS time_in,
+                    MAX(cs.end_time) AS time_out
+             FROM class_schedules cs
+             INNER JOIN teaching_assignments ta ON ta.assignment_id = cs.assignment_id
+             WHERE ta.teacher_id = :teacher_id
+               AND cs.schedule_status = 'Active'
+             GROUP BY cs.assignment_id, cs.day_of_week"
+        );
+        $attendanceScheduleStatement->execute(['teacher_id' => $teacherId]);
+        foreach ($attendanceScheduleStatement->fetchAll() as $schedule) {
+            $attendanceSchedules[(int) $schedule['assignment_id']][$schedule['day_of_week']] = [
+                'time_in' => substr((string) $schedule['time_in'], 0, 5),
+                'time_out' => substr((string) $schedule['time_out'], 0, 5),
+            ];
+        }
+    }
+
     $enrollmentStatement = $connection->prepare(
-        "SELECT DISTINCT e.enrollment_id AS id,
+        "SELECT DISTINCT e.enrollment_id AS id, ta.assignment_id,
                 CONCAT(s.student_number, ' - ', s.first_name, ' ', s.last_name, ' / ', sec.section_name) AS label
          FROM teaching_assignments ta
          INNER JOIN sections sec ON sec.section_id = ta.section_id
-         INNER JOIN enrollments e ON e.section_id = sec.section_id AND e.enrollment_status = 'Enrolled'
+         INNER JOIN enrollments e ON e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = 'Enrolled'
          INNER JOIN students s ON s.student_id = e.student_id
          WHERE ta.teacher_id = :teacher_id
          ORDER BY label"
@@ -537,11 +1095,13 @@ if ($teacherId !== null) {
     $enrollmentOptions = $enrollmentStatement->fetchAll();
 
     $studentStatement = $connection->prepare(
-        "SELECT DISTINCT s.student_id AS id,
+        "SELECT DISTINCT s.student_id AS id, ta.assignment_id,
                 CONCAT(s.student_number, ' - ', s.first_name, ' ', s.last_name) AS label
          FROM teaching_assignments ta
          INNER JOIN sections sec ON sec.section_id = ta.section_id
-         INNER JOIN enrollments e ON e.section_id = sec.section_id AND e.enrollment_status = 'Enrolled'
+         INNER JOIN enrollments e ON e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = 'Enrolled'
          INNER JOIN students s ON s.student_id = e.student_id
          WHERE ta.teacher_id = :teacher_id
          ORDER BY s.last_name, s.first_name"
@@ -550,7 +1110,8 @@ if ($teacherId !== null) {
     $studentOptions = $studentStatement->fetchAll();
 
     $periodStatement = $connection->prepare(
-        'SELECT DISTINCT gp.grading_period_id AS id,
+        'SELECT DISTINCT gp.grading_period_id AS id, gp.period_name,
+                gp.academic_year_id, gp.semester_id, gp.start_date,
                 CONCAT(ay.year_name, " - ", gp.period_name) AS label
          FROM teaching_assignments ta
          INNER JOIN sections sec ON sec.section_id = ta.section_id
@@ -569,7 +1130,7 @@ if ($teacherId !== null) {
     $categories = $categoryStatement->fetchAll();
 
     $assessmentOptionStatement = $connection->prepare(
-        "SELECT a.assessment_id AS id,
+        "SELECT a.assessment_id AS id, ta.assignment_id,
                 CONCAT(a.assessment_title, ' / ', su.subject_code, ' / ', sec.section_name) AS label
          FROM assessments a
          INNER JOIN teaching_assignments ta ON ta.assignment_id = a.assignment_id
@@ -682,7 +1243,7 @@ if ($teacherId !== null) {
     $gradeStatement = $connection->prepare(
         "SELECT s.student_number, CONCAT(s.first_name, ' ', s.last_name) AS student_name,
                 su.subject_code, sec.section_name, gp.period_name,
-                gr.preliminary_grade, gr.final_grade, gr.remarks
+                gr.preliminary_grade, gr.midterm_grade, gr.final_grade, gr.remarks
          FROM grade_records gr
          INNER JOIN teaching_assignments ta ON ta.assignment_id = gr.assignment_id
          INNER JOIN sections sec ON sec.section_id = ta.section_id
@@ -696,6 +1257,85 @@ if ($teacherId !== null) {
     );
     $gradeStatement->execute(['teacher_id' => $teacherId]);
     $gradeRows = $gradeStatement->fetchAll();
+    $gradeHistoryStatement = $connection->prepare(
+        "SELECT gr.grade_id, gr.enrollment_id, gr.assignment_id, gr.grading_period_id,
+                gp.period_name, gp.academic_year_id, gp.semester_id, gp.start_date,
+                gr.preliminary_grade, gr.midterm_grade, gr.final_grade,
+                gr.component_exam, gr.component_quizzes,
+                gr.component_attendance, gr.component_recitation
+         FROM grade_records gr
+         INNER JOIN teaching_assignments ta ON ta.assignment_id = gr.assignment_id
+         INNER JOIN sections sec ON sec.section_id = ta.section_id
+         INNER JOIN enrollments e ON e.enrollment_id = gr.enrollment_id
+           AND e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = 'Enrolled'
+         INNER JOIN grading_periods gp ON gp.grading_period_id = gr.grading_period_id
+           AND gp.academic_year_id = sec.academic_year_id
+           AND (gp.semester_id IS NULL OR gp.semester_id = ta.semester_id)
+         WHERE ta.teacher_id = :teacher_id
+         ORDER BY gp.start_date DESC, gr.grade_id DESC"
+    );
+    $gradeHistoryStatement->execute(['teacher_id' => $teacherId]);
+    $gradeHistoryRows = $gradeHistoryStatement->fetchAll();
+    foreach ($gradeHistoryRows as $gradeRow) {
+        $gradeHistory[(int) $gradeRow['assignment_id']][(int) $gradeRow['enrollment_id']][] = [
+            'grade_id' => (int) $gradeRow['grade_id'],
+            'grading_period_id' => (int) $gradeRow['grading_period_id'],
+            'period_name' => (string) $gradeRow['period_name'],
+            'academic_year_id' => (int) $gradeRow['academic_year_id'],
+            'semester_id' => $gradeRow['semester_id'] === null ? null : (int) $gradeRow['semester_id'],
+            'start_date' => (string) $gradeRow['start_date'],
+            'preliminary_grade' => $gradeRow['preliminary_grade'] === null ? null : (float) $gradeRow['preliminary_grade'],
+            'midterm_grade' => $gradeRow['midterm_grade'] === null ? null : (float) $gradeRow['midterm_grade'],
+            'final_grade' => $gradeRow['final_grade'] === null ? null : (float) $gradeRow['final_grade'],
+            'components' => [
+                'component_exam' => $gradeRow['component_exam'] === null ? null : (float) $gradeRow['component_exam'],
+                'component_quizzes' => $gradeRow['component_quizzes'] === null ? null : (float) $gradeRow['component_quizzes'],
+                'component_attendance' => $gradeRow['component_attendance'] === null ? null : (float) $gradeRow['component_attendance'],
+                'component_recitation' => $gradeRow['component_recitation'] === null ? null : (float) $gradeRow['component_recitation'],
+            ],
+        ];
+    }
+
+    $gradeAssessmentScoreStatement = $connection->prepare(
+        "SELECT ta.assignment_id, e.enrollment_id, a.grading_period_id,
+                a.assessment_type, COUNT(*) AS assessment_count,
+                SUM(ss.score) AS points_earned, SUM(a.total_points) AS points_possible
+         FROM student_scores ss
+         INNER JOIN assessments a ON a.assessment_id = ss.assessment_id
+         INNER JOIN teaching_assignments ta ON ta.assignment_id = a.assignment_id
+         INNER JOIN sections sec ON sec.section_id = ta.section_id
+         INNER JOIN enrollments e ON e.student_id = ss.student_id
+           AND e.section_id = sec.section_id
+           AND e.academic_year_id = sec.academic_year_id
+           AND e.enrollment_status = 'Enrolled'
+         INNER JOIN grading_periods gp ON gp.grading_period_id = a.grading_period_id
+           AND gp.academic_year_id = sec.academic_year_id
+           AND (gp.semester_id IS NULL OR gp.semester_id = ta.semester_id)
+         WHERE ta.teacher_id = :teacher_id
+           AND a.assessment_type IN ('Exam', 'Quiz')
+           AND a.status IN ('Published', 'Completed')
+         GROUP BY ta.assignment_id, e.enrollment_id, a.grading_period_id, a.assessment_type"
+    );
+    $gradeAssessmentScoreStatement->execute(['teacher_id' => $teacherId]);
+    foreach ($gradeAssessmentScoreStatement->fetchAll() as $assessmentScoreRow) {
+        $type = $assessmentScoreRow['assessment_type'] === 'Exam' ? 'exam' : 'quiz';
+        $pointsPossible = (float) $assessmentScoreRow['points_possible'];
+        if ($pointsPossible <= 0) {
+            continue;
+        }
+        $componentKey = $type === 'exam' ? 'component_exam' : 'component_quizzes';
+        $gradeAssessmentScores[(int) $assessmentScoreRow['assignment_id']]
+            [(int) $assessmentScoreRow['enrollment_id']]
+            [(int) $assessmentScoreRow['grading_period_id']]
+            [$componentKey] = [
+                'percentage' => round((float) $assessmentScoreRow['points_earned'] / $pointsPossible * 100, 1),
+                'assessment_count' => (int) $assessmentScoreRow['assessment_count'],
+                'points_earned' => (float) $assessmentScoreRow['points_earned'],
+                'points_possible' => $pointsPossible,
+            ];
+    }
 
     $reportCardStatement = $connection->prepare(
         'SELECT DISTINCT ay.year_name, gp.period_name, s.student_number,
@@ -835,11 +1475,15 @@ if ($teacherId !== null) {
             ],
             [
                 'title' => 'Term grades',
-                'caption' => 'Preliminary and final grades for your assigned classes',
-                'columns' => ['Student number', 'Student', 'Class', 'Section', 'Grading period', 'Preliminary', 'Final', 'Result'],
+                'caption' => 'Calculated Prelim, Midterm, and overall Final grades for your assigned classes',
+                'columns' => ['Student number', 'Student', 'Class', 'Section', 'Grading period', 'Prelim', 'Midterm', 'Overall Final', 'Result'],
                 'rows' => array_map(static fn (array $row): array => [
                     $row['student_number'], $row['student_name'], $row['subject_code'], $row['section_name'],
-                    $row['period_name'], $row['preliminary_grade'] ?? '—', $row['final_grade'] ?? '—', $row['remarks'],
+                    $row['period_name'],
+                    $row['preliminary_grade'] === null ? '—' : number_format((float) $row['preliminary_grade'], 1) . '%',
+                    $row['midterm_grade'] === null ? '—' : number_format((float) $row['midterm_grade'], 1) . '%',
+                    $row['final_grade'] === null ? '—' : number_format((float) $row['final_grade'], 1) . '%',
+                    $row['remarks'],
                 ], $gradeRows),
                 'empty' => 'No term grades have been recorded yet.',
             ],
@@ -874,6 +1518,7 @@ if ($teacherId !== null) {
 $lookupOptions = [
     'assignments' => $assignments,
     'enrollments' => $enrollmentOptions,
+    'attendance_assignments' => $attendanceAssignments,
     'students' => $studentOptions,
     'grading_periods' => $gradingPeriods,
     'categories' => $categories,

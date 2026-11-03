@@ -1,0 +1,12 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Native fieldset and legend group the calculator; inputs have associated labels and errors reference their descriptions.",
+    "Automatic components are readonly native inputs, and the calculated output remains available through the polite status region."
+  ]
+}

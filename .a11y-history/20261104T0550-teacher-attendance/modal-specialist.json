@@ -1,0 +1,14 @@
+{
+  "skill": "modal-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The attendance dialog is named by its heading and focuses that heading on open; an error summary receives focus after invalid submission.",
+    "Escape, the close button, and backdrop dismissal close the native dialog.",
+    "Closing the dialog returns focus to its connected trigger; Escape behavior was verified in the browser."
+  ]
+}

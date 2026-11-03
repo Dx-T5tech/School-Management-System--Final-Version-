@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Calculator controls follow a logical source and visual order.",
+    "Read-only automatic component fields become keyboard-focusable when enabled and have visible focus styling.",
+    "Manual component fields are keyboard operable; calculation status updates are announced.",
+    "No calculator-specific keyboard trap or focus-order defect found."
+  ],
+  "notes": [
+    "Code review only; keyboard behavior was not verified in a running browser."
+  ]
+}

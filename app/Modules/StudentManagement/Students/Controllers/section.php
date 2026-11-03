@@ -569,7 +569,7 @@ if ($sectionKey === 'profile') {
     );
     $termRows = $fetchRows(
         'SELECT su.subject_code, sec.section_name, gp.period_name,
-                gr.preliminary_grade, gr.final_grade, gr.remarks, gr.date_encoded
+                gr.preliminary_grade, gr.midterm_grade, gr.final_grade, gr.remarks, gr.date_encoded
          FROM grade_records gr
          INNER JOIN enrollments e ON e.enrollment_id = gr.enrollment_id
          INNER JOIN teaching_assignments ta
@@ -595,11 +595,13 @@ if ($sectionKey === 'profile') {
     );
     $tables[] = $table(
         'Term grades',
-        'Term grades recorded for your enrolled class sections.',
-        ['Subject', 'Section', 'Grading period', 'Preliminary grade', 'Final grade', 'Result', 'Recorded'],
+        'Calculated Prelim, Midterm, and overall Final grades recorded for your enrolled class sections.',
+        ['Subject', 'Section', 'Grading period', 'Prelim grade', 'Midterm grade', 'Overall Final grade', 'Result', 'Recorded'],
         array_map(static fn (array $row): array => [
             $row['subject_code'], $row['section_name'], $row['period_name'],
-            $row['preliminary_grade'] ?? '—', $row['final_grade'] ?? '—',
+            $row['preliminary_grade'] === null ? '—' : number_format((float) $row['preliminary_grade'], 1) . '%',
+            $row['midterm_grade'] === null ? '—' : number_format((float) $row['midterm_grade'], 1) . '%',
+            $row['final_grade'] === null ? '—' : number_format((float) $row['final_grade'], 1) . '%',
             $row['remarks'], $row['date_encoded'],
         ], $termRows),
         'No term grades are available for your enrollment records yet.'
@@ -639,6 +641,7 @@ if ($sectionKey === 'profile') {
         'Midterm' => ['billed_cents' => 0, 'paid_cents' => 0],
         'Final' => ['billed_cents' => 0, 'paid_cents' => 0],
     ];
+    $annualFeeBalances = ['billed_cents' => 0, 'paid_cents' => 0, 'outstanding_cents' => 0, 'fee_count' => 0];
     $financeTotals = ['billed_cents' => 0, 'paid_cents' => 0, 'outstanding_cents' => 0];
     if ($studentId !== null) {
         $feeRecords = $fetchRows(
@@ -704,6 +707,11 @@ if ($sectionKey === 'profile') {
                     $termBalance['paid_cents'] += $feeRecord['term_paid_cents'][$termName];
                 }
                 unset($termBalance);
+            } else {
+                $annualFeeBalances['billed_cents'] += $netCents;
+                $annualFeeBalances['paid_cents'] += $paidCents;
+                $annualFeeBalances['outstanding_cents'] += $feeRecord['outstanding_cents'];
+                $annualFeeBalances['fee_count']++;
             }
             $feeRows[] = $feeRecord;
         }

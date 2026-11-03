@@ -1,0 +1,13 @@
+{
+  "skill": "tables-data-specialist",
+  "scope": [
+    "public/teacher-section.php",
+    "app/Modules/StudentManagement/Students/Controllers/section.php",
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Teacher and student term-grade tables label Prelim, Midterm, and Overall Final values and format saved grades as percentages.",
+    "The teacher table has a caption and scoped column/row headers; the student table has a caption and scoped column headers."
+  ]
+}

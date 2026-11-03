@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Dialog title and form descriptions reference existing IDs.",
+    "Roster groups use native fieldsets and legends; checkbox controls reference the roster error and expose aria-invalid when validation fails.",
+    "Select-all checked and indeterminate states update from the student checkbox selection."
+  ]
+}

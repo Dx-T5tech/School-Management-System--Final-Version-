@@ -44,6 +44,13 @@ $brandRoleIcon = match ($dashboard['navigationStyle'] ?? '') {
     'student' => 'fa-user-graduate',
     default => null,
 };
+$brandRoleCaption = match ($dashboard['navigationStyle'] ?? '') {
+    'super-admin' => 'Super Admin Dashboard',
+    'admin' => 'Admin Dashboard',
+    'teacher' => 'Teacher Dashboard',
+    'student' => 'Student Dashboard',
+    default => $dashboard['sidebarCaption'] ?? 'Integrated School Management',
+};
 $fontAwesomeCssPath = dirname(__DIR__, 2) . '/public/assets/vendor/fontawesome/css/all.min.css';
 ?>
 <!doctype html>
@@ -71,7 +78,7 @@ $fontAwesomeCssPath = dirname(__DIR__, 2) . '/public/assets/vendor/fontawesome/c
                 <?php endif; ?>
                 <span class="brand-copy">
                     <span class="brand-name"><?= dashboardEscape($dashboard['sidebarTitle'] ?? 'Fullbright') ?></span>
-                    <span class="brand-caption"><?= dashboardEscape($dashboard['sidebarCaption'] ?? 'Integrated School Management') ?></span>
+                    <span class="brand-caption"><?= dashboardEscape($brandRoleCaption) ?></span>
                 </span>
             </a>
 

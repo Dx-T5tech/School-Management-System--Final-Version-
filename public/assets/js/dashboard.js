@@ -5,6 +5,7 @@
     const navigationLinks = sidebar?.querySelectorAll('a[href^="#"]') ?? [];
 
     const errorSummary = document.querySelector("[data-error-summary]");
+    const attendanceFieldErrorSummary = document.querySelector("[data-attendance-field-error-summary]");
     const errorFocusTarget = document.querySelector("[data-error-focus]");
     document.documentElement.classList.add("dashboard-js");
     const statusSummary = document.querySelector("[data-status-summary]");
@@ -521,6 +522,7 @@
         dialog.className = "form-modal";
         dialog.id = dialogId;
         dialog.dataset.openOnLoad = panel.dataset.modalOpenOnLoad || "false";
+        dialog.dataset.initialFocus = panel.dataset.modalInitialFocus || "field";
         if (!heading.id) {
             heading.id = `${dialogId}-heading`;
         }
@@ -543,6 +545,10 @@
             dialog.showModal();
             if (errorSummary instanceof HTMLElement && dialog.contains(errorSummary)) {
                 errorSummary.focus();
+                return;
+            }
+            if (dialog.dataset.initialFocus === "heading") {
+                heading.focus();
                 return;
             }
             const firstField = dialog.querySelector(
@@ -573,6 +579,11 @@
         }
         trigger.setAttribute("aria-haspopup", "dialog");
         trigger.setAttribute("aria-controls", dialogId);
+        dialog.addEventListener("close", () => {
+            if (trigger.isConnected) {
+                trigger.focus();
+            }
+        });
         trigger.addEventListener("click", (event) => {
             if (trigger instanceof HTMLAnchorElement) {
                 event.preventDefault();
@@ -621,6 +632,501 @@
             dialog.showModal();
         }
     }
+
+    const attendanceForm = document.querySelector("form[data-attendance-form]");
+    if (attendanceForm instanceof HTMLFormElement) {
+        const classSelect = attendanceForm.querySelector("[data-attendance-class]");
+        const attendanceDate = attendanceForm.querySelector("[data-attendance-date]");
+        const attendanceDetails = attendanceForm.querySelector("[data-attendance-details]");
+        const scheduleSummary = attendanceForm.querySelector("[data-attendance-schedule-summary]");
+        const noClassMessage = attendanceForm.querySelector("[data-attendance-no-class]");
+        const rosters = Array.from(attendanceForm.querySelectorAll("[data-attendance-roster]"));
+        const weekdays = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+
+        if (
+            classSelect instanceof HTMLSelectElement
+            && attendanceDate instanceof HTMLInputElement
+            && attendanceDetails instanceof HTMLElement
+            && scheduleSummary instanceof HTMLElement
+            && noClassMessage instanceof HTMLElement
+        ) {
+            const schedules = JSON.parse(classSelect.dataset.attendanceSchedules || "{}");
+            const clearAttendanceFieldError = (errorId) => {
+                attendanceForm.querySelector(`#${errorId}`)?.remove();
+                attendanceForm.querySelectorAll(`[aria-describedby~="${errorId}"]`).forEach((control) => {
+                    if (!(control instanceof HTMLElement)) {
+                        return;
+                    }
+                    const descriptions = (control.getAttribute("aria-describedby") || "")
+                        .split(/\s+/)
+                        .filter((description) => description !== "" && description !== errorId);
+                    if (descriptions.length > 0) {
+                        control.setAttribute("aria-describedby", descriptions.join(" "));
+                    } else {
+                        control.removeAttribute("aria-describedby");
+                    }
+                    control.removeAttribute("aria-invalid");
+                });
+                if (!attendanceForm.querySelector(".teacher-field-error")) {
+                    attendanceFieldErrorSummary?.remove();
+                }
+            };
+            const getNextScheduledDate = (assignmentId) => {
+                const scheduledDays = Object.keys(schedules[assignmentId] || {})
+                    .map((day) => weekdays.indexOf(day))
+                    .filter((dayIndex) => dayIndex >= 0);
+                if (scheduledDays.length === 0) {
+                    return "";
+                }
+
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                const daysUntilSchedule = Math.min(
+                    ...scheduledDays.map((dayIndex) => (dayIndex - today.getDay() + 7) % 7),
+                );
+                const scheduledDate = new Date(today);
+                scheduledDate.setDate(scheduledDate.getDate() + daysUntilSchedule);
+                const year = scheduledDate.getFullYear();
+                const month = String(scheduledDate.getMonth() + 1).padStart(2, "0");
+                const day = String(scheduledDate.getDate()).padStart(2, "0");
+                return `${year}-${month}-${day}`;
+            };
+            const updateRosterSelectionState = (roster) => {
+                const studentChecks = Array.from(roster.querySelectorAll("[data-attendance-student]"))
+                    .filter((input) => input instanceof HTMLInputElement);
+                const selectAll = roster.querySelector("[data-attendance-select-all]");
+                if (!(selectAll instanceof HTMLInputElement)) {
+                    return;
+                }
+                const selectedCount = studentChecks.filter((input) => input.checked).length;
+                selectAll.checked = studentChecks.length > 0 && selectedCount === studentChecks.length;
+                selectAll.indeterminate = selectedCount > 0 && selectedCount < studentChecks.length;
+                const countSummary = roster.querySelector("[data-attendance-selection-count]");
+                if (countSummary instanceof HTMLElement) {
+                    countSummary.textContent = `${selectedCount} ${selectedCount === 1 ? "student" : "students"} selected.`;
+                }
+            };
+            rosters.forEach((roster) => {
+                const selectAll = roster.querySelector("[data-attendance-select-all]");
+                if (selectAll instanceof HTMLInputElement) {
+                    selectAll.addEventListener("change", () => {
+                        roster.querySelectorAll("[data-attendance-student]").forEach((input) => {
+                            if (input instanceof HTMLInputElement) {
+                                input.checked = selectAll.checked;
+                            }
+                        });
+                        updateRosterSelectionState(roster);
+                        clearAttendanceFieldError("teacher-attendance-roster-error");
+                    });
+                }
+                roster.querySelectorAll("[data-attendance-student]").forEach((input) => {
+                    input.addEventListener("change", () => {
+                        updateRosterSelectionState(roster);
+                        clearAttendanceFieldError("teacher-attendance-roster-error");
+                    });
+                });
+            });
+            const updateScheduleSummary = () => {
+                if (!classSelect.value) {
+                    scheduleSummary.textContent = "Select a class to load its next scheduled date and time.";
+                    return;
+                }
+                const selectedClassName = classSelect.selectedOptions[0]?.textContent.trim() || "Selected class";
+                const selectedRoster = rosters.find((roster) => roster.dataset.assignmentId === classSelect.value);
+                const studentCount = selectedRoster?.querySelectorAll("[data-attendance-student]").length || 0;
+                const rosterAnnouncement = studentCount === 0
+                    ? "No enrolled students are available."
+                    : `${studentCount} enrolled ${studentCount === 1 ? "student" : "students"} loaded.`;
+                const scheduleContext = `${selectedClassName}. ${rosterAnnouncement}`;
+                if (!attendanceDate.value) {
+                    scheduleSummary.textContent = Object.keys(schedules[classSelect.value] || {}).length > 0
+                        ? `${scheduleContext} Choose an attendance date to view the scheduled time.`
+                        : `${scheduleContext} No scheduled dates are available for this class.`;
+                    return;
+                }
+
+                const selectedDate = new Date(`${attendanceDate.value}T00:00:00`);
+                if (Number.isNaN(selectedDate.getTime())) {
+                    scheduleSummary.textContent = `${scheduleContext} Enter a valid attendance date to view the scheduled time.`;
+                    return;
+                }
+
+                const weekday = weekdays[selectedDate.getDay()];
+                const scheduledTime = schedules[classSelect.value]?.[weekday];
+                const formattedDate = selectedDate.toLocaleDateString(undefined, {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                });
+                scheduleSummary.textContent = scheduledTime
+                    ? `${scheduleContext} ${formattedDate}: ${scheduledTime.time_in}–${scheduledTime.time_out}.`
+                    : `${scheduleContext} No class is scheduled on ${formattedDate}. Choose a scheduled date.`;
+            };
+
+            const updateRoster = (clearSelection = false) => {
+                const selectedAssignment = classSelect.value;
+                const hasSelectedAssignment = selectedAssignment !== "";
+                let activeRoster = null;
+                const attendanceSubmit = attendanceForm.querySelector("[data-attendance-submit]");
+                attendanceDetails.hidden = !hasSelectedAssignment;
+                attendanceDetails.querySelectorAll("input, select, textarea").forEach((control) => {
+                    if (control instanceof HTMLInputElement || control instanceof HTMLSelectElement || control instanceof HTMLTextAreaElement) {
+                        control.disabled = !hasSelectedAssignment;
+                    }
+                });
+                rosters.forEach((roster) => {
+                    const isActive = roster.dataset.assignmentId === selectedAssignment && hasSelectedAssignment;
+                    if (isActive) {
+                        activeRoster = roster;
+                    }
+                    roster.hidden = !isActive;
+                    roster.disabled = !isActive;
+                    if (clearSelection) {
+                        roster.querySelectorAll("[data-attendance-student], [data-attendance-select-all]").forEach((input) => {
+                            if (input instanceof HTMLInputElement) {
+                                input.checked = false;
+                                input.indeterminate = false;
+                            }
+                        });
+                    }
+                });
+                if (attendanceSubmit instanceof HTMLButtonElement) {
+                    attendanceSubmit.disabled = hasSelectedAssignment
+                        && !(activeRoster instanceof HTMLFieldSetElement
+                            && activeRoster.querySelector("[data-attendance-student]"));
+                }
+                noClassMessage.hidden = selectedAssignment !== "";
+
+                if (activeRoster instanceof HTMLFieldSetElement) {
+                    updateRosterSelectionState(activeRoster);
+                }
+                updateScheduleSummary();
+            };
+
+            classSelect.addEventListener("change", () => {
+                attendanceDate.value = getNextScheduledDate(classSelect.value);
+                updateRoster(true);
+                clearAttendanceFieldError("teacher-attendance-assignment-error");
+                clearAttendanceFieldError("teacher-attendance-date-error");
+            });
+            attendanceDate.addEventListener("change", () => {
+                updateScheduleSummary();
+                clearAttendanceFieldError("teacher-attendance-date-error");
+            });
+            attendanceForm.querySelector("#teacher-attendance-status")?.addEventListener("change", () => {
+                clearAttendanceFieldError("teacher-attendance-status-error");
+            });
+            updateRoster();
+        }
+    }
+
+    document.querySelectorAll("[data-student-dependent]").forEach((dependentSelect) => {
+        if (!(dependentSelect instanceof HTMLSelectElement)) {
+            return;
+        }
+
+        const controllerId = dependentSelect.dataset.studentController || "";
+        const controller = document.getElementById(controllerId);
+        const status = document.getElementById(dependentSelect.dataset.studentStatus || "");
+        if (!(controller instanceof HTMLSelectElement) || !(status instanceof HTMLElement)) {
+            return;
+        }
+
+        const updateStudentOptions = (clearSelection = false) => {
+            const selectedStudentId = clearSelection ? "" : dependentSelect.value;
+            const selectedControllerOption = controller.selectedOptions[0];
+            const assignmentId = selectedControllerOption?.dataset.assignmentId || controller.value;
+            const matchingOptions = Array.from(dependentSelect.options).filter((option) => (
+                option.value !== "" && option.dataset.assignmentId === assignmentId
+            ));
+
+            Array.from(dependentSelect.options).forEach((option) => {
+                if (!option.value) {
+                    option.hidden = false;
+                    option.disabled = false;
+                    return;
+                }
+                const isMatching = option.dataset.assignmentId === assignmentId && assignmentId !== "";
+                option.hidden = !isMatching;
+                option.disabled = !isMatching;
+            });
+
+            dependentSelect.value = matchingOptions.some((option) => option.value === selectedStudentId)
+                ? selectedStudentId
+                : "";
+            dependentSelect.disabled = assignmentId === "" || matchingOptions.length === 0;
+
+            const selectedControllerLabel = controller.selectedOptions[0]?.textContent.trim() || "";
+            const controllerType = dependentSelect.id.startsWith("teacher-score-")
+                ? "assessment"
+                : "class assignment";
+            if (!assignmentId) {
+                status.textContent = `Choose ${controllerType === "assessment" ? "an assessment" : "a class assignment"} to load its students.`;
+            } else if (matchingOptions.length === 0) {
+                status.textContent = `No enrolled students are available for ${selectedControllerLabel}. Choose another ${controllerType} or contact a school administrator.`;
+            } else {
+                status.textContent = `${matchingOptions.length} enrolled ${matchingOptions.length === 1 ? "student" : "students"} available for ${selectedControllerLabel}.`;
+            }
+
+            if (clearSelection) {
+                const errorId = `${dependentSelect.id}-error`;
+                dependentSelect.closest(".teacher-field")?.querySelector(`#${errorId}`)?.remove();
+                dependentSelect.removeAttribute("aria-invalid");
+                const descriptions = (dependentSelect.getAttribute("aria-describedby") || "")
+                    .split(/\s+/)
+                    .filter((description) => description !== "" && description !== errorId);
+                if (descriptions.length > 0) {
+                    dependentSelect.setAttribute("aria-describedby", descriptions.join(" "));
+                } else {
+                    dependentSelect.removeAttribute("aria-describedby");
+                }
+            }
+        };
+
+        controller.addEventListener("change", () => updateStudentOptions(true));
+        updateStudentOptions();
+    });
+
+    document.querySelectorAll("[data-term-grade-form]").forEach((form) => {
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+
+        const calculator = form.querySelector("[data-grade-calculator]");
+        const assignment = form.querySelector("[data-grade-assignment]");
+        const enrollment = form.querySelector("[data-grade-enrollment]");
+        const period = form.querySelector("[data-grade-period]");
+        const componentInputs = Array.from(form.querySelectorAll("[data-grade-component]"));
+        const automaticComponentInputs = Array.from(form.querySelectorAll("[data-grade-auto-component]"));
+        const status = calculator?.querySelector("[data-grade-calculation-status]");
+        const output = calculator?.querySelector("[data-grade-calculated-output]");
+        if (
+            !(calculator instanceof HTMLFieldSetElement)
+            || !(assignment instanceof HTMLSelectElement)
+            || !(enrollment instanceof HTMLSelectElement)
+            || !(period instanceof HTMLSelectElement)
+            || !(status instanceof HTMLElement)
+            || !(output instanceof HTMLElement)
+            || componentInputs.length !== 2
+            || componentInputs.some((input) => !(input instanceof HTMLInputElement))
+            || automaticComponentInputs.length !== 2
+            || automaticComponentInputs.some((input) => !(input instanceof HTMLInputElement))
+        ) {
+            return;
+        }
+
+        const gradeHistory = JSON.parse(calculator.dataset.gradeHistory || "{}");
+        const gradeAssessmentScores = JSON.parse(calculator.dataset.gradeAssessmentScores || "{}");
+        const componentKeys = [
+            "component_attendance",
+            "component_recitation",
+        ];
+        const automaticComponentKeys = ["component_exam", "component_quizzes"];
+        const componentWeights = {
+            component_exam: 0.5,
+            component_quizzes: 0.25,
+            component_attendance: 0.1,
+            component_recitation: 0.15,
+        };
+        let preserveSubmittedComponents = calculator.dataset.preserveSubmittedComponents === "true";
+        let statusAnnouncementTimer = null;
+
+        const updateCalculationStatus = (message, debounce = false) => {
+            if (statusAnnouncementTimer !== null) {
+                window.clearTimeout(statusAnnouncementTimer);
+                statusAnnouncementTimer = null;
+            }
+            if (status.textContent === message) {
+                return;
+            }
+            if (!debounce) {
+                status.textContent = message;
+                return;
+            }
+            statusAnnouncementTimer = window.setTimeout(() => {
+                if (status.textContent !== message) {
+                    status.textContent = message;
+                }
+                statusAnnouncementTimer = null;
+            }, 350);
+        };
+
+        const clearComponentError = (input) => {
+            input.removeAttribute("aria-invalid");
+            input.closest(".teacher-field")?.querySelector(".teacher-field-error")?.remove();
+            const errorId = `${input.id}-error`;
+            const descriptions = (input.getAttribute("aria-describedby") || "")
+                .split(/\s+/)
+                .filter((description) => description !== "" && description !== errorId);
+            if (descriptions.length > 0) {
+                input.setAttribute("aria-describedby", descriptions.join(" "));
+            } else {
+                input.removeAttribute("aria-describedby");
+            }
+        };
+
+        const getStudentGrades = () => gradeHistory[assignment.value]?.[enrollment.value] ?? [];
+        const getPriorGrade = (periodName, gradeProperty, selectedPeriod) => getStudentGrades()
+            .filter((grade) => (
+                (periodName === "prelim" ? ["prelim", "preliminary"] : [periodName])
+                    .includes(grade.period_name.toLowerCase())
+                && String(grade.academic_year_id) === (selectedPeriod.dataset.academicYearId || "")
+                && String(grade.semester_id ?? "") === (selectedPeriod.dataset.semesterId || "")
+                && grade[gradeProperty] !== null
+            ))
+            .sort((left, right) => right.start_date.localeCompare(left.start_date))[0];
+
+        const updateCalculator = (loadSavedComponents = false, debounceStatus = false) => {
+            const selectedPeriod = period.selectedOptions[0];
+            const controlsReady = assignment.value !== "" && enrollment.value !== "" && period.value !== "";
+            [...componentInputs, ...automaticComponentInputs].forEach((input) => {
+                input.disabled = !controlsReady;
+            });
+
+            if (loadSavedComponents && !preserveSubmittedComponents && controlsReady) {
+                const currentGrade = getStudentGrades().find(
+                    (grade) => String(grade.grading_period_id) === period.value,
+                );
+                componentInputs.forEach((input, index) => {
+                    input.value = currentGrade?.components?.[componentKeys[index]] ?? "";
+                    clearComponentError(input);
+                });
+            }
+            preserveSubmittedComponents = false;
+
+            const percentageValues = componentInputs.map((input) => input.value.trim());
+            const validManualComponents = percentageValues.every((value) => (
+                value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100
+            ));
+            const assessmentScores = gradeAssessmentScores[assignment.value]?.[enrollment.value]?.[period.value] ?? {};
+            const automaticValues = automaticComponentKeys.map((key) => {
+                const summary = assessmentScores[key];
+                const percentage = summary?.percentage;
+                return Number.isFinite(percentage) ? Number(percentage) : null;
+            });
+            automaticComponentInputs.forEach((input, index) => {
+                const key = automaticComponentKeys[index];
+                const summary = assessmentScores[key];
+                const detail = calculator.querySelector(`[data-grade-assessment-detail="${key}"]`);
+                if (automaticValues[index] === null) {
+                    input.value = "";
+                    if (detail instanceof HTMLElement) {
+                        const assessmentLabel = key === "component_exam" ? "Exam" : "Quiz";
+                        detail.textContent = `No scored ${assessmentLabel} assessments for this grading period.`;
+                    }
+                    return;
+                }
+                input.value = `${automaticValues[index].toFixed(1)}%`;
+                clearComponentError(input);
+                if (detail instanceof HTMLElement) {
+                    const assessmentLabel = key === "component_exam" ? "Exam" : "Quiz";
+                    const assessmentCount = Number(summary.assessment_count);
+                    const assessmentNoun = assessmentCount === 1 ? "assessment" : "assessments";
+                    detail.textContent = `${assessmentCount} scored ${assessmentLabel} ${assessmentNoun}: ${Number(summary.points_earned).toFixed(2)} / ${Number(summary.points_possible).toFixed(2)} points.`;
+                }
+            });
+            const assessmentComponentSummary = automaticComponentKeys
+                .map((key, index) => {
+                    const label = key === "component_exam" ? "Exam" : "Quizzes";
+                    const value = automaticValues[index];
+                    return `${label} ${value === null ? "unavailable" : `${value.toFixed(1)}%`}`;
+                })
+                .join("; ");
+            const announceWithAssessmentSummary = (message) => updateCalculationStatus(
+                `${assessmentComponentSummary}. ${message}`,
+                debounceStatus,
+            );
+
+            output.textContent = "—";
+            if (!controlsReady) {
+                updateCalculationStatus("Select a class, student, and grading period to calculate a grade.", debounceStatus);
+                return;
+            }
+
+            const stage = selectedPeriod?.dataset.periodName?.trim().toLowerCase();
+            if (!["prelim", "preliminary", "midterm", "final"].includes(stage || "")) {
+                updateCalculationStatus("Choose a Prelim, Midterm, or Final grading period.", debounceStatus);
+                return;
+            }
+
+            let previousGrade = null;
+            let previousPeriodName = "";
+            let previousGradeProperty = "";
+            if (stage === "midterm") {
+                previousPeriodName = "prelim";
+                previousGradeProperty = "preliminary_grade";
+            } else if (stage === "final") {
+                previousPeriodName = "midterm";
+                previousGradeProperty = "midterm_grade";
+            }
+            if (previousPeriodName !== "") {
+                const previousRecord = getPriorGrade(previousPeriodName, previousGradeProperty, selectedPeriod);
+                if (!previousRecord) {
+                    const displayPeriod = previousPeriodName === "prelim" ? "Prelim" : "Midterm";
+                    updateCalculationStatus(
+                        `Save the ${displayPeriod} grade for this student before calculating ${selectedPeriod.dataset.periodName}.`,
+                        debounceStatus,
+                    );
+                    return;
+                }
+                previousGrade = Number(previousRecord[previousGradeProperty]);
+            }
+
+            if (automaticValues.some((value) => value === null)) {
+                const missingTypes = automaticValues
+                    .map((value, index) => value === null ? (index === 0 ? "Exam" : "Quiz") : null)
+                    .filter((value) => value !== null);
+                announceWithAssessmentSummary(
+                    `Record and save at least one scored ${missingTypes.join(" and ")} assessment for this grading period.`,
+                );
+                return;
+            }
+
+            if (!validManualComponents) {
+                announceWithAssessmentSummary("Enter attendance and recitation percentages from 0 to 100.");
+                return;
+            }
+
+            const componentValues = {
+                component_exam: automaticValues[0],
+                component_quizzes: automaticValues[1],
+                component_attendance: Number(componentInputs[0].value),
+                component_recitation: Number(componentInputs[1].value),
+            };
+            const tentativeGrade = Math.round(Object.entries(componentValues).reduce(
+                (total, [key, value]) => total + value * componentWeights[key],
+                0,
+            ) * 10) / 10;
+            const calculatedGrade = previousGrade === null
+                ? tentativeGrade
+                : Math.round((previousGrade * 0.25 + tentativeGrade * 0.75) * 10) / 10;
+            output.textContent = `${calculatedGrade.toFixed(1)}%`;
+
+            if (previousGrade === null) {
+                announceWithAssessmentSummary(`Calculated ${selectedPeriod.dataset.periodName}: ${calculatedGrade.toFixed(1)}%.`);
+            } else {
+                const displayPeriod = previousPeriodName === "prelim" ? "Prelim" : "Midterm";
+                announceWithAssessmentSummary(
+                    `Saved ${displayPeriod}: ${previousGrade.toFixed(1)}%. Calculated ${selectedPeriod.dataset.periodName}: ${calculatedGrade.toFixed(1)}%.`,
+                );
+            }
+        };
+
+        assignment.addEventListener("change", () => updateCalculator(true));
+        enrollment.addEventListener("change", () => updateCalculator(true));
+        period.addEventListener("change", () => updateCalculator(true));
+        componentInputs.forEach((input) => {
+            input.addEventListener("input", () => {
+                const value = input.value.trim();
+                if (value !== "" && Number.isFinite(Number(value)) && Number(value) >= 0 && Number(value) <= 100) {
+                    clearComponentError(input);
+                }
+                updateCalculator(false, true);
+            });
+        });
+        updateCalculator(!preserveSubmittedComponents);
+    });
 
     const assignmentSectionSelect = document.querySelector("[data-assignment-section]");
     const assignmentSubjectSelect = document.querySelector("[data-assignment-subject]");

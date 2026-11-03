@@ -1,0 +1,14 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Attendance controls use native labeled inputs, selects, checkboxes, and fieldsets with legends.",
+    "The native modal contains keyboard focus; browser testing confirmed focus remains in the dialog and Escape closes it.",
+    "Browser testing confirmed visible focus indicators and focus restoration to the Record attendance trigger."
+  ]
+}

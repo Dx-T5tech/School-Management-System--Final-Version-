@@ -143,21 +143,41 @@ declare(strict_types=1);
                 <span style="width: <?= dashboardEscape($financeTotals['progress']) ?>%"></span>
             </div>
             <section class="student-panel" aria-labelledby="student-term-balance-heading">
-                <h2 id="student-term-balance-heading">Tuition installments</h2>
-                <p class="student-payment-help">Net tuition after discounts is split as evenly as possible across Prelim, Midterm, and Final. Only completed payments reduce your balance.</p>
+                <h2 id="student-term-balance-heading">Tuition by term</h2>
+                <p class="student-payment-help">Your net tuition after discounts is divided across Prelim, Midterm, and Final. Amounts below show tuition only; other assessed fees are billed once for the academic year. Only completed payments reduce your balance.</p>
                 <div class="student-term-grid">
                     <?php foreach ($termBalances as $termName => $termBalance): ?>
                         <?php $termOutstanding = max(0, $termBalance['billed_cents'] - $termBalance['paid_cents']); ?>
                         <article class="student-term-card">
                             <h3><?= dashboardEscape($termName) ?></h3>
-                            <p><span>Due</span><strong>₱<?= dashboardEscape(number_format($termOutstanding / 100, 2)) ?></strong></p>
-                            <p><span>Assessed</span><span>₱<?= dashboardEscape(number_format($termBalance['billed_cents'] / 100, 2)) ?></span></p>
-                            <p><span>Paid</span><span>₱<?= dashboardEscape(number_format($termBalance['paid_cents'] / 100, 2)) ?></span></p>
+                            <p><span>Tuition assessed</span><span>₱<?= dashboardEscape(number_format($termBalance['billed_cents'] / 100, 2)) ?></span></p>
+                            <p><span>Tuition paid</span><span>₱<?= dashboardEscape(number_format($termBalance['paid_cents'] / 100, 2)) ?></span></p>
+                            <p><span>Tuition to pay</span><strong>₱<?= dashboardEscape(number_format($termOutstanding / 100, 2)) ?></strong></p>
                             <span class="student-status<?= $termOutstanding === 0 && $termBalance['billed_cents'] > 0 ? ' student-status--success' : ($termBalance['paid_cents'] > 0 ? ' student-status--attention' : '') ?>">
                                 <?= dashboardEscape($termBalance['billed_cents'] === 0 ? 'No tuition fee' : ($termOutstanding === 0 ? 'Paid' : ($termBalance['paid_cents'] > 0 ? 'Partially paid' : 'Unpaid'))) ?>
                             </span>
                         </article>
                     <?php endforeach; ?>
+                </div>
+                <div class="student-annual-fee-summary">
+                    <dl>
+                        <div>
+                            <dt>Other annual fees to pay</dt>
+                            <dd>₱<?= dashboardEscape(number_format($annualFeeBalances['outstanding_cents'] / 100, 2)) ?></dd>
+                        </div>
+                        <div>
+                            <dt>Annual fees assessed</dt>
+                            <dd>₱<?= dashboardEscape(number_format($annualFeeBalances['billed_cents'] / 100, 2)) ?></dd>
+                        </div>
+                        <div>
+                            <dt>Annual fees paid</dt>
+                            <dd>₱<?= dashboardEscape(number_format($annualFeeBalances['paid_cents'] / 100, 2)) ?></dd>
+                        </div>
+                    </dl>
+                    <p>
+                        These <?= dashboardEscape($annualFeeBalances['fee_count']) ?> non-tuition fee(s) are not split across terms.
+                        <a href="#student-fee-ledger-heading">View itemized fee balances</a>
+                    </p>
                 </div>
             </section>
             <section class="student-panel" aria-labelledby="student-fee-ledger-heading">
@@ -413,13 +433,16 @@ declare(strict_types=1);
         <section class="student-panel" aria-labelledby="student-notifications-heading">
             <h2 id="student-notifications-heading">Your notifications</h2>
             <?php if ($studentNotifications === []): ?>
-                <p class="student-empty">You have no current notifications. Fee reminders and payment status updates will appear here.</p>
+                <p class="student-empty">You have no current notifications. Fee reminders, payment updates, and posted grades will appear here.</p>
             <?php else: ?>
                 <?php foreach ($studentNotifications as $notification): ?>
                     <article class="student-notification<?= (int) $notification['is_read'] === 0 ? ' student-notification--unread' : '' ?>">
                         <div>
                             <h3><?= dashboardEscape($notification['title']) ?></h3>
                             <p><?= dashboardEscape($notification['message']) ?></p>
+                            <?php if ($notification['notification_type'] === 'Grade posted'): ?>
+                                <a class="student-notification-link" href="student-section.php?section=grades">View My Grades</a>
+                            <?php endif; ?>
                             <time datetime="<?= dashboardEscape(date('c', strtotime($notification['created_at']))) ?>"><?= dashboardEscape($notification['created_at']) ?></time>
                         </div>
                         <span class="student-status<?= $notification['notification_type'] === 'Payment status' ? ' student-status--success' : ' student-status--attention' ?>"><?= dashboardEscape($notification['notification_type']) ?></span>

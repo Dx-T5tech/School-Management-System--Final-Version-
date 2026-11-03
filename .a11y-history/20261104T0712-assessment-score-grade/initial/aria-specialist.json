@@ -1,0 +1,13 @@
+{
+  "skill": "aria-specialist",
+  "scope": [
+    "app/Shared/teacher_section_content.php",
+    "public/assets/js/dashboard.js"
+  ],
+  "findings": [],
+  "passed": [
+    "Native fieldset and legend group the calculator; interactive controls have associated labels and native required constraints.",
+    "Component descriptions and server-side errors are associated with aria-describedby and aria-invalid; valid edits clear the error state.",
+    "Calculation updates use a polite status region, which announces the calculated grade even though the separate visual output is aria-hidden."
+  ]
+}

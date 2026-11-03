@@ -121,6 +121,10 @@ Apply `database/migrations/202611040013_distribute_demo_teaching_assignments.sql
 after the screenshot schedule import to add 13 active demo teacher profiles
 without login accounts and distribute the active assignments across them and
 the existing Demo Teacher, avoiding teacher timetable overlaps.
+Apply `database/migrations/202611040016_seed_demo_students_per_section.sql` to
+add fictional, profile-only students to active sections, bringing each roster
+to 30 enrolled students where capacity allows. The new students have no login
+accounts.
 Manual reports reference two active schedules and include a reason. Conflict
 Review also reports advisory scheduling-policy warnings: at most 12 course
 units and 6 subjects per teacher per day, with 2–4 daily class sessions per
@@ -160,13 +164,15 @@ migration prevents the same structure from being charged twice to one
 enrollment. Student payment submissions continue to create Pending payment
 records for staff verification; payment submission does not mark a balance paid.
 Students can review active-year balances, completed payments, methods, and
-Prelim/Midterm/Final installments under Balance Fees; submit a payment already
-made for staff verification under Payment; and print or save a Financial Report
-as PDF. Student payment submissions stay Pending until staff verify them; this
-is not online payment processing. The Notifications page shows unread payment
-status updates and due/overdue fee reminders. Fee reminders refresh when the
-student opens a page and are shown for fees due within seven days or already
-overdue. Apply
+Prelim/Midterm/Final tuition amounts under Balance Fees. Tuition after discounts
+is split evenly across the three terms, while other configured fees are shown
+as annual charges with their itemized balances. Students can submit a payment
+already made for staff verification under Payment and print or save a Financial
+Report as PDF. Student payment submissions stay Pending until staff verify them;
+this is not online payment processing. The Notifications page shows unread
+payment status updates and due/overdue fee reminders. Fee reminders refresh
+when the student opens a page and are shown for fees due within seven days or
+already overdue. Apply
 `database/migrations/202611020008_add_student_finance_notifications.sql` after
 the tuition-term migration to allow fee-linked payments for non-tuition fees
 and create in-app student notifications.
@@ -265,7 +271,37 @@ log. Apply
 to seed Prelim, Midterm, and Final grading periods across active and upcoming
 academic years, split evenly over each year's dates, and add the default
 Written Work, Performance Task, and Major Exam categories. Category weights are
-left unset for administrators to configure.
+left unset for administrators to configure. Attendance is recorded for one
+assigned class at a time. Selecting a class loads its enrolled students and
+defaults the editable attendance date to that class's next scheduled day; the
+date and active schedule time are announced together. Teachers can multi-select
+students and apply Present, Absent, or Excused status together. Time in/out are
+derived from the earliest start and latest end of that class's active schedule
+on the selected attendance date.
+
+Apply
+`database/migrations/202611040017_add_weighted_term_grade_calculations.sql`
+before using the weighted grade calculator. Exam and Quiz components are
+calculated separately for the selected student, assignment, and grading period
+as total points earned divided by total points possible across scored
+assessments of that type. Only Published or Completed assessments count;
+Attendance and Recitation remain teacher-entered percentages. The component
+weights are Exam 50%, Quizzes 25%, Attendance 10%, and Recitation 15%, with the
+weighted result rounded to one decimal place. Prelim uses that weighted result
+directly; Midterm is the saved Prelim grade × 25% plus the weighted Midterm
+result × 75%; Final is the saved Midterm grade × 25% plus the weighted Final
+result × 75%. Periods are recorded sequentially, so the preceding period must
+be saved first. Updating an earlier period recalculates saved later periods
+using their current assessment scores and saved Attendance/Recitation
+components; changed result statuses reset to Pending for teacher review, and
+grades without complete components are invalidated. Updating a scored Exam or
+Quiz also refreshes saved grades for the affected assignment and student and
+deactivates the linked Final-grade notification if its result changes; the
+teacher must post the updated Final grade to notify the student again. The
+calculated Prelim, Midterm, and overall Final grades appear in the teacher grade
+table and the student's My Grades page. Saving an overall Final grade also
+creates or refreshes an in-app notification for a linked student account; no
+email is sent.
 
 The Student sidebar links to the dashboard, student profile, enrollment history,
 active class schedule, attendance, published assessment scores and term grades,
