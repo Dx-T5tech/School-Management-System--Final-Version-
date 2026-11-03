@@ -5943,3 +5943,227 @@ textarea:focus-visible,
         transform: none;
     }
 }
+
+.admissions-review-page {
+    background: var(--soft);
+}
+
+.admissions-review-page .main-content {
+    width: 100%;
+    max-width: 1480px;
+    margin-inline: auto;
+    padding: clamp(24px, 4vw, 48px) clamp(16px, 3vw, 40px) 48px;
+}
+
+.admissions-review-page .page-intro {
+    align-items: center;
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+}
+
+.admissions-review-page .page-intro-copy .page-description {
+    margin-bottom: 0;
+}
+
+.admissions-review-page .page-intro > .admin-button {
+    flex: 0 0 auto;
+}
+
+.admissions-review-page .admissions-review-guidance {
+    margin-bottom: 24px;
+    padding: 22px 24px;
+}
+
+.admissions-review-guidance ol {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 18px;
+    padding-left: 22px;
+}
+
+.admissions-review-guidance li {
+    min-width: 0;
+    padding: 12px 14px 12px 10px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--soft);
+}
+
+.admissions-review-guidance .admin-field-hint {
+    padding-top: 14px;
+    border-top: 1px solid var(--line);
+}
+
+.admissions-review-page .admin-table-scroll-hint {
+    margin: 0 0 8px;
+    font-size: 12px;
+}
+
+.admissions-review-page .admin-table-scroll {
+    border-radius: 12px;
+    background: var(--surface);
+    overscroll-behavior-inline: contain;
+}
+
+.admissions-review-table {
+    min-width: 1040px;
+    table-layout: fixed;
+    font-size: 13px;
+}
+
+.admissions-review-table th:nth-child(1) { width: 20%; }
+.admissions-review-table th:nth-child(2) { width: 27%; }
+.admissions-review-table th:nth-child(3) { width: 17%; }
+.admissions-review-table th:nth-child(4) { width: 12%; }
+.admissions-review-table th:nth-child(5) { width: 24%; }
+
+.admissions-review-table caption {
+    padding: 14px 16px;
+    color: var(--ink);
+    background: var(--surface);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admissions-review-table th,
+.admissions-review-table td {
+    padding: 14px 16px;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+.admissions-review-table thead th {
+    padding-block: 12px;
+    color: var(--ink);
+    background: var(--soft);
+    font-size: 12px;
+}
+
+.admissions-review-table tbody th.admissions-applicant-cell {
+    font-weight: 400;
+}
+
+.admissions-applicant-cell > :is(span, a) {
+    display: block;
+}
+
+.admissions-applicant-name {
+    margin-bottom: 3px;
+    color: var(--ink);
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.admissions-applicant-cell .admissions-applicant-email,
+.admissions-review-table .admissions-document-list a {
+    color: var(--accent);
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+}
+
+.admissions-applicant-cell .admissions-applicant-email {
+    margin-bottom: 7px;
+}
+
+.admissions-applicant-meta {
+    color: var(--muted);
+    font-size: 12px;
+}
+
+.admissions-contact-detail + .admissions-contact-detail {
+    margin-top: 5px;
+}
+
+.admissions-contact-label {
+    color: var(--ink);
+    font-weight: 600;
+}
+
+.admissions-program-cell {
+    color: var(--ink) !important;
+    font-weight: 600;
+}
+
+.admissions-exam-cell {
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+}
+
+.admissions-score {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    padding: 3px 9px;
+    border-radius: 8px;
+    color: var(--accent);
+    background: var(--accent-soft);
+    font-weight: 700;
+}
+
+.admissions-score--missing {
+    color: var(--muted);
+    background: var(--soft);
+    font-weight: 500;
+    white-space: normal;
+}
+
+.admissions-document-list {
+    display: grid;
+    gap: 4px;
+    margin: 0;
+    padding-left: 18px;
+}
+
+.admissions-document-list a {
+    display: inline-flex;
+    min-height: 24px;
+    align-items: center;
+}
+
+.admissions-review-table tbody tr:hover {
+    background: var(--accent-soft);
+}
+
+.admissions-review-page .admissions-review-empty {
+    max-width: 760px;
+}
+
+@media (max-width: 760px) {
+    .admissions-review-page .main-content {
+        padding: 24px 16px 36px;
+    }
+
+    .admissions-review-page .page-intro {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .admissions-review-guidance ol {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 8px;
+    }
+
+    .admissions-review-page .admissions-review-guidance {
+        padding: 20px;
+    }
+
+    .admissions-review-table {
+        min-width: 1000px;
+    }
+}
+
+@media (max-width: 520px) {
+    .admissions-review-page .main-content {
+        padding: 20px 12px 28px;
+    }
+
+    .admissions-review-page .page-intro h1 {
+        font-size: clamp(26px, 8vw, 34px);
+    }
+
+    .admissions-review-page .admissions-review-guidance {
+        padding: 18px 16px;
+    }
+}

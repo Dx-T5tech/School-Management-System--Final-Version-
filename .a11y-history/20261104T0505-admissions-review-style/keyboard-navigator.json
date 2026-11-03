@@ -1,0 +1,17 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Controllers\\admin_applications.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Skip link provides a first-tab shortcut to main content.",
+    "Tab order follows the page content, with the dashboard link, focusable table scroll region, email links, and document links reachable by keyboard.",
+    "The horizontally overflowing table has a focusable region and a visible focus indicator.",
+    "Email and document links are native anchors and have visible focus styling."
+  ],
+  "notes": [
+    "Assessment was based on source review; runtime keyboard behavior was not tested."
+  ]
+}

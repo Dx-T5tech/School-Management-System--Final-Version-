@@ -15,6 +15,66 @@ function financeTuitionInstallmentsInCents(int $netTuitionCents): array
     ];
 }
 
+function financeGenerateStudentFeesForEnrollment(PDO $connection, int $enrollmentId): int
+{
+    $statement = $connection->prepare(
+        "INSERT INTO student_fees (
+            enrollment_id, fee_structure_id, amount, discount_amount, due_date, fee_status
+         )
+         SELECT e.enrollment_id, fs.fee_structure_id, fs.amount, 0, fs.due_date, 'Unpaid'
+         FROM enrollments e
+         INNER JOIN fee_structures fs
+           ON fs.academic_year_id = e.academic_year_id
+          AND (fs.program_id IS NULL OR fs.program_id = e.program_id)
+          AND (fs.year_level IS NULL OR fs.year_level = e.year_level)
+         INNER JOIN fee_types ft
+           ON ft.fee_type_id = fs.fee_type_id
+          AND ft.status = 'Active'
+         WHERE e.enrollment_id = :enrollment_id
+           AND e.enrollment_status = 'Enrolled'
+           AND NOT EXISTS (
+               SELECT 1
+               FROM student_fees existing
+               WHERE existing.enrollment_id = e.enrollment_id
+                 AND existing.fee_structure_id = fs.fee_structure_id
+           )
+         ON DUPLICATE KEY UPDATE student_fee_id = student_fee_id"
+    );
+    $statement->execute(['enrollment_id' => $enrollmentId]);
+
+    return $statement->rowCount();
+}
+
+function financeGenerateStudentFeesForStructure(PDO $connection, int $feeStructureId): int
+{
+    $statement = $connection->prepare(
+        "INSERT INTO student_fees (
+            enrollment_id, fee_structure_id, amount, discount_amount, due_date, fee_status
+         )
+         SELECT e.enrollment_id, fs.fee_structure_id, fs.amount, 0, fs.due_date, 'Unpaid'
+         FROM fee_structures fs
+         INNER JOIN fee_types ft
+           ON ft.fee_type_id = fs.fee_type_id
+          AND ft.status = 'Active'
+         INNER JOIN enrollments e
+           ON e.academic_year_id = fs.academic_year_id
+          AND (fs.program_id IS NULL OR fs.program_id = e.program_id)
+          AND (fs.year_level IS NULL OR fs.year_level = e.year_level)
+          AND e.enrollment_status = 'Enrolled'
+         WHERE fs.fee_structure_id = :fee_structure_id
+           AND NOT EXISTS (
+               SELECT 1
+               FROM student_fees existing
+               WHERE existing.enrollment_id = e.enrollment_id
+                 AND existing.fee_structure_id = fs.fee_structure_id
+           )
+         ON DUPLICATE KEY UPDATE student_fee_id = student_fee_id"
+    );
+    $statement->execute(['fee_structure_id' => $feeStructureId]);
+
+    return $statement->rowCount();
+}
+
 function financeCreateStudentNotification(
     PDO $connection,
     int $userId,

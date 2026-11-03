@@ -3,6 +3,7 @@
 declare(strict_types=1);
 
 require_once dirname(__DIR__, 5) . '/app/Core/dashboard.php';
+require_once dirname(__DIR__, 5) . '/app/Core/finance.php';
 require_once dirname(__DIR__, 2) . '/Students/Services/student.php';
 
 startAppSession();
@@ -288,6 +289,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($publicApplication)) {
                                 'section_id' => (int) $section['section_id'],
                                 'year_level' => (int) $section['year_level'],
                             ]);
+                            financeGenerateStudentFeesForEnrollment(
+                                $connection,
+                                (int) $connection->lastInsertId()
+                            );
 
                             $linkApplication = $connection->prepare(
                                 "UPDATE student_applications
@@ -515,6 +520,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && is_array($publicApplication)) {
                                 'year_level' => (int) $section['year_level'],
                             ]);
                         }
+                        financeGenerateStudentFeesForEnrollment(
+                            $connection,
+                            $existingEnrollment !== false
+                                ? (int) $existingEnrollment['enrollment_id']
+                                : (int) $connection->lastInsertId()
+                        );
 
                         $updateStudent = $connection->prepare(
                             "UPDATE students

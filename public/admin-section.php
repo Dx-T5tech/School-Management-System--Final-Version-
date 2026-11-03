@@ -295,6 +295,28 @@ $entityDefinitions = [
         ],
         'delete' => ['type' => 'delete'],
     ],
+    'fee_types' => [
+        'section' => 'finance-payments', 'financeView' => 'student-fees', 'table' => 'fee_types', 'primaryKey' => 'fee_type_id', 'label' => 'Fee types',
+        'fields' => [
+            'fee_name' => $field('Fee name', 'text', true, null, false),
+            'fee_category' => $field('Category', 'select', true, $enum('Tuition', 'Miscellaneous', 'Laboratory', 'Library', 'Registration', 'Other'), false),
+            'description' => $field('Description', 'textarea'),
+            'status' => $field('Status', 'select', true, $enum('Active', 'Inactive'), false),
+        ],
+        'delete' => ['type' => 'status', 'field' => 'status', 'value' => 'Inactive', 'label' => 'Deactivate'],
+    ],
+    'fee_structures' => [
+        'section' => 'finance-payments', 'financeView' => 'student-fees', 'table' => 'fee_structures', 'primaryKey' => 'fee_structure_id', 'label' => 'Fee structures',
+        'fields' => [
+            'academic_year_id' => $field('Academic year', 'select', true, 'academic_years', false),
+            'program_id' => $field('Program (optional)', 'select', false, 'programs'),
+            'fee_type_id' => $field('Fee type', 'select', true, 'fee_types', false),
+            'amount' => $field('Amount', 'number', true, null, false),
+            'year_level' => $field('Year level (optional)', 'number'),
+            'due_date' => $field('Due date', 'date'),
+        ],
+        'delete' => ['type' => 'delete'],
+    ],
     'student_fees' => [
         'section' => 'finance-payments', 'financeView' => 'student-fees', 'table' => 'student_fees', 'primaryKey' => 'student_fee_id', 'label' => 'Student fees',
         'fields' => [
@@ -351,6 +373,7 @@ $lookupDefinitions = [
     'assessment_categories' => ['SELECT category_id AS id, category_name AS label FROM assessment_categories ORDER BY category_name'],
     'assessments' => ['SELECT assessment_id AS id, assessment_title AS label FROM assessments ORDER BY assessment_date DESC'],
     'fee_structures' => ["SELECT fs.fee_structure_id AS id, CONCAT(ft.fee_name, ' - ₱', FORMAT(fs.amount, 2)) AS label FROM fee_structures fs INNER JOIN fee_types ft ON ft.fee_type_id = fs.fee_type_id ORDER BY ft.fee_name"],
+    'fee_types' => ["SELECT fee_type_id AS id, CONCAT(fee_name, ' (', status, ')') AS label FROM fee_types ORDER BY fee_name"],
     'tuition_fees' => [
         "SELECT sf.student_fee_id AS id,
                 CONCAT(s.student_number, ' - ', s.first_name, ' ', s.last_name, ' / ',
@@ -741,10 +764,55 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 && $values['total_points'] <= 0) {
                 $fieldErrors['total_points'] = 'Total points must be greater than zero.';
             }
-            foreach (['payments' => 'total_amount', 'student_fees' => 'amount'] as $amountEntity => $amountField) {
+            foreach (['payments' => 'total_amount', 'student_fees' => 'amount', 'fee_structures' => 'amount'] as $amountEntity => $amountField) {
                 if ($entityKey === $amountEntity && isset($values[$amountField]) && $values[$amountField] !== null
                     && $values[$amountField] <= 0) {
                     $fieldErrors[$amountField] = 'Amount must be greater than zero.';
+                }
+            }
+            if ($entityKey === 'fee_structures' && isset($values['year_level'])
+                && $values['year_level'] !== null && $values['year_level'] > 12) {
+                $fieldErrors['year_level'] = 'Year level must be between 1 and 12.';
+            }
+            if ($entityKey === 'fee_structures') {
+                $feeTypeStatus = $connection->prepare(
+                    'SELECT status FROM fee_types WHERE fee_type_id = :fee_type_id'
+                );
+                $feeTypeStatus->execute(['fee_type_id' => $values['fee_type_id']]);
+                if ($feeTypeStatus->fetchColumn() !== 'Active') {
+                    $fieldErrors['fee_type_id'] = 'Choose an active fee type.';
+                }
+                if ($values['program_id'] !== null) {
+                    $programStatus = $connection->prepare(
+                        'SELECT status FROM programs WHERE program_id = :program_id'
+                    );
+                    $programStatus->execute(['program_id' => $values['program_id']]);
+                    if ($programStatus->fetchColumn() !== 'Active') {
+                        $fieldErrors['program_id'] = 'Choose an active program or leave the program blank for all programs.';
+                    }
+                }
+                $duplicateFeeStructureSql = 'SELECT COUNT(*)
+                                             FROM fee_structures
+                                             WHERE academic_year_id = :academic_year_id
+                                               AND fee_type_id = :fee_type_id
+                                               AND (program_id IS NULL OR :program_filter IS NULL OR program_id = :program_compare)
+                                               AND (year_level IS NULL OR :year_filter IS NULL OR year_level = :year_compare)';
+                $duplicateFeeStructureParams = [
+                    'academic_year_id' => $values['academic_year_id'],
+                    'program_filter' => $values['program_id'],
+                    'program_compare' => $values['program_id'],
+                    'fee_type_id' => $values['fee_type_id'],
+                    'year_filter' => $values['year_level'],
+                    'year_compare' => $values['year_level'],
+                ];
+                if ($recordId !== null) {
+                    $duplicateFeeStructureSql .= ' AND fee_structure_id <> :record_id';
+                    $duplicateFeeStructureParams['record_id'] = $recordId;
+                }
+                $duplicateFeeStructure = $connection->prepare($duplicateFeeStructureSql);
+                $duplicateFeeStructure->execute($duplicateFeeStructureParams);
+                if ((int) $duplicateFeeStructure->fetchColumn() > 0) {
+                    $fieldErrors['fee_type_id'] = 'This fee type already has an overlapping structure for the selected academic year, program, and year level.';
                 }
             }
             if ($entityKey === 'student_fees' && isset($values['discount_amount']) && $values['discount_amount'] !== null
@@ -1230,6 +1298,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                         $auditAction = 'Update';
                         $auditId = $recordId;
                     }
+                    $generatedStudentFees = 0;
+                    if ($entityKey === 'enrollments' && $values['enrollment_status'] === 'Enrolled') {
+                        $generatedStudentFees = financeGenerateStudentFeesForEnrollment($connection, $auditId);
+                    } elseif ($entityKey === 'fee_structures') {
+                        $generatedStudentFees = financeGenerateStudentFeesForStructure($connection, $auditId);
+                    } elseif ($entityKey === 'fee_types' && $values['status'] === 'Active') {
+                        $feeStructures = $connection->prepare(
+                            'SELECT fee_structure_id FROM fee_structures WHERE fee_type_id = :fee_type_id'
+                        );
+                        $feeStructures->execute(['fee_type_id' => $auditId]);
+                        foreach ($feeStructures->fetchAll(PDO::FETCH_COLUMN) as $feeStructureId) {
+                            $generatedStudentFees += financeGenerateStudentFeesForStructure(
+                                $connection,
+                                (int) $feeStructureId
+                            );
+                        }
+                    }
                     if (
                         $entityKey === 'payments'
                         && (
@@ -1273,6 +1358,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['admin_flash'] = $recordId === null
                         ? "{$entity['label']} record created."
                         : "{$entity['label']} record updated.";
+                    if ($generatedStudentFees > 0) {
+                        $_SESSION['admin_flash'] .= " {$generatedStudentFees} matching student fee record(s) generated.";
+                    }
                     $redirectUrl = 'admin-section.php?section=' . rawurlencode($sectionKey);
                     if ($sectionKey === 'academic-management') {
                         $redirectUrl .= '&academic_view=' . rawurlencode($academicView);
@@ -1913,23 +2001,18 @@ if ($sectionKey === 'attendance-scheduling') {
             'day' => $teacherFilterDay,
         ];
     } elseif ($attendanceView === 'student-schedule') {
-        $scheduledSectionIds = [];
-        $scheduledProgramsByYear = [];
         $scheduledYears = [];
-        foreach ($scheduleRows as $schedule) {
-            $scheduledSectionIds[(int) $schedule['section_id']] = true;
-            $yearLevel = (int) $schedule['year_level'];
+        foreach ($sectionOptions as $section) {
+            $yearLevel = (int) $section['year_level'];
             $scheduledYears[$yearLevel] = $yearLevel;
-            $programId = (int) ($schedule['program_id'] ?? 0);
-            if ($programId > 0 && !isset($scheduledProgramsByYear[$yearLevel][$programId])) {
-                $scheduledProgramsByYear[$yearLevel][$programId] = [
-                    'program_id' => $programId,
-                    'program_code' => (string) $schedule['program_code'],
-                    'program_name' => (string) $schedule['program_name'],
-                ];
-            }
         }
         sort($scheduledYears, SORT_NUMERIC);
+        $studentProgramOptions = $connection->query(
+            "SELECT program_id, program_code, program_name
+             FROM programs
+             WHERE status = 'Active'
+             ORDER BY program_code, program_name"
+        )->fetchAll();
         $studentFilterProgramId = filter_var(
             $_GET['program_id'] ?? null,
             FILTER_VALIDATE_INT,
@@ -1943,23 +2026,12 @@ if ($sectionKey === 'attendance-scheduling') {
         if ($studentFilterYearLevel !== '' && !in_array((int) $studentFilterYearLevel, $scheduledYears, true)) {
             $studentFilterYearLevel = '';
         }
-        $studentProgramOptions = [];
-        foreach ($scheduledProgramsByYear as $yearLevel => $programs) {
-            if ($studentFilterYearLevel === '' || (int) $studentFilterYearLevel === $yearLevel) {
-                foreach ($programs as $programId => $program) {
-                    $studentProgramOptions[$programId] = $program;
-                }
-            }
-        }
-        $studentProgramOptions = array_values($studentProgramOptions);
-        usort(
-            $studentProgramOptions,
-            static fn (array $left, array $right): int => [$left['program_code'], $left['program_name']]
-                <=> [$right['program_code'], $right['program_name']]
-        );
         if ($studentFilterProgramId !== null && !in_array(
             $studentFilterProgramId,
-            array_column($studentProgramOptions, 'program_id'),
+            array_map(
+                static fn (array $program): int => (int) $program['program_id'],
+                $studentProgramOptions
+            ),
             true
         )) {
             $studentFilterProgramId = null;
@@ -1967,8 +2039,7 @@ if ($sectionKey === 'attendance-scheduling') {
         $studentSections = array_values(array_filter(
             $sectionOptions,
             static fn (array $section): bool =>
-                isset($scheduledSectionIds[(int) $section['section_id']])
-                && ($studentFilterProgramId === null || (int) $section['program_id'] === $studentFilterProgramId)
+                ($studentFilterProgramId === null || (int) $section['program_id'] === $studentFilterProgramId)
                 && ($studentFilterYearLevel === '' || (int) $section['year_level'] === (int) $studentFilterYearLevel)
         ));
         $studentFilterSectionId = filter_var(

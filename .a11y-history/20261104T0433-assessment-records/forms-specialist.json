@@ -1,0 +1,11 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [],
+  "notes": [
+    "The add form and its trigger are omitted for Assessment & Grading views, while edit mode still renders the form and table actions remain available (line 1319). This is not, by itself, an accessibility defect: the add action is unavailable to all users, not selectively hidden from assistive technology. Confirm that omitting record creation is intentional for these views."
+  ]
+}

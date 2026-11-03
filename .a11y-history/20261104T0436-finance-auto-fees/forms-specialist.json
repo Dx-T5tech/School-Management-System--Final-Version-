@@ -1,0 +1,13 @@
+{
+  "skill": "forms-specialist",
+  "scope": [
+    "public/admin-section.php",
+    "app/Shared/admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Fee type and fee structure forms use labeled native controls.",
+    "Fee-generation instructions are present inside the corresponding setup dialogs and associated with their fields using aria-describedby.",
+    "The payment-flow explanation states that student submissions remain Pending until staff verification."
+  ]
+}

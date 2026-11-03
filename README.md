@@ -147,6 +147,18 @@ term's balance. The Admin dashboard shows active-year billed, collected, and
 outstanding amounts and paid, unpaid, and partially paid student counts per
 term. Payments without a tuition fee and term assignment remain supported for
 other payment types and are listed separately from term collections.
+On Student Fees, Admins can configure fee types and fee structures by academic
+year, optional program, and optional year level. Saving an active fee structure
+creates Unpaid fee records for matching enrolled students; matching structures
+are also applied when an enrollment becomes Enrolled. The generated fee keeps
+the amount and due date from the structure at the time it is created; later
+structure edits do not change existing student fee records. Generated fees
+start without a scholarship or discount, which Admins can apply to the student
+fee record as appropriate. The
+`database/migrations/202611040014_prevent_duplicate_enrollment_fees.sql`
+migration prevents the same structure from being charged twice to one
+enrollment. Student payment submissions continue to create Pending payment
+records for staff verification; payment submission does not mark a balance paid.
 Students can review active-year balances, completed payments, methods, and
 Prelim/Midterm/Final installments under Balance Fees; submit a payment already
 made for staff verification under Payment; and print or save a Financial Report

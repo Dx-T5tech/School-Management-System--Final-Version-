@@ -1281,6 +1281,8 @@ foreach ($lookupOptions as $lookupName => $options) {
     <?php else: ?>
         <?php if ($sectionKey === 'finance-payments' && $financeView === 'payment-records'): ?>
             <p class="admin-notice admin-notice--info">Payment records are retained for audit. The row action cancels a payment instead of deleting its financial history.</p>
+        <?php elseif ($sectionKey === 'finance-payments' && $financeView === 'student-fees'): ?>
+            <p class="admin-notice admin-notice--info">Set up an active fee type and fee structure to generate Unpaid fee records for matching enrolled students. Matching fee structures are also applied when a student becomes enrolled. Students’ payment submissions create Pending payment records for staff verification; submissions are not marked paid automatically.</p>
         <?php elseif ($sectionKey === 'students' || $sectionKey === 'teachers'): ?>
             <p class="admin-notice admin-notice--info">Deactivate records instead of permanently deleting them, so linked enrollments, grades, attendance, and history remain intact.</p>
         <?php elseif ($sectionKey === 'announcements'): ?>
@@ -1316,6 +1318,13 @@ foreach ($lookupOptions as $lookupName => $options) {
                 ? 'Edit ' . strtolower($entity['label'])
                 : 'Add ' . strtolower(rtrim($entity['label'], 's'));
             ?>
+            <?php if (
+                $isEditing
+                || (
+                    $sectionKey !== 'assessment-grading'
+                    && !($sectionKey === 'students' && in_array($entityKey, ['students', 'enrollments'], true))
+                )
+            ): ?>
             <div class="admin-panel" data-form-modal data-modal-trigger-label="<?= dashboardEscape($modalTriggerLabel) ?>" data-modal-trigger-class="admin-button" data-modal-open-on-load="<?= $modalOpenOnLoad ? 'true' : 'false' ?>"<?= $entityKey === 'curriculum' ? ' id="admin-form-curriculum"' : ($entityKey === 'subjects' ? ' id="admin-form-subjects"' : '') ?>>
                 <h2><?= $isEditing ? 'Edit ' . dashboardEscape(strtolower($entity['label'])) : 'Add ' . dashboardEscape(strtolower(rtrim($entity['label'], 's'))) ?></h2>
                 <form class="admin-form" method="post">
@@ -1338,6 +1347,11 @@ foreach ($lookupOptions as $lookupName => $options) {
                         <input type="hidden" name="record_id" value="<?= dashboardEscape((int) $editingRecord[$entity['primaryKey']]) ?>">
                     <?php endif; ?>
                     <p class="admin-field-required-note"><span class="admin-required-marker">Required</span> fields must be completed.</p>
+                    <?php if ($entityKey === 'fee_types'): ?>
+                        <p class="admin-field-hint" id="admin-fee-types-automation-hint">Only active fee types are used for automatic fee generation. Add an active fee structure to assign this type to matching enrollments.</p>
+                    <?php elseif ($entityKey === 'fee_structures'): ?>
+                        <p class="admin-field-hint" id="admin-fee-structures-automation-hint">Saving this structure creates Unpaid fee records for matching enrolled students; it also applies when students become enrolled. Blank program or year level applies to all matching enrollments in the academic year. Generated fees start with no scholarship or discount. Existing fee records keep their saved amount and due date if this structure is later edited.</p>
+                    <?php endif; ?>
                     <div class="admin-form-grid">
                         <?php foreach ($entity['fields'] as $name => $definition): ?>
                             <?php if ($entityKey === 'payments' && $name === 'student_fee_id'): ?>
@@ -1358,6 +1372,11 @@ foreach ($lookupOptions as $lookupName => $options) {
                             $value = is_scalar($rawValue) ? (string) $rawValue : '';
                             $error = $fieldError($name);
                             $descriptionIds = [];
+                            if ($entityKey === 'fee_types') {
+                                $descriptionIds[] = 'admin-fee-types-automation-hint';
+                            } elseif ($entityKey === 'fee_structures') {
+                                $descriptionIds[] = 'admin-fee-structures-automation-hint';
+                            }
                             if ($entityKey === 'curriculum' && in_array(
                                 $name,
                                 ['subject_id', 'subject_name_override', 'units_override'],
@@ -1473,6 +1492,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                     </div>
                 </form>
             </div>
+            <?php endif; ?>
 
             <?php if ($entityKey !== 'subjects' && $entityKey !== 'curriculum'): ?>
                 <div class="admin-panel">
@@ -1514,7 +1534,7 @@ foreach ($lookupOptions as $lookupName => $options) {
                                             if (is_string($definition['options']) && $cellValue !== '' && isset($lookupLabels[$definition['options']][(string) $cellValue])) {
                                                 $cellValue = $lookupLabels[$definition['options']][(string) $cellValue];
                                             }
-                                            if ($name === 'total_amount' && is_numeric($cellValue)) {
+                                            if (in_array($name, ['amount', 'discount_amount', 'total_amount'], true) && is_numeric($cellValue)) {
                                                 $cellValue = dashboardFormatCurrency((float) $cellValue);
                                             }
                                             ?>

@@ -107,16 +107,15 @@ if ($applications !== []) {
     <title>Admissions Review - Fullbright College ISMS</title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
 </head>
-<body class="dashboard-page">
+<body class="dashboard-page admissions-review-page">
     <a class="skip-link" href="#main-content">Skip to applications</a>
     <main class="main-content" id="main-content" tabindex="-1">
         <header class="page-intro">
             <div class="page-intro-copy">
-                <p class="eyebrow">Admissions review</p>
                 <h1>Completed student enrollments</h1>
                 <p class="page-description">Review applicant details, entrance exam scores, and uploaded documents. These records are submitted after enrollment is complete, so each applicant already has an active Student account.</p>
             </div>
-            <a class="admin-button" href="<?= dashboardEscape($dashboardHref) ?>"><?= dashboardEscape($dashboardLabel) ?></a>
+            <a class="admin-button admin-button--secondary" href="<?= dashboardEscape($dashboardHref) ?>"><?= dashboardEscape($dashboardLabel) ?></a>
         </header>
         <section class="admin-panel admissions-review-guidance" aria-labelledby="admissions-review-guidance-heading">
             <h2 id="admissions-review-guidance-heading">Recommended review steps</h2>
@@ -136,7 +135,7 @@ if ($applications !== []) {
         <?php else: ?>
             <p class="admin-table-scroll-hint">Scroll horizontally to review all application details.</p>
             <div class="admin-table-scroll" tabindex="0" role="region" aria-label="Submitted student applications table">
-                <table class="admin-table">
+                <table class="admin-table admissions-review-table">
                     <caption>Submitted student applications</caption>
                     <thead>
                         <tr>
@@ -151,32 +150,32 @@ if ($applications !== []) {
                         <?php foreach ($applications as $application): ?>
                             <?php $id = (int) $application['application_id']; ?>
                             <tr>
-                                <th scope="row">
-                                    <?= dashboardEscape(trim(implode(' ', array_filter([
+                                <th scope="row" class="admissions-applicant-cell">
+                                    <span class="admissions-applicant-name"><?= dashboardEscape(trim(implode(' ', array_filter([
                                         $application['first_name'],
                                         $application['middle_name'],
                                         $application['last_name'],
-                                    ], static fn (mixed $value): bool => is_string($value) && $value !== '')))) ?>
-                                    <br><a href="mailto:<?= dashboardEscape($application['email']) ?>"><?= dashboardEscape($application['email']) ?></a>
-                                    <br><span>Birth date: <?= dashboardEscape($application['birth_date']) ?></span>
-                                    <br><span>Gender: <?= dashboardEscape($application['gender']) ?></span>
+                                    ], static fn (mixed $value): bool => is_string($value) && $value !== '')))) ?></span>
+                                    <a class="admissions-applicant-email" href="mailto:<?= dashboardEscape($application['email']) ?>"><?= dashboardEscape($application['email']) ?></a>
+                                    <span class="admissions-applicant-meta">Birth date: <?= dashboardEscape($application['birth_date']) ?></span>
+                                    <span class="admissions-applicant-meta">Gender: <?= dashboardEscape($application['gender']) ?></span>
                                 </th>
                                 <td>
-                                    <span>Primary: <?= dashboardEscape($application['phone'] ?? '—') ?></span>
-                                    <br><span>Alternate: <?= dashboardEscape($application['alternate_phone'] ?? '—') ?></span>
-                                    <br><span>Residential: <?= dashboardEscape($application['residential_address']) ?>, <?= dashboardEscape($application['city']) ?>, <?= dashboardEscape($application['province']) ?></span>
-                                    <br><span>Mailing: <?= dashboardEscape($application['mailing_address']) ?></span>
+                                    <div class="admissions-contact-detail"><span class="admissions-contact-label">Primary:</span> <?= dashboardEscape($application['phone'] ?? '—') ?></div>
+                                    <div class="admissions-contact-detail"><span class="admissions-contact-label">Alternate:</span> <?= dashboardEscape($application['alternate_phone'] ?? '—') ?></div>
+                                    <div class="admissions-contact-detail"><span class="admissions-contact-label">Residential:</span> <?= dashboardEscape($application['residential_address']) ?>, <?= dashboardEscape($application['city']) ?>, <?= dashboardEscape($application['province']) ?></div>
+                                    <div class="admissions-contact-detail"><span class="admissions-contact-label">Mailing:</span> <?= dashboardEscape($application['mailing_address']) ?></div>
                                 </td>
-                                <td><?= dashboardEscape($application['program_name']) ?></td>
-                                <td>
+                                <td class="admissions-program-cell"><?= dashboardEscape($application['program_name']) ?></td>
+                                <td class="admissions-exam-cell">
                                     <?php if ($application['score'] === null): ?>
-                                        Not recorded
+                                        <span class="admissions-score admissions-score--missing">Not recorded</span>
                                     <?php else: ?>
-                                        <?= dashboardEscape((int) $application['score']) ?> / <?= dashboardEscape((int) $application['total_questions']) ?>
+                                        <span class="admissions-score"><?= dashboardEscape((int) $application['score']) ?> / <?= dashboardEscape((int) $application['total_questions']) ?></span>
                                     <?php endif; ?>
                                 </td>
                                 <td>
-                                    <ul>
+                                    <ul class="admissions-document-list">
                                         <?php foreach ($documentsByApplication[$id] ?? [] as $document): ?>
                                             <?php
                                             $documentLabels = [

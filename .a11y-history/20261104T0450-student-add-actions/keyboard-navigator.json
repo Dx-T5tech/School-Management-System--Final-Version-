@@ -1,0 +1,11 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Shared\\admin_section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Removing the add-form panels does not remove existing record tables or their native, keyboard-operable Edit links.",
+    "Edit mode retains a form panel when a record is selected."
+  ]
+}

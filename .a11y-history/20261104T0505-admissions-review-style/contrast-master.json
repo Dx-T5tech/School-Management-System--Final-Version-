@@ -1,0 +1,16 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\app\\Modules\\StudentManagement\\Admissions\\Controllers\\admin_applications.php",
+    "C:\\xampp\\htdocs\\School Management System (Final Version)\\public\\assets\\css\\dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Text on panel and table backgrounds meets WCAG AA contrast.",
+    "Score badges meet WCAG AA contrast (accent on accent-soft: 4.52:1).",
+    "Hover-row text meets WCAG AA contrast on accent-soft (minimum checked: 4.83:1).",
+    "Admissions links are underlined and meet WCAG AA contrast on their backgrounds.",
+    "Focus indicators use the accent color and exceed 3:1 against adjacent backgrounds.",
+    "Panel backgrounds and surfaces were checked; no contrast failure found."
+  ]
+}
