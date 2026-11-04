@@ -6405,3 +6405,34 @@ textarea:focus-visible,
         padding: 18px 16px;
     }
 }
+ :root {
+    color-scheme: light;
+    --bg: #F3F7FC;
+    --soft: #EAF1F8;
+    --surface: #FFFFFF;
+    --panel: #FFFFFF;
+    --ink: #172D43;
+    --ink-soft: #52677D;
+    --muted: #52677D;
+    --line: #D7E2EE;
+    --accent: #245F9E;
+    --accent-soft: #E4EEF8;
+    --accent-ink: #FFFFFF;
+    --navy: #1B3654;
+    --blue: #2F6FA8;
+    --gold: #8C651C;
+    --sage: #18764B;
+    --danger: #B42318;
+    --warning: #93600A;
+}
+
+.dashboard-page {
+    --blue: #2F6FA8;
+    --gold: #8C651C;
+}
+
+.dashboard-page--executive,
+.dashboard-page--operations {
+    --blue: #2F6FA8;
+    --gold: #8C651C;
+}

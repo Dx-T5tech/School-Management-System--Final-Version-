@@ -1,0 +1,16 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [],
+  "passed": [
+    "The native fragment link targets the Fee balances heading, which has tabindex=\"-1\"; fragment activation can move focus to that heading without adding it to the Tab sequence.",
+    "The dashboard CSS applies a visible :focus-visible outline to [tabindex] elements, covering the focused heading.",
+    "The summary link and any horizontally scrollable fee table remain keyboard reachable."
+  ],
+  "notes": [
+    "Confirmed from the markup and CSS; browser runtime behavior was not tested."
+  ]
+}

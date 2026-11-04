@@ -1,0 +1,12 @@
+{
+  "skill": "contrast-master",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "app/Modules/StudentManagement/Students/Views/section_content.php"
+  ],
+  "findings": [],
+  "passed": [
+    "Annual-fee labels and explanatory text use #5B6A65 on white (5.68:1); monetary values use #0E1B17 on white (17.68:1).",
+    "The fee-ledger link inherits the readable muted text color and remains distinguishable with the underline."
+  ]
+}

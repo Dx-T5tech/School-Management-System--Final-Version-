@@ -3,7 +3,7 @@
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta name="theme-color" content="#172b3b">
+    <meta name="theme-color" content="#1B3654">
     <title>Admissions - <?= dashboardEscape($schoolName) ?></title>
     <link rel="stylesheet" href="assets/css/dashboard.css">
     <link rel="stylesheet" href="assets/css/admissions.css">

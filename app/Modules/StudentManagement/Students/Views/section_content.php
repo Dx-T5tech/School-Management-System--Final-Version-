@@ -175,13 +175,17 @@ declare(strict_types=1);
                         </div>
                     </dl>
                     <p>
-                        These <?= dashboardEscape($annualFeeBalances['fee_count']) ?> non-tuition fee(s) are not split across terms.
+                        <?php if ($annualFeeBalances['fee_count'] > 0): ?>
+                            These <?= dashboardEscape($annualFeeBalances['fee_count']) ?> non-tuition fees are billed once for the academic year, not split across terms.
+                        <?php else: ?>
+                            No non-tuition fees have been assessed for this academic year.
+                        <?php endif; ?>
                         <a href="#student-fee-ledger-heading">View itemized fee balances</a>
                     </p>
                 </div>
             </section>
             <section class="student-panel" aria-labelledby="student-fee-ledger-heading">
-                <h2 id="student-fee-ledger-heading">Fee balances</h2>
+                <h2 id="student-fee-ledger-heading" tabindex="-1">Fee balances</h2>
                 <?php if ($feeRows === []): ?>
                     <p class="student-empty">No fees are recorded for your active academic year yet. Contact the school office if you expected a fee assessment.</p>
                 <?php else: ?>

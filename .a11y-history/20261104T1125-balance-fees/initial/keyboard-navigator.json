@@ -1,0 +1,24 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "app/Modules/StudentManagement/Students/Views/section_content.php",
+    "public/assets/css/dashboard.css"
+  ],
+  "findings": [
+    {
+      "rule": "KEYBOARD-FOCUS-001",
+      "wcag": "2.4.3 A",
+      "severity": "minor",
+      "confidence": "medium",
+      "location": "app/Modules/StudentManagement/Students/Views/section_content.php:183",
+      "summary": "Activating the itemized-balances link scrolls to a heading that cannot receive focus, so keyboard focus may remain at the link.",
+      "fix": "Add tabindex=\"-1\" to the Fee balances heading so fragment navigation can move focus there; provide a visible focus style if needed.",
+      "evidence": "<a href=\"#student-fee-ledger-heading\"> targets <h2 id=\"student-fee-ledger-heading\"> without tabindex."
+    }
+  ],
+  "passed": [
+    "The summary link is a native anchor with a valid matching target and is keyboard reachable.",
+    "When fee rows exist, the horizontally scrollable table wrapper is keyboard reachable with tabindex=\"0\" and has a visible focus outline.",
+    "The fee table uses native table markup with scoped column and row headers."
+  ]
+}

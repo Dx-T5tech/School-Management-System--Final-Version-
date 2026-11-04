@@ -585,3 +585,10 @@
     outline-offset: 2px;
     box-shadow: none;
 }
+ .auth-page {
+    --accent: #245F9E;
+    --accent-soft: #E4EEF8;
+    --blue: #2F6FA8;
+    --navy: #1B3654;
+    --line: #D7E2EE;
+}
