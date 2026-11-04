@@ -1774,5 +1774,15 @@ main#main-content:focus {
     --accent-soft: #E4EEF8;
     --blue: #2F6FA8;
     --navy: #1B3654;
+    --navy-soft: #214A70;
     --line: #D7E2EE;
+}
+
+.admissions-page main#main-content:focus,
+.admissions-page main#main-content:focus-visible {
+    outline-color: var(--accent);
+}
+
+.admissions-page input {
+    accent-color: var(--accent);
 }

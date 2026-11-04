@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1B3654">
     <title>Admissions - <?= dashboardEscape($schoolName) ?></title>
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-    <link rel="stylesheet" href="assets/css/admissions.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=20261104-blue-theme">
+    <link rel="stylesheet" href="assets/css/admissions.css?v=20261104-blue-theme">
 </head>
 <body class="admissions-page">
     <a class="admissions-skip-link" href="#main-content">Skip to main content</a>

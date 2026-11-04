@@ -6419,6 +6419,7 @@ textarea:focus-visible,
     --accent-soft: #E4EEF8;
     --accent-ink: #FFFFFF;
     --navy: #1B3654;
+    --navy-soft: #214A70;
     --blue: #2F6FA8;
     --gold: #8C651C;
     --sage: #18764B;
@@ -6435,4 +6436,18 @@ textarea:focus-visible,
 .dashboard-page--operations {
     --blue: #2F6FA8;
     --gold: #8C651C;
+}
+
+body.dashboard-page .sidebar :is(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #FFFFFF;
+    outline-offset: 3px;
+    box-shadow: 0 0 0 2px #1B3654;
+}
+
+.schedule-summary-grid .schedule-status-present {
+    color: #126B4A;
+}
+
+.schedule-summary-grid .schedule-status-late {
+    color: #8B5700;
 }

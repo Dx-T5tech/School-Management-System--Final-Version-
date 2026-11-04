@@ -1,0 +1,18 @@
+{
+  "skill": "keyboard-navigator",
+  "scope": [
+    "public/assets/css/dashboard.css",
+    "public/assets/css/auth.css",
+    "public/assets/css/admissions.css"
+  ],
+  "findings": [],
+  "passed": [
+    "Focus-visible indicators retain clear outlines and offset in dashboard, auth, and admissions styles.",
+    "The sidebar focus style provides a dark #1B3654 ring and a white outline; the dark ring is visible against the pale sidebar, and the white outline separates on dark surfaces.",
+    "Admissions main-content focus uses a blue outline on the pale surface."
+  ],
+  "notes": [
+    "The final sidebar surface is pale; no dark sidebar surface is defined in this theme.",
+    "Automated Playwright keyboard scanning could not run because Playwright is not installed."
+  ]
+}

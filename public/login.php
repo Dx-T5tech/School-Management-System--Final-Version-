@@ -147,8 +147,8 @@ $escape = static fn (string $value): string => htmlspecialchars(
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1B3654">
     <title>Sign in - <?= $escape($schoolName) ?> ISMS</title>
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-    <link rel="stylesheet" href="assets/css/auth.css">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=20261104-blue-theme">
+    <link rel="stylesheet" href="assets/css/auth.css?v=20261104-blue-theme">
 </head>
 <body class="dashboard-page auth-page">
     <a class="skip-link" href="#main-content">Skip to sign in</a>

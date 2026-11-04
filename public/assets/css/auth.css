@@ -590,5 +590,10 @@
     --accent-soft: #E4EEF8;
     --blue: #2F6FA8;
     --navy: #1B3654;
+    --navy-soft: #214A70;
     --line: #D7E2EE;
+}
+
+.auth-page .brand-caption {
+    color: var(--ink-soft);
 }

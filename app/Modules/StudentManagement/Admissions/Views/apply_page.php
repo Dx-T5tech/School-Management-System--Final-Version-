@@ -41,8 +41,8 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="theme-color" content="#1B3654">
     <title><?= dashboardEscape($pageTitle) ?></title>
-    <link rel="stylesheet" href="assets/css/dashboard.css">
-    <link rel="stylesheet" href="assets/css/admissions.css?v=20261104-exam-qr">
+    <link rel="stylesheet" href="assets/css/dashboard.css?v=20261104-blue-theme">
+    <link rel="stylesheet" href="assets/css/admissions.css?v=20261104-exam-qr-blue-theme">
     <script src="assets/js/auth.js" defer></script>
     <?php if ($step === 'exam' && isset($timeRemaining)): ?>
         <script src="assets/js/vendor/qrcode-generator.js" defer></script>
@@ -60,7 +60,6 @@ $detailValue = static fn (string $field, string $fallback = ''): string => isset
             </span>
         </a>
         <nav class="admissions-nav" aria-label="Admissions">
-            <a href="admissions.php">Admissions</a>
             <a class="admissions-nav-apply" href="login.php">Sign in</a>
         </nav>
     </header>
